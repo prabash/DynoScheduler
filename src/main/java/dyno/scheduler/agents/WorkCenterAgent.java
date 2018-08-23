@@ -18,12 +18,18 @@ public class WorkCenterAgent extends Agent
 
     // <editor-fold desc="overriden methods" defaultstate="collapsed">
     
+    /**
+     * takeDown overridden method
+     */
     @Override
     protected void takeDown()
     {
         super.takeDown(); //To change body of generated methods, choose Tools | Templates.
     }
 
+    /**
+     * setup overridden method
+     */
     @Override
     protected void setup()
     {
@@ -40,10 +46,15 @@ public class WorkCenterAgent extends Agent
      * This behaviour offer the best available date for a specific operation date request
      * sent in by the ShopOrderAgent
      */
-    private class BOfferBestAvailableDate extends CyclicBehaviour
+    private static class BOfferBestAvailableDate extends CyclicBehaviour
     {
+        private static final long serialVersionUID = -7860101940083496148L;
+        
         // <editor-fold desc="overriden methods" defaultstate="collapsed">
         
+        /**
+         * action overridden method
+         */
         @Override
         public void action()
         {
@@ -61,10 +72,15 @@ public class WorkCenterAgent extends Agent
      * This behaviour gets the acknowledgement for the offered date from the ShopOrderAgent
      * and schedules the operation on the offered date/time
      */
-    private class BAssignOperationToWorkCenter extends CyclicBehaviour
+    private static class BAssignOperationToWorkCenter extends CyclicBehaviour
     {
+        private static final long serialVersionUID = 4660381226186754715L;
+        
         // <editor-fold desc="overriden methods" defaultstate="collapsed">
         
+        /**
+         * action overridden method
+         */
         @Override
         public void action()
         {

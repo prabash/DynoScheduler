@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package dyno.scheduler.datamodels;
+package dyno.scheduler.data;
 
 /**
  *
  * @author Prabash
  */
-public class DataModelClass
+public class MysqlManager
 {
     
 }

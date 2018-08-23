@@ -9,7 +9,7 @@ package dyno.scheduler.data;
  *
  * @author Prabash
  */
-public class DataClass
+public class DataFactory
 {
     
 }
