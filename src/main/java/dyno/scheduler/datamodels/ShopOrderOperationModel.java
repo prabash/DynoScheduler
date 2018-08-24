@@ -196,7 +196,18 @@ public class ShopOrderOperationModel extends DataModel
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    public String getPrimaryKey()
+    {
+        return String.valueOf(getOperationId());
+    }
+
+    @Override
+    public String getClassName()
+    {
+        return ShopOrderOperationModel.class.getName();
+    }
     
     // </editor-fold> 
-
 }

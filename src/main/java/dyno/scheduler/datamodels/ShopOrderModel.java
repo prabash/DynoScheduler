@@ -35,6 +35,11 @@ public class ShopOrderModel extends DataModel
     private ShopOrderStatus shopOrderStatus;
     private ShopOrderPriority priority;
     private List<ShopOrderOperationModel> operations;
+    
+    public ShopOrderModel()
+    {
+        AGENT_PREFIX = "SHOP_ORDER_AGENT";
+    }
 
     public String getOrderNo()
     {
@@ -199,6 +204,24 @@ public class ShopOrderModel extends DataModel
     public ShopOrderModel getModelObject(Object rowData)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    @Override
+    public String getPrimaryKey()
+    {
+        return getOrderNo();
+    }
+
+    @Override
+    public String getClassName()
+    {
+        return ShopOrderModel.class.getName();
+    }
+    
+    @Override
+    public String getAgentPrefix()
+    {
+        return this.AGENT_PREFIX;
     }
     
     // </editor-fold> 

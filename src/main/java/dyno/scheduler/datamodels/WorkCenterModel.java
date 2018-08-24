@@ -17,6 +17,11 @@ public class WorkCenterModel extends DataModel
     private String workCenterType;
     private String workCenterDescription;
     private String workCenterCapacity;
+    
+    public WorkCenterModel()
+    {
+        AGENT_PREFIX = "WORK_CENTER_AGENT";
+    }
 
     public String getWorkCenterNo()
     {
@@ -71,6 +76,24 @@ public class WorkCenterModel extends DataModel
     public WorkCenterModel getModelObject(Object rowData)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    @Override
+    public String getPrimaryKey()
+    {
+        return getWorkCenterNo();
+    }
+
+    @Override
+    public String getClassName()
+    {
+        return WorkCenterModel.class.getName();
+    }
+    
+    @Override
+    public String getAgentPrefix()
+    {
+        return this.AGENT_PREFIX;
     }
     
     // </editor-fold> 

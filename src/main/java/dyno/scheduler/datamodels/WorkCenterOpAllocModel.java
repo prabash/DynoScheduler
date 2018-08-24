@@ -65,5 +65,18 @@ public class WorkCenterOpAllocModel extends DataModel
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
+    @Override
+    public String getPrimaryKey()
+    {
+        // TODO: should change this
+        return getWorkCenterNo() + getOperationDate().toString();
+    }
+
+    @Override
+    public String getClassName()
+    {
+        return WorkCenterOpAllocModel.class.getName();
+    }
+    
     // </editor-fold> 
 }

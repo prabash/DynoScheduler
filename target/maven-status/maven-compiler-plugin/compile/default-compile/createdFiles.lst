@@ -4,9 +4,7 @@ dyno\scheduler\data\DataManager.class
 dyno\scheduler\agents\ShopOrderAgent$BWorkCenterAgentHandler.class
 dyno\scheduler\datamodels\WorkCenterOpAllocModel.class
 dyno\scheduler\datamodels\DataModelEnums$ShopOrderScheduleStatus.class
-dyno\scheduler\jade\JadeClass.class
 dyno\scheduler\datamodels\DataModelEnums$OperationStatus.class
-dyno\scheduler\utils\UtilsClass.class
 dyno\scheduler\agents\WorkCenterAgent.class
 dyno\scheduler\data\DataEnums.class
 dyno\scheduler\agents\WorkCenterAgent$BAssignOperationToWorkCenter.class
@@ -18,8 +16,10 @@ dyno\scheduler\datamodels\DataModelEnums$ShopOrderSchedulingDirection.class
 dyno\scheduler\datamodels\ShopOrderModel.class
 dyno\scheduler\data\DataFactory.class
 dyno\scheduler\data\MysqlManager.class
+dyno\scheduler\jade\AgentsManager.class
 dyno\scheduler\datamodels\ShopOrderOperationModel.class
 dyno\scheduler\datamodels\DataModelEnums.class
+dyno\scheduler\utils\LogManager.class
 dyno\scheduler\agents\WorkCenterAgent$BOfferBestAvailableDate.class
 dyno\scheduler\data\DataEnums$DataGetMethod.class
 dyno\scheduler\datamodels\DataModel.class

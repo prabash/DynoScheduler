@@ -11,6 +11,7 @@ package dyno.scheduler.datamodels;
  */
 public abstract class DataModel
 {
+    protected String AGENT_PREFIX;
     /**
      * this method is used to return the DataModel or sub-type object by passing 
      * rowData acquired by reading an Excel or MySql table row
@@ -19,4 +20,10 @@ public abstract class DataModel
      * @return return an object of the DataModel sub-type
      */
     public abstract <T> T getModelObject(Object rowData);
+    
+    public abstract String getPrimaryKey();
+    
+    public abstract String getClassName();
+    
+    public String getAgentPrefix() { return null; }
 }
