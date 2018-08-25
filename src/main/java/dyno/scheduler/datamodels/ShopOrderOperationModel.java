@@ -6,7 +6,11 @@
 package dyno.scheduler.datamodels;
 
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
+import dyno.scheduler.utils.DateTimeUtil;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
 
 /**
  *
@@ -15,7 +19,7 @@ import org.joda.time.DateTime;
 public class ShopOrderOperationModel extends DataModel
 {
     // <editor-fold desc="properties"> 
-    
+
     private String orderNo;
     private int operationId;
     private int operationNo;
@@ -181,20 +185,49 @@ public class ShopOrderOperationModel extends DataModel
     {
         this.operationStatus = operationStatus;
     }
-    
+
     // </editor-fold> 
-    
     // <editor-fold desc="overriden methods"> 
-    
     /**
      * get ShopOrderOperationModel object by passing Excel or MySql table row
+     *
      * @param rowData relevant data object
      * @return ShopOrderOperationModel object
      */
     @Override
-    public ShopOrderOperationModel getModelObject(Object rowData)
+    public ShopOrderOperationModel getModelObject(Object row)
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // Create a DataFormatter to format and get each cell's value as String
+        DataFormatter dataFormatter = new DataFormatter();
+        DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+
+        if (row instanceof Row)
+        {
+            Row excelRow = (Row)row;
+            int i = -1;
+            
+            this.setOrderNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setWorkCenterRuntime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setLaborRunTime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setOpStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setOpStartTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setOpFinishDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setOpFinishTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setQuantity(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setWorkCenterType(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setOperationStatus(OperationStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            
+            return this;
+
+        } else
+        {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.    
+        }
     }
 
     @Override
@@ -208,6 +241,6 @@ public class ShopOrderOperationModel extends DataModel
     {
         return ShopOrderOperationModel.class.getName();
     }
-    
+
     // </editor-fold> 
 }

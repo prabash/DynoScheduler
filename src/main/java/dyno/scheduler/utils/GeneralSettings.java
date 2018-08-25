@@ -16,8 +16,10 @@ public class GeneralSettings
 {
     // <editor-fold desc="properties">
     
-    private static final String hostName = "127.0.0.1";
-    private static final DataGetMethod dataGetMethod = DataEnums.DataGetMethod.Excel;
+    private static final String HOST_NAME = "127.0.0.1";
+    private static final String EXCEL_FILE = "data.xlsx";
+    private static final DataGetMethod DATA_GET_METHOD = DataEnums.DataGetMethod.Excel;
+    
 
     // </editor-fold>
     
@@ -25,13 +27,19 @@ public class GeneralSettings
     
     public static String getHostName()
     {
-        return hostName;
+        return HOST_NAME;
     }
     
     public static DataGetMethod getDataGetMethod()
     {
-        return dataGetMethod;
+        return DATA_GET_METHOD;
+    }
+    
+    public static String getDefaultExcelFile()
+    {
+        return EXCEL_FILE;
     }
     
     // </editor-fold>
+
 }

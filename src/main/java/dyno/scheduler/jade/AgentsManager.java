@@ -5,9 +5,13 @@
  */
 package dyno.scheduler.jade;
 
+import dyno.scheduler.agents.ShopOrderAgent;
+import dyno.scheduler.agents.WorkCenterAgent;
 import dyno.scheduler.datamodels.DataModel;
+import dyno.scheduler.datamodels.ShopOrderModel;
+import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.utils.GeneralSettings;
-import dyno.scheduler.utils.LogManager;
+import dyno.scheduler.utils.LogUtil;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
@@ -26,7 +30,7 @@ import java.util.Map;
  */
 public class AgentsManager
 {
-    private static final String className = AgentsManager.class.getName();
+    private static final String CLASS_NAME = AgentsManager.class.getName();
 
     /**
      * return an instance of the runtime
@@ -72,7 +76,7 @@ public class AgentsManager
             containerList.put(container, containerRef);
         });
 
-        LogManager.logInfoMessage(className, "Launching containers done");
+        LogUtil.logInfoMessage(CLASS_NAME, "Launching containers done");
         return containerList;
     }
 
@@ -84,31 +88,38 @@ public class AgentsManager
      * @param dataSet agents will be added for each of the objects in the
      * @return the set of agents created
      */
-    public static List<AgentController> createAgentsFromData(ContainerController container, List<DataModel> dataSet)
+    public static List<AgentController> createAgentsFromData(ContainerController container, List<? extends DataModel> dataSet)
     {
         String agentName;
         List<AgentController> agentsList = new ArrayList();
 
         for (DataModel data : dataSet)
         {
-            agentName = data.getAgentPrefix() + data.getPrimaryKey();
-            try
-            {
-                Object[] initInfo = new Object[]
+            Object[] initInfo = new Object[]
                 {
                     data
                 };//used to give informations to the agent
-
-                AgentController agentController = container.createNewAgent(agentName, data.getClassName(), initInfo);
-                agentsList.add(agentController);
-                System.out.println(agentName + " launched");
-            }
-            catch (StaleProxyException ex)
-            {
-                LogManager.logSevereErrorMessage(className, ex.getMessage(), ex);
-            }
+            
+            agentName = data.getAgentPrefix() + data.getPrimaryKey();
+            agentsList.add(createAgent(container, agentName, getAgentClassNameByModel(data), initInfo));
         }
         return agentsList;
+    }
+    
+    
+    public static AgentController createAgent(ContainerController container, String agentName, String className, Object[] initInfo)
+    {
+        AgentController agentController = null;
+        try
+        {
+            agentController = container.createNewAgent(agentName, className, initInfo);
+            System.out.println(agentName + " launched");
+        }
+        catch (StaleProxyException ex)
+        {
+            LogUtil.logSevereErrorMessage(CLASS_NAME, ex.getMessage(), ex);
+        }
+        return agentController;
     }
 
     /**
@@ -118,18 +129,18 @@ public class AgentsManager
      */
     public static void startAgents(List<AgentController> agentList)
     {
-        agentList.stream().forEach((ac) ->
+        agentList.stream().forEach((agent) ->
         {
             try
             {
-                ac.start();
+                agent.start();
             }
             catch (StaleProxyException ex)
             {
-                LogManager.logSevereErrorMessage(className, null, ex);
+                LogUtil.logSevereErrorMessage(CLASS_NAME, null, ex);
             }
         });
-        LogManager.logInfoMessage(className, "Agents started...");
+        LogUtil.logInfoMessage(CLASS_NAME, "Agents started...");
     }
 
     /**
@@ -145,15 +156,15 @@ public class AgentsManager
             rmaAgent = container.createNewAgent("rma", "jade.tools.rma.rma", new Object[0]);
             rmaAgent.start();
 
-            LogManager.logInfoMessage(className, "Launched RMA Agent on " + container.getContainerName());
+            LogUtil.logInfoMessage(CLASS_NAME, "Launched RMA Agent on " + container.getContainerName());
         }
         catch (StaleProxyException ex)
         {
-            LogManager.logSevereErrorMessage(className, "Launching of RMA Agent failed", ex);
+            LogUtil.logSevereErrorMessage(CLASS_NAME, "Launching of RMA Agent failed", ex);
         }
         catch (ControllerException ex)
         {
-            LogManager.logSevereErrorMessage(className, ex.getMessage(), ex);
+            LogUtil.logSevereErrorMessage(CLASS_NAME, ex.getMessage(), ex);
         }
 
         try
@@ -162,16 +173,32 @@ public class AgentsManager
             snifferAgent = container.createNewAgent("sniffeur", "jade.tools.sniffer.Sniffer", new Object[0]);
             snifferAgent.start();
 
-            LogManager.logInfoMessage(className, "Launched Sinffer Agent on " + container.getContainerName());
+            LogUtil.logInfoMessage(CLASS_NAME, "Launched Sinffer Agent on " + container.getContainerName());
         }
         catch (StaleProxyException ex)
         {
-            LogManager.logSevereErrorMessage(className, "Launching of Sinffer failed", ex);
+            LogUtil.logSevereErrorMessage(CLASS_NAME, "Launching of Sinffer failed", ex);
         }
         catch (ControllerException ex)
         {
-            LogManager.logSevereErrorMessage(className, ex.getMessage(), ex);
+            LogUtil.logSevereErrorMessage(CLASS_NAME, ex.getMessage(), ex);
         }
     }
-
+    
+    private static String getAgentClassNameByModel(DataModel object)
+    {
+        if (object instanceof ShopOrderModel)
+        {
+            return ShopOrderAgent.class.getName();
+        }
+        else if (object instanceof WorkCenterModel)
+        {
+            return WorkCenterAgent.class.getName();
+        }
+        else
+        {
+            return null;
+        }
+    }
+    
 }

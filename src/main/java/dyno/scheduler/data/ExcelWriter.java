@@ -9,7 +9,7 @@ package dyno.scheduler.data;
  *
  * @author Prabash
  */
-public class MysqlManager extends DataManager
+public class ExcelWriter
 {
     
 }

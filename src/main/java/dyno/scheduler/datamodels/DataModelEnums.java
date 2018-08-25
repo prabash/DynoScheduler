@@ -11,6 +11,9 @@ package dyno.scheduler.datamodels;
  */
 public class DataModelEnums
 {
+    /**
+     * species the priority of a shop order
+     */
     public enum ShopOrderPriority
     {
         Critical,
@@ -48,6 +51,14 @@ public class DataModelEnums
         Issued,
         InProgress,
         Completed
+    }
+    
+    public enum DataModelType
+    {
+        ShopOrder,
+        ShopOrderOperation,
+        WorkCenter,
+        WorkCenterAllocation
     }
 
 }

@@ -14,15 +14,20 @@ import dyno.scheduler.utils.GeneralSettings;
  */
 public class DataFactory
 {
-    public DataManager getDataManagerInstance()
+    /**
+     * return a new instance of the DataReadManager depending on the current data get method
+     * available in the general settings
+     * @return DataReadManager instance
+     */
+    public static DataReadManager getDataReadManagerInstance()
     {
         DataGetMethod dataGetMethod = GeneralSettings.getDataGetMethod();
         switch (dataGetMethod)
         {
             case Database:
-                return new MysqlManager();
+                return new MysqlReadManager();
             case Excel:
-                return new ExcelManager();
+                return new ExcelReadManager();
             default:
                 return null;
         }

@@ -9,8 +9,12 @@ import dyno.scheduler.datamodels.DataModelEnums.ShopOrderPriority;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderScheduleStatus;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderSchedulingDirection;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderStatus;
+import dyno.scheduler.utils.DateTimeUtil;
 import java.util.List;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
 
 /**
  *
@@ -19,7 +23,7 @@ import org.joda.time.DateTime;
 public class ShopOrderModel extends DataModel
 {
     // <editor-fold desc="properties"> 
-    
+
     private String orderNo;
     private String description;
     private DateTime createdDate;
@@ -32,10 +36,10 @@ public class ShopOrderModel extends DataModel
     private ShopOrderSchedulingDirection schedulingDirection;
     private String customerNo;
     private ShopOrderScheduleStatus schedulingStatus;
-    private ShopOrderStatus shopOrderStatus;
+    private ShopOrderStatus thisStatus;
     private ShopOrderPriority priority;
     private List<ShopOrderOperationModel> operations;
-    
+
     public ShopOrderModel()
     {
         AGENT_PREFIX = "SHOP_ORDER_AGENT";
@@ -163,12 +167,12 @@ public class ShopOrderModel extends DataModel
 
     public ShopOrderStatus getShopOrderStatus()
     {
-        return shopOrderStatus;
+        return thisStatus;
     }
 
-    public void setShopOrderStatus(ShopOrderStatus shopOrderStatus)
+    public void setShopOrderStatus(ShopOrderStatus thisStatus)
     {
-        this.shopOrderStatus = shopOrderStatus;
+        this.thisStatus = thisStatus;
     }
 
     public ShopOrderPriority getPriority()
@@ -190,22 +194,51 @@ public class ShopOrderModel extends DataModel
     {
         this.operations = operations;
     }
-    
+
     // </editor-fold> 
     
     // <editor-fold desc="overriden methods"> 
     
     /**
      * get ShopOrderModel object by passing Excel or MySql table row
-     * @param rowData relevant data object
+     *
+     * @param row relevant data object
      * @return ShopOrderModel object
      */
     @Override
-    public ShopOrderModel getModelObject(Object rowData)
+    public ShopOrderModel getModelObject(Object row)
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // Create a DataFormatter to format and get each cell's value as String
+        DataFormatter dataFormatter = new DataFormatter();
+        DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+        
+        if (row instanceof Row)
+        {
+            Row excelRow = (Row)row;
+            int i = -1;
+
+            this.setOrderNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setCreatedDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setPartNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setStructureRevision(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setRoutingRevision(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setRequiredDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setFinishDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+            this.setSchedulingDirection(ShopOrderSchedulingDirection.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setCustomerNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+            this.setSchedulingStatus(ShopOrderScheduleStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setShopOrderStatus(ShopOrderStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setPriority(ShopOrderPriority.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            
+            return this;
+        } else
+        {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.    
+        }
     }
-    
+
     @Override
     public String getPrimaryKey()
     {
@@ -217,12 +250,12 @@ public class ShopOrderModel extends DataModel
     {
         return ShopOrderModel.class.getName();
     }
-    
+
     @Override
     public String getAgentPrefix()
     {
         return this.AGENT_PREFIX;
     }
-    
+
     // </editor-fold> 
 }

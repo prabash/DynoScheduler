@@ -12,8 +12,19 @@ import java.util.logging.Logger;
  *
  * @author prabash.dharshanapri
  */
-public class LogManager
+public class LogUtil
 {
+    /**
+     * log info messages
+     * @param classOb class object
+     * @param message message to be logged
+     */
+    public static void logInfoMessage(Object classOb, String message)
+    {
+        logInfoMessage(classOb.getClass().getName(), message);
+    }
+    
+    
     /**
      * log info messages
      * @param className name of the class
@@ -26,6 +37,17 @@ public class LogManager
     
     /**
      * log error messages
+     * @param classOb class object
+     * @param message message to be logged
+     * @param ex exception
+     */
+    public static void logSevereErrorMessage(Object classOb, String message, Exception ex)
+    {
+        logSevereErrorMessage(classOb.getClass().getName(), message, ex);
+    }
+    
+    /**
+     * log error messages
      * @param className name of the class
      * @param message message to be logged
      * @param ex exception
@@ -34,4 +56,5 @@ public class LogManager
     {
         Logger.getLogger(className).log(Level.SEVERE, message, ex);
     }
+    
 }
