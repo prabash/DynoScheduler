@@ -20,7 +20,7 @@ import org.joda.time.format.DateTimeFormatter;
 public class WorkCenterOpAllocModel extends DataModel
 {
     // <editor-fold desc="properties"> 
-
+    
     private String workCenterNo;
     private DateTime operationDate;
     private HashMap<String, Integer> timeBlockAllocation;
@@ -28,6 +28,11 @@ public class WorkCenterOpAllocModel extends DataModel
     public String getWorkCenterNo()
     {
         return workCenterNo;
+    }
+
+    public WorkCenterOpAllocModel()
+    {
+        timeBlockAllocation = new HashMap<>();
     }
 
     public void setWorkCenterNo(String workCenterNo)

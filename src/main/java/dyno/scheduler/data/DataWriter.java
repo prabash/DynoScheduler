@@ -5,6 +5,7 @@
  */
 package dyno.scheduler.data;
 
+import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import java.util.List;
 
@@ -16,6 +17,6 @@ public class DataWriter
 {
     public static boolean updateWorkCenterAllocData(List<WorkCenterOpAllocModel> dataList, String storageName)
     {
-        return DataFactory.getDataWriteManagerInstance().updateWorkCenterOpALlocData(dataList, storageName);
+        return DataFactory.getDataWriteManagerInstance().updateData(dataList, DataModelEnums.DataModelType.WorkCenterAllocation);
     }
 }

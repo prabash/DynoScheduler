@@ -107,6 +107,30 @@ public class ExcelWriteManager extends DataWriteManager
     @Override
     public boolean addWorkCenterOpALlocData(List<WorkCenterOpAllocModel> workCenterOpAllocs, String storageName)
     {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updateShopOrderData(List<ShopOrderModel> dataList, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updateShopOrderOperationData(List<ShopOrderOperationModel> dataList, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updateWorkCenterData(List<WorkCenterModel> dataList, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updateWorkCenterOpALlocData(List<WorkCenterOpAllocModel> workCenterOpAllocs, String storageName)
+    {
         try
         {
             // Obtain a workbook from the excel file
@@ -119,12 +143,19 @@ public class ExcelWriteManager extends DataWriteManager
                 DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
                 // Get Sheet at index 0
                 Sheet sheet = workbook.getSheet(storageName);
-                workCenterOpAllocs.forEach((WorkCenterOpAllocModel workCenterOpAlloc) ->
+
+                for (WorkCenterOpAllocModel workCenterOpAlloc : workCenterOpAllocs)
                 {
                     for (Row row : sheet)
                     {
-                        if (dataFormatter.formatCellValue(row.getCell(0)).equals(workCenterOpAlloc.getWorkCenterNo())
-                                && dateFormat.parseDateTime(dataFormatter.formatCellValue(row.getCell(1))).equals(workCenterOpAlloc.getOperationDate()))
+                        //skip the header row of the excel
+                        if (row.getRowNum() == 0)
+                        {
+                            continue;
+                        }
+                        
+                       if (dataFormatter.formatCellValue(row.getCell(0)).equals(workCenterOpAlloc.getWorkCenterNo())
+                            && dateFormat.parseDateTime(dataFormatter.formatCellValue(row.getCell(1))).equals(workCenterOpAlloc.getOperationDate()))
                         {
                             SortedSet<String> keys = new TreeSet<>(workCenterOpAlloc.getTimeBlockAllocation().keySet());
 
@@ -151,7 +182,7 @@ public class ExcelWriteManager extends DataWriteManager
                         }
 
                     }
-                });
+                }
 
                 inputStream.close();
                 // Write the output to the file
@@ -183,30 +214,6 @@ public class ExcelWriteManager extends DataWriteManager
         }
 
         return true;
-    }
-
-    @Override
-    public boolean updateShopOrderData(List<ShopOrderModel> dataList, String storageName)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean updateShopOrderOperationData(List<ShopOrderOperationModel> dataList, String storageName)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean updateWorkCenterData(List<WorkCenterModel> dataList, String storageName)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public boolean updateWorkCenterOpALlocData(List<WorkCenterOpAllocModel> dataList, String storageName)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**

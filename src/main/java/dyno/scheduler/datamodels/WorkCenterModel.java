@@ -214,7 +214,8 @@ public class WorkCenterModel extends DataModel
     {
         List<WorkCenterOpAllocModel> details = new ArrayList<>();
         WorkCenterOpAllocModel alloc = new WorkCenterOpAllocModel();
-        alloc.setOperationDate(bestOfferedDate);
+        // bestOfferedDate value also has the time portion in it. Therefore, convert it to string and only add the Date portion
+        alloc.setOperationDate(DateTimeUtil.getDateFormat().parseDateTime(bestOfferedDate.toString(DateTimeUtil.getDateFormat())));
         alloc.setWorkCenterNo(workCenterNo);
         alloc.addToTimeBlockAllocation(alloc.getTimeBlockName(new DateTime(bestOfferedDate).toLocalTime()), operationId);
         details.add(alloc);
