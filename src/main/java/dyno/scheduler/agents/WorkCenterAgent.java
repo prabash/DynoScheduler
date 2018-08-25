@@ -175,6 +175,8 @@ public class WorkCenterAgent extends Agent
                 //Integer price = (Integer) catalogue.remove(title);
                 if (bestOfferedDate != null)
                 {
+                    reply.setPerformative(ACLMessage.INFORM);
+                    
                     //new WorkCenterOpAllocDataManager(DataManager.getDataMethod()).updateWorkCenterOpAllocDetails(workCenter.getWorkCenterNo(), bestOfferedDate, Integer.valueOf(operationId));
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);

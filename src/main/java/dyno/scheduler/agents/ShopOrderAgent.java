@@ -28,7 +28,6 @@ import org.joda.time.format.DateTimeFormatter;
  */
 public class ShopOrderAgent extends Agent
 {
-
     private static final long serialVersionUID = 3537448666946171304L;
 
     // The list of known workcenter agents
