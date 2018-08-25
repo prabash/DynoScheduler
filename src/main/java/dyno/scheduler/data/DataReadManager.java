@@ -15,7 +15,6 @@ import java.util.List;
  */
 public abstract class DataReadManager
 {
-
     public abstract List<? extends DataModel> getData(DataModelType dataModel);
 
     protected abstract List<ShopOrderModel> getShopOrderData(String storageName);
@@ -25,7 +24,4 @@ public abstract class DataReadManager
     protected abstract List<WorkCenterModel> getWorkCenterData(String storageName);
 
     protected abstract List<WorkCenterOpAllocModel> getWorkCenterOpAllocData(String storageName);
-
-    protected abstract String getStorageName(DataModelType dataModel);
-
 }

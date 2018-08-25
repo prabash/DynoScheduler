@@ -5,8 +5,10 @@
  */
 package dyno.scheduler.datamodels;
 
-import dyno.scheduler.data.DataHandler;
+import dyno.scheduler.data.DataReader;
+import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.utils.DateTimeUtil;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -142,7 +144,7 @@ public class WorkCenterModel extends DataModel
         DateTime bestDateTimeOffer = null;
         // get the allocation for the work center. 
         // TODO: if the requiredDate allocation is full next possible date should be taken
-        List<WorkCenterOpAllocModel> workCenterAlloc = DataHandler.getWorkCenterOpAllocDetails().stream()
+        List<WorkCenterOpAllocModel> workCenterAlloc = DataReader.getWorkCenterOpAllocDetails().stream()
                 .filter(rec -> rec.getWorkCenterNo().equals(this.getWorkCenterNo()))
                 .collect(Collectors.toList());
 
@@ -206,6 +208,18 @@ public class WorkCenterModel extends DataModel
             }
         }
         return bestTimeOffer;
+    }
+    
+    public void updateWorkCenterOpAllocDetails(String workCenterNo, DateTime bestOfferedDate, int operationId)
+    {
+        List<WorkCenterOpAllocModel> details = new ArrayList<>();
+        WorkCenterOpAllocModel alloc = new WorkCenterOpAllocModel();
+        alloc.setOperationDate(bestOfferedDate);
+        alloc.setWorkCenterNo(workCenterNo);
+        alloc.addToTimeBlockAllocation(alloc.getTimeBlockName(new DateTime(bestOfferedDate).toLocalTime()), operationId);
+        details.add(alloc);
+
+        DataWriter.updateWorkCenterAllocData(details, workCenterNo);
     }
     
     // </editor-fold> 

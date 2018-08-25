@@ -11,7 +11,7 @@ package dyno.scheduler.data;
  */
 public class DataEnums
 {
-    public enum DataGetMethod
+    public enum DataAccessMethod
     {
         Excel,
         Database

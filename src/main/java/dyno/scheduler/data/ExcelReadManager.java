@@ -6,6 +6,7 @@
 package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.*;
+import dyno.scheduler.utils.ExcelUtil;
 import dyno.scheduler.utils.GeneralSettings;
 import dyno.scheduler.utils.LogUtil;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class ExcelReadManager extends DataReadManager
     {
         try
         {
-            String excelSheetName = getStorageName(dataModelType);
+            String excelSheetName = ExcelUtil.getStorageName(dataModelType);
             switch (dataModelType)
             {
                 case ShopOrder:
@@ -63,27 +64,10 @@ public class ExcelReadManager extends DataReadManager
         } catch (Exception ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return null;
         }
-        return null;
     }
 
-    @Override
-    protected String getStorageName(DataModelEnums.DataModelType dataModel)
-    {
-        switch (dataModel)
-        {
-            case ShopOrder:
-                return "ShopOrders";
-            case ShopOrderOperation:
-                return "ShopOrderOperations";
-            case WorkCenter:
-                return "WorkCenters";
-            case WorkCenterAllocation:
-                return "WorkCenterOpAllocations";
-            default:
-                return "";
-        }
-    }
 
     @Override
     protected List<ShopOrderModel> getShopOrderData(String storageName)

@@ -177,7 +177,7 @@ public class WorkCenterAgent extends Agent
                 {
                     reply.setPerformative(ACLMessage.INFORM);
                     
-                    //new WorkCenterOpAllocDataManager(DataManager.getDataMethod()).updateWorkCenterOpAllocDetails(workCenter.getWorkCenterNo(), bestOfferedDate, Integer.valueOf(operationId));
+                    workCenter.updateWorkCenterOpAllocDetails(workCenter.getWorkCenterNo(), bestOfferedDate, Integer.parseInt(operationId));
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);
                 }

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  *
  * @author Prabash
  */
-public class DataHandler
+public class DataReader
 {
     private static List<ShopOrderModel> shopOrderDetails;
     private static List<ShopOrderOperationModel> shopOrderOperationDetails;

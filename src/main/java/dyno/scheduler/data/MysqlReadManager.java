@@ -24,13 +24,7 @@ public class MysqlReadManager extends DataReadManager
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
-    @Override
-    protected String getStorageName(DataModelEnums.DataModelType dataModel)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
     @Override
     protected List<ShopOrderModel> getShopOrderData(String storageName)
     {

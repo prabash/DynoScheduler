@@ -5,7 +5,7 @@
  */
 package dyno.scheduler.agents;
 
-import dyno.scheduler.data.DataHandler;
+import dyno.scheduler.data.DataReader;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.utils.LogUtil;
 import jade.core.Agent;
@@ -36,8 +36,8 @@ public class ManagerAgent extends Agent
             ContainerController container = (ContainerController)args[0];
             
             agentList = new ArrayList<>();
-            agentList.addAll(AgentsManager.createAgentsFromData(container, DataHandler.getShopOrderDetails()));
-            agentList.addAll(AgentsManager.createAgentsFromData(container, DataHandler.getWorkCenterDetails()));
+            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getShopOrderDetails()));
+            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getWorkCenterDetails()));
         }
         
         try

@@ -5,7 +5,7 @@
  */
 package dyno.scheduler.data;
 
-import dyno.scheduler.data.DataEnums.DataGetMethod;
+import dyno.scheduler.data.DataEnums.DataAccessMethod;
 import dyno.scheduler.utils.GeneralSettings;
 
 /**
@@ -21,13 +21,31 @@ public class DataFactory
      */
     public static DataReadManager getDataReadManagerInstance()
     {
-        DataGetMethod dataGetMethod = GeneralSettings.getDataGetMethod();
+        DataAccessMethod dataGetMethod = GeneralSettings.getDataAccessMethod();
         switch (dataGetMethod)
         {
             case Database:
                 return new MysqlReadManager();
             case Excel:
                 return new ExcelReadManager();
+            default:
+                return null;
+        }
+    }
+    
+    /**
+     * return a new instance of the DataWriteManager depending on the current
+     * @return DataWriteManager instance
+     */
+    public static DataWriteManager getDataWriteManagerInstance()
+    {
+        DataAccessMethod dataGetMethod = GeneralSettings.getDataAccessMethod();
+        switch (dataGetMethod)
+        {
+            case Database:
+                return new MysqlWriteManager();
+            case Excel:
+                return new ExcelWriteManager();
             default:
                 return null;
         }
