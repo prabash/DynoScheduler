@@ -11,6 +11,7 @@ import dyno.scheduler.datamodels.DataModelEnums.ShopOrderSchedulingDirection;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderStatus;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.List;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
@@ -20,6 +21,7 @@ import org.joda.time.format.DateTimeFormatter;
  *
  * @author Prabash
  */
+@XmlRootElement
 public class ShopOrderModel extends DataModel
 {
     // <editor-fold desc="properties"> 
@@ -36,13 +38,32 @@ public class ShopOrderModel extends DataModel
     private ShopOrderSchedulingDirection schedulingDirection;
     private String customerNo;
     private ShopOrderScheduleStatus schedulingStatus;
-    private ShopOrderStatus thisStatus;
+    private ShopOrderStatus shopOrderStatus;
     private ShopOrderPriority priority;
     private List<ShopOrderOperationModel> operations;
 
     public ShopOrderModel()
     {
         AGENT_PREFIX = "SHOP_ORDER_AGENT";
+    }
+    
+    public ShopOrderModel(String orderNo, String description, DateTime createdDate, String partNo, String structureRevision, String routingRevision, DateTime requiredDate,
+            DateTime startDate, DateTime finishDate, ShopOrderSchedulingDirection schedulingDirection, String customerNo, ShopOrderStatus shopOrderStatus, ShopOrderPriority priority, List<ShopOrderOperationModel> operaitons)
+    {
+        this.orderNo = orderNo;
+        this.description = description;
+        this.createdDate = createdDate;
+        this.partNo = partNo;
+        this.structureRevision = structureRevision;
+        this.routingRevision = routingRevision;
+        this.requiredDate = requiredDate;
+        this.startDate = startDate;
+        this.finishDate = finishDate;
+        this.schedulingDirection = schedulingDirection;
+        this.customerNo = customerNo;
+        this.shopOrderStatus = shopOrderStatus;
+        this.priority = priority;
+        this.operations = operaitons;
     }
 
     public String getOrderNo()
@@ -167,12 +188,12 @@ public class ShopOrderModel extends DataModel
 
     public ShopOrderStatus getShopOrderStatus()
     {
-        return thisStatus;
+        return shopOrderStatus;
     }
 
     public void setShopOrderStatus(ShopOrderStatus thisStatus)
     {
-        this.thisStatus = thisStatus;
+        this.shopOrderStatus = thisStatus;
     }
 
     public ShopOrderPriority getPriority()

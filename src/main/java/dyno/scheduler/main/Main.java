@@ -2,6 +2,7 @@ package dyno.scheduler.main;
 
 import dyno.scheduler.agents.ManagerAgent;
 import dyno.scheduler.jade.AgentsManager;
+import dyno.scheduler.restservice.RESTServiceHandler;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -25,6 +26,9 @@ public class Main
      */
     public static void main(String[] args)
     {
+        // start the rest services
+        startRESTService();
+        
         // get the platform
         platformRuntime = AgentsManager.getRuntimeInstance();
         
@@ -52,5 +56,12 @@ public class Main
         
         // start the manager agent
         AgentsManager.startAgents(agentList);
+        
+    }
+    
+    private static void startRESTService()
+    {
+        Thread restServiceHandler = new Thread(new RESTServiceHandler());
+        restServiceHandler.start();
     }
 }

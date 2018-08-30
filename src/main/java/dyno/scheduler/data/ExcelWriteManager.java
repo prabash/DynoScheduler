@@ -144,7 +144,7 @@ public class ExcelWriteManager extends DataWriteManager
                 // Get Sheet at index 0
                 Sheet sheet = workbook.getSheet(storageName);
 
-                for (WorkCenterOpAllocModel workCenterOpAlloc : workCenterOpAllocs)
+                workCenterOpAllocs.forEach((workCenterOpAlloc) ->
                 {
                     for (Row row : sheet)
                     {
@@ -154,8 +154,8 @@ public class ExcelWriteManager extends DataWriteManager
                             continue;
                         }
                         
-                       if (dataFormatter.formatCellValue(row.getCell(0)).equals(workCenterOpAlloc.getWorkCenterNo())
-                            && dateFormat.parseDateTime(dataFormatter.formatCellValue(row.getCell(1))).equals(workCenterOpAlloc.getOperationDate()))
+                        if (dataFormatter.formatCellValue(row.getCell(0)).equals(workCenterOpAlloc.getWorkCenterNo())
+                                && dateFormat.parseDateTime(dataFormatter.formatCellValue(row.getCell(1))).equals(workCenterOpAlloc.getOperationDate()))
                         {
                             SortedSet<String> keys = new TreeSet<>(workCenterOpAlloc.getTimeBlockAllocation().keySet());
 
@@ -182,7 +182,7 @@ public class ExcelWriteManager extends DataWriteManager
                         }
 
                     }
-                }
+                });
 
                 inputStream.close();
                 // Write the output to the file
