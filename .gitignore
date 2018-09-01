@@ -1,0 +1,7 @@
+# Ignore everything
+*
+# Recursively allow files under src
+!/src/**
+!.gitignore
+!.xml
+/target/
