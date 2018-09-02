@@ -24,9 +24,9 @@ public class DataReader
      * this method will return all the list of shop orders available
      * @return list of shop orders
      */
-    public synchronized static List<ShopOrderModel> getShopOrderDetails()
+    public synchronized static List<ShopOrderModel> getShopOrderDetails(boolean refresh)
     {
-        if (shopOrderDetails == null)
+        if (shopOrderDetails == null || refresh)
         {
             // get shop order details 
             populateShopOrderDetails();
@@ -45,27 +45,27 @@ public class DataReader
         return shopOrderDetails;
     }
 
-    public synchronized static List<ShopOrderOperationModel> getShopOrderOperationDetails()
+    public synchronized static List<ShopOrderOperationModel> getShopOrderOperationDetails(boolean refresh)
     {
-        if (shopOrderOperationDetails == null)
+        if (shopOrderOperationDetails == null || refresh)
         {
             populateShopOrderOperationDetails();
         }
         return shopOrderOperationDetails;
     }
 
-    public synchronized static List<WorkCenterModel> getWorkCenterDetails()
+    public synchronized static List<WorkCenterModel> getWorkCenterDetails(boolean refresh)
     {
-        if (workCenterDetails == null)
+        if (workCenterDetails == null || refresh)
         {
             populateWorkCenterDetails();
         }
         return workCenterDetails;
     }
 
-    public synchronized static List<WorkCenterOpAllocModel> getWorkCenterOpAllocDetails()
+    public synchronized static List<WorkCenterOpAllocModel> getWorkCenterOpAllocDetails(boolean refresh)
     {
-        if (workCenterOpAllocDetails == null)
+        if (workCenterOpAllocDetails == null || refresh)
         {
             populateWorkCenterOpAllocDetails();
         }

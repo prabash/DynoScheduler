@@ -144,7 +144,7 @@ public class WorkCenterModel extends DataModel
         DateTime bestDateTimeOffer = null;
         // get the allocation for the work center. 
         // TODO: if the requiredDate allocation is full next possible date should be taken
-        List<WorkCenterOpAllocModel> workCenterAlloc = DataReader.getWorkCenterOpAllocDetails().stream()
+        List<WorkCenterOpAllocModel> workCenterAlloc = DataReader.getWorkCenterOpAllocDetails(false).stream()
                 .filter(rec -> rec.getWorkCenterNo().equals(this.getWorkCenterNo()))
                 .collect(Collectors.toList());
 

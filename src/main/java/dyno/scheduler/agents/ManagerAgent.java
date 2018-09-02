@@ -36,8 +36,8 @@ public class ManagerAgent extends Agent
             ContainerController container = (ContainerController)args[0];
             
             agentList = new ArrayList<>();
-            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getShopOrderDetails()));
-            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getWorkCenterDetails()));
+            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getShopOrderDetails(false)));
+            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getWorkCenterDetails(false)));
         }
         
         try
