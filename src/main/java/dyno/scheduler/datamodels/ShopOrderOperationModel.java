@@ -7,6 +7,7 @@ package dyno.scheduler.datamodels;
 
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.utils.DateTimeUtil;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
@@ -16,9 +17,10 @@ import org.joda.time.format.DateTimeFormatter;
  *
  * @author Prabash
  */
+@XmlRootElement
 public class ShopOrderOperationModel extends DataModel
 {
-    // <editor-fold desc="properties"> 
+    // <editor-fold defaultstate="collapsed" desc="properties"> 
 
     private String orderNo;
     private int operationId;
@@ -36,6 +38,34 @@ public class ShopOrderOperationModel extends DataModel
     private int quantity;
     private OperationStatus operationStatus;
 
+    // </editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="constructors">
+    
+    public ShopOrderOperationModel() { }
+    
+    public ShopOrderOperationModel(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, int operationSequence,
+                double workCenterRunTime, double laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, OperationStatus operationStatus)
+    {
+        this.orderNo = orderNo;
+        this.operationId = operationId;
+        this.operationNo = operationNo;
+        this.workCenterNo = workCenterNo;
+        this.workCenterType = workCenterType;
+        this.operationDescription = operationDescription;
+        this.operationSequence = operationSequence;
+        this.workCenterRuntime = workCenterRunTime;
+        this.laborRunTime = laborRunTime;
+        this.opStartDate = opStartDate;
+        this.opStartTime = opStartTime;
+        this.opFinishDate = opFinishDate;
+        this.opFinishTime = opFinishTime;
+    }
+    
+    //</editor-fold>
+
+    //<editor-fold defaultstate="collapsed" desc="getters/setters">
+    
     public String getOrderNo()
     {
         return orderNo;
@@ -186,12 +216,14 @@ public class ShopOrderOperationModel extends DataModel
         this.operationStatus = operationStatus;
     }
 
-    // </editor-fold> 
-    // <editor-fold desc="overriden methods"> 
+    //</editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
+    
     /**
      * get ShopOrderOperationModel object by passing Excel or MySql table row
      *
-     * @param rowData relevant data object
+     * @param row relevant data object
      * @return ShopOrderOperationModel object
      */
     @Override
@@ -203,9 +235,9 @@ public class ShopOrderOperationModel extends DataModel
 
         if (row instanceof Row)
         {
-            Row excelRow = (Row)row;
+            Row excelRow = (Row) row;
             int i = -1;
-            
+
             this.setOrderNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
             this.setOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
@@ -221,7 +253,7 @@ public class ShopOrderOperationModel extends DataModel
             this.setWorkCenterType(dataFormatter.formatCellValue(excelRow.getCell(++i)));
             this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
             this.setOperationStatus(OperationStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            
+
             return this;
 
         } else
