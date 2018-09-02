@@ -135,16 +135,15 @@ public class WorkCenterModel extends DataModel
      * and the required date TODO: should also incorporate scheduling direction
      * and time factors
      *
-     * @param workCenterNo
      * @param requiredDate
      * @return
      */
     public DateTime getBestDateTimeOffer(DateTime requiredDate)
     {
         DateTime bestDateTimeOffer = null;
-        // get the allocation for the work center. 
+        // get the allocation for the work center. Set refresh to true so that it will always get the latest values from the DB
         // TODO: if the requiredDate allocation is full next possible date should be taken
-        List<WorkCenterOpAllocModel> workCenterAlloc = DataReader.getWorkCenterOpAllocDetails(false).stream()
+        List<WorkCenterOpAllocModel> workCenterAlloc = DataReader.getWorkCenterOpAllocDetails(true).stream()
                 .filter(rec -> rec.getWorkCenterNo().equals(this.getWorkCenterNo()))
                 .collect(Collectors.toList());
 
@@ -220,6 +219,7 @@ public class WorkCenterModel extends DataModel
         alloc.addToTimeBlockAllocation(alloc.getTimeBlockName(new DateTime(bestOfferedDate).toLocalTime()), operationId);
         details.add(alloc);
 
+        // rpdate work center allocation data with provided information
         DataWriter.updateWorkCenterAllocData(details, workCenterNo);
     }
     

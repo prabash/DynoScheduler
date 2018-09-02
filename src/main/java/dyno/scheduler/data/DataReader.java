@@ -22,6 +22,7 @@ public class DataReader
 
     /**
      * this method will return all the list of shop orders available
+     * @param refresh send true to refresh available data
      * @return list of shop orders
      */
     public synchronized static List<ShopOrderModel> getShopOrderDetails(boolean refresh)
