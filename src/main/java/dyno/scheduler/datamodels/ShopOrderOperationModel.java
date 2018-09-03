@@ -236,24 +236,26 @@ public class ShopOrderOperationModel extends DataModel
         if (row instanceof Row)
         {
             Row excelRow = (Row) row;
-            int i = -1;
+            if (excelRow.getLastCellNum() > 0)
+            {
+                int i = -1;
 
-            this.setOrderNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
-            this.setOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
-            this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            this.setWorkCenterRuntime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            this.setLaborRunTime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            this.setOpStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
-            this.setOpStartTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
-            this.setOpFinishDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
-            this.setOpFinishTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
-            this.setQuantity(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            this.setWorkCenterType(dataFormatter.formatCellValue(excelRow.getCell(++i)));
-            this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
-            this.setOperationStatus(OperationStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-
+                this.setOrderNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+                this.setOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+                this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setWorkCenterRuntime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setLaborRunTime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setOpStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+                this.setOpStartTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+                this.setOpFinishDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+                this.setOpFinishTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+                this.setQuantity(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setWorkCenterType(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+                this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
+                this.setOperationStatus(OperationStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            }
             return this;
 
         } else

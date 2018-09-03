@@ -209,18 +209,23 @@ public class WorkCenterModel extends DataModel
         return bestTimeOffer;
     }
     
-    public void updateWorkCenterOpAllocDetails(String workCenterNo, DateTime bestOfferedDate, int operationId)
+    public void updateWorkCenterOpAllocDetails(String workCenterNo, DateTime bestOfferedDate, int operationId, int workCenterRuntime)
     {
-        List<WorkCenterOpAllocModel> details = new ArrayList<>();
+        List<WorkCenterOpAllocModel> workCenterOpAllocations = new ArrayList<>();
         WorkCenterOpAllocModel alloc = new WorkCenterOpAllocModel();
         // bestOfferedDate value also has the time portion in it. Therefore, convert it to string and only add the Date portion
         alloc.setOperationDate(DateTimeUtil.getDateFormat().parseDateTime(bestOfferedDate.toString(DateTimeUtil.getDateFormat())));
         alloc.setWorkCenterNo(workCenterNo);
-        alloc.addToTimeBlockAllocation(alloc.getTimeBlockName(new DateTime(bestOfferedDate).toLocalTime()), operationId);
-        details.add(alloc);
+        
+        // time blocks should be updated for the given runtime factor
+        for (int i = 0; i < workCenterRuntime; i++)
+        {
+            alloc.addToTimeBlockAllocation(alloc.getTimeBlockName(new DateTime(bestOfferedDate.plusHours(i)).toLocalTime()), operationId);
+        }
+        workCenterOpAllocations.add(alloc);
 
-        // rpdate work center allocation data with provided information
-        DataWriter.updateWorkCenterAllocData(details, workCenterNo);
+        // update work center allocation data with provided information
+        DataWriter.updateWorkCenterAllocData(workCenterOpAllocations, workCenterNo);
     }
     
     // </editor-fold> 

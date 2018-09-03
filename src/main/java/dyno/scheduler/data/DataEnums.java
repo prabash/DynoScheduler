@@ -16,4 +16,10 @@ public class DataEnums
         Excel,
         Database
     }
+    
+    public enum CapacityType
+    {
+        FiniteCapacity,
+        InfiniteCapacity,
+    }
 }

@@ -35,8 +35,16 @@ public class SampleService implements IDynoService
         list.add(new DataObj("Prabash", "28", TestEnum.test1, DateTime.now(), subList));
         list.add(new DataObj("Shehan", "25", TestEnum.test2, DateTime.now(), subList));
         
-        entity = new GenericEntity<List<DataObj>>(list){};
+        entity = new GenericEntityImpl(list);
         return Response.ok(entity).build();
+    }
+
+    private static class GenericEntityImpl extends GenericEntity<List<DataObj>>
+    {
+        public GenericEntityImpl(List<DataObj> entity)
+        {
+            super(entity);
+        }
     }
 }
 

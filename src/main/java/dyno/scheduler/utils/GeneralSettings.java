@@ -6,6 +6,7 @@
 package dyno.scheduler.utils;
 
 import dyno.scheduler.data.DataEnums;
+import dyno.scheduler.data.DataEnums.CapacityType;
 import dyno.scheduler.data.DataEnums.DataAccessMethod;
 
 /**
@@ -19,27 +20,45 @@ public class GeneralSettings
     private static final String HOST_NAME = "127.0.0.1";
     private static final String EXCEL_FILE = "data.xlsx";
     private static final DataAccessMethod DATA_ACCESS_METHOD = DataEnums.DataAccessMethod.Excel;
-    
+    private static final CapacityType CAPACITY_TYPE = CapacityType.FiniteCapacity;
 
     // </editor-fold>
     
     // <editor-fold desc="getters/setters">
     
+    /**
+     * @return return the host name for the application instance
+     */
     public static String getHostName()
     {
         return HOST_NAME;
     }
     
+    /**
+     * @return the DATA_ACCESS_METHOD for the application instance
+     */
     public static DataAccessMethod getDataAccessMethod()
     {
         return DATA_ACCESS_METHOD;
     }
     
+    /**
+     * @return the EXCEL_FILE path for the application instance
+     */
     public static String getDefaultExcelFile()
     {
         return EXCEL_FILE;
     }
     
+    /**
+     * @return the CAPACITY_TYPE for the application instance
+     */
+    public static CapacityType getCapacityType()
+    {
+        return CAPACITY_TYPE;
+    }
+    
     // </editor-fold>
+
 
 }

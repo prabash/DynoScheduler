@@ -8,6 +8,7 @@ package dyno.scheduler.agents;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.LogUtil;
+import dyno.scheduler.utils.StringUtil;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
@@ -169,7 +170,9 @@ public class WorkCenterAgent extends Agent
             if (msg != null)
             {
                 // ACCEPT_PROPOSAL Message received with the OperationNo
-                String operationId = msg.getContent();
+                String [] messageContent = StringUtil.readMessageContent(msg.getContent());
+                String operationId = messageContent[0];
+                int workCenterRuntime = Double.valueOf(messageContent[1]).intValue();
                 ACLMessage reply = msg.createReply();
 
                 //Integer price = (Integer) catalogue.remove(title);
@@ -177,7 +180,7 @@ public class WorkCenterAgent extends Agent
                 {
                     reply.setPerformative(ACLMessage.INFORM);
                     
-                    workCenter.updateWorkCenterOpAllocDetails(workCenter.getWorkCenterNo(), bestOfferedDate, Integer.parseInt(operationId));
+                    workCenter.updateWorkCenterOpAllocDetails(workCenter.getWorkCenterNo(), bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);
                 }

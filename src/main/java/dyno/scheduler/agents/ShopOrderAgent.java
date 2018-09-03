@@ -9,6 +9,7 @@ import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.LogUtil;
+import dyno.scheduler.utils.StringUtil;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -19,6 +20,8 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -41,6 +44,9 @@ public class ShopOrderAgent extends Agent
 
     transient DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
     transient DateTimeFormatter dateTimeFormat = DateTimeUtil.getDateTimeFormat();
+    
+    // shop order operations will be added to the queue to be processed sequentially
+    private transient final Queue<ShopOrderOperationModel> operationsQueue = new ConcurrentLinkedQueue<>();
 
     // <editor-fold desc="overriden methods" defaultstate="collapsed">
     /**
@@ -56,24 +62,26 @@ public class ShopOrderAgent extends Agent
         if (args[0] != null)
         {
             shopOrder = (ShopOrderModel) args[0];
-            for (ShopOrderOperationModel operation : shopOrder.getOperations())
+            // add all the operations to the queue to be processed one by one
+            operationsQueue.addAll(shopOrder.getOperations());
+
+            addBehaviour(new TickerBehaviour(this, 1000)
             {
-                // if the targetOperationDate is null (initially), set the SO created date as the startdate and concatenate with 8.00AM as the starting time
-                // if the targetOperationDate is available use it as it is (since it will already have the time portion available)
-                targetOperationDate = targetOperationDate == null ? DateTimeUtil.concatenateDateTime(shopOrder.getCreatedDate().toString(dateFormat), "08:00:00") : targetOperationDate;
-                targetOperationID = operation.getOperationId();
+                private static final long serialVersionUID = 3035804743025458174L;
 
-                System.out.println("Target operation date is " + targetOperationDate.toString(dateTimeFormat));
-
-                // Add a TickerBehaviour that schedules a request to seller agents every minute
-                addBehaviour(new TickerBehaviour(this, 5000)
+                @Override
+                protected void onTick()
                 {
-                    private static final long serialVersionUID = 3035804743025458174L;
-
-                    @Override
-                    protected void onTick()
+                    ShopOrderOperationModel operation = operationsQueue.poll();
+                    if (operation != null)
                     {
-                        System.out.println("Trying to schedule operation : " + targetOperationDate);
+                        // if the targetOperationDate is null (initially), set the SO created date as the startdate and concatenate with 8.00AM as the starting time
+                        // if the targetOperationDate is available use it as it is (since it will already have the time portion available)
+                        // TODO: if currently created date is taken assuming forward scheduling. If the SO is backward scheduled, should calculate the start date before this point.
+                        targetOperationDate = targetOperationDate == null ? DateTimeUtil.concatenateDateTime(shopOrder.getCreatedDate().toString(dateFormat), "08:00:00") : targetOperationDate;
+                        targetOperationID = operation.getOperationId();
+
+                        System.out.println("Trying to schedule operation : " + operation.getOperationId() + " on " + targetOperationDate);
 
                         // Update the list of seller agents
                         DFAgentDescription template = new DFAgentDescription();
@@ -103,8 +111,8 @@ public class ShopOrderAgent extends Agent
                         // Perform the request
                         myAgent.addBehaviour(new BWorkCenterAgentHandler(operation));
                     }
-                });
-            }
+                }
+            });
 
         } else
         {
@@ -227,7 +235,7 @@ public class ShopOrderAgent extends Agent
                     // Send the confirmation to the work center that sent the best date
                     ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
                     order.addReceiver(bestWorkCenter);
-                    order.setContent(String.valueOf(targetOperationID));
+                    order.setContent(String.valueOf(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime()))));
                     order.setConversationId(CONVERSATION_ID);
                     order.setReplyWith("setOperation" + System.currentTimeMillis());
                     myAgent.send(order);
@@ -236,7 +244,7 @@ public class ShopOrderAgent extends Agent
                             MessageTemplate.MatchInReplyTo(order.getReplyWith()));
 
                     // after accepting the offer, the new targetOperationDate should be the accepted date, for the next operation to begin
-                    targetOperationDate = bestOfferedDate;
+                    targetOperationDate = bestOfferedDate.plusHours((int)currentOperation.getWorkCenterRuntime());
 
                     step = 3;
                     break;
