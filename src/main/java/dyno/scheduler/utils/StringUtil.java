@@ -11,8 +11,8 @@ package dyno.scheduler.utils;
  */
 public class StringUtil
 {
-    private final static String delimiter = "|";
-    private final static String delimiterRegex = "\\|";
+    private final static String DELIMITER = "|";
+    private final static String DELIMITER_REGEX = "\\|";
     
     /**
      * generate message to be passed between Agents by taking a set of objects
@@ -21,7 +21,7 @@ public class StringUtil
      */
     public static String generateMessageContent(String... values)
     {
-        return String.join(delimiter, values);
+        return String.join(DELIMITER, values);
     }
     
     /**
@@ -31,6 +31,6 @@ public class StringUtil
      */
     public static String[] readMessageContent(String message)
     {
-        return message.split(delimiterRegex);
+        return message.split(DELIMITER_REGEX);
     }
 }

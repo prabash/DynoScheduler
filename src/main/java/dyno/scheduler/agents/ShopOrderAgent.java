@@ -179,7 +179,7 @@ public class ShopOrderAgent extends Agent
                     {
                         cfpMessage.addReceiver(workCenterAgents[i]);
                     }
-                    cfpMessage.setContent(targetOperationDate.toString(DateTimeUtil.getDateTimeFormat()));
+                    cfpMessage.setContent(StringUtil.generateMessageContent(targetOperationDate.toString(DateTimeUtil.getDateTimeFormat()), String.valueOf(currentOperation.getWorkCenterRuntime())));
                     cfpMessage.setConversationId(CONVERSATION_ID);
                     cfpMessage.setReplyWith("cfp" + System.currentTimeMillis()); // Unique value (can be something with the Shop Order No + operation No. and time)
                     myAgent.send(cfpMessage);
@@ -235,7 +235,7 @@ public class ShopOrderAgent extends Agent
                     // Send the confirmation to the work center that sent the best date
                     ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
                     order.addReceiver(bestWorkCenter);
-                    order.setContent(String.valueOf(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime()))));
+                    order.setContent(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime())));
                     order.setConversationId(CONVERSATION_ID);
                     order.setReplyWith("setOperation" + System.currentTimeMillis());
                     myAgent.send(order);
@@ -259,12 +259,12 @@ public class ShopOrderAgent extends Agent
                         if (reply.getPerformative() == ACLMessage.INFORM)
                         {
                             // Date set successfully. We can terminate
-                            System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + targetOperationDate + " at work center" + reply.getSender().getName());
-                            System.out.println("Set Date = " + bestOfferedDate);
+                            System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
+                            System.out.println("______________________________________________________________________________________________________________________________________");
 
                         } else
                         {
-                            System.out.println("Operation " + currentOperation.getOperationId() + " could not be scheduled on " + targetOperationDate + " at work center" + reply.getSender().getName());
+                            System.out.println("Operation " + currentOperation.getOperationId() + " could not be scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
                         }
 
                         step = 4;

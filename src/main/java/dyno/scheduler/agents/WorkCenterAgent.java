@@ -120,20 +120,20 @@ public class WorkCenterAgent extends Agent
             if (msg != null)
             {
                 // CFP Message received. Process it
-                requestedOpDate = dateTimeFormat.parseDateTime(msg.getContent());
+                String [] messageContent = StringUtil.readMessageContent(msg.getContent());
+                requestedOpDate = dateTimeFormat.parseDateTime(messageContent[0]);
+                int workCenterRuntime = Double.valueOf(messageContent[1]).intValue();
                 ACLMessage reply = msg.createReply();
 
                 // you should get the date related to the work center that is the earliest date after the target date
-                bestOfferedDate = workCenter.getBestDateTimeOffer(requestedOpDate);
+                bestOfferedDate = workCenter.getBestDateTimeOffer(requestedOpDate, workCenterRuntime);
 
-                if (bestOfferedDate != null)
-                {
-                    // reply with the earliest available date/timeblock that comes after the target date
-                    reply.setPerformative(ACLMessage.PROPOSE);
+                // reply with the earliest available date/timeblock that comes after the target date
+                reply.setPerformative(ACLMessage.PROPOSE);
 
-                    // offer should be included with the time as well, therefore the dateTimeFormat is used
-                    reply.setContent(bestOfferedDate.toString(dateTimeFormat));
-                }
+                // offer should be included with the time as well, therefore the dateTimeFormat is used
+                reply.setContent(bestOfferedDate.toString(dateTimeFormat));
+                
                 myAgent.send(reply);
                 
             } else

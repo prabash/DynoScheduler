@@ -12,13 +12,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
-import org.joda.time.LocalTime;
+import org.joda.time.LocalDate;
 
 /**
  *
@@ -129,85 +127,75 @@ public class WorkCenterModel extends DataModel
         return this.AGENT_PREFIX;
     }
     
+    
+    private List<WorkCenterOpAllocModel> currentWorkCenterOpAllocs;
+    private String currentTimeBlockName;
+    private LocalDate currentDate;
     /**
      * *
      * this method will return the best date time offer for the work center no
      * and the required date TODO: should also incorporate scheduling direction
      * and time factors
      *
-     * @param requiredDate
+     * @param requiredDateTime
      * @return
      */
-    public DateTime getBestDateTimeOffer(DateTime requiredDate)
+    public DateTime getBestDateTimeOffer(DateTime requiredDateTime, int workCenterRuntime)
     {
         DateTime bestDateTimeOffer = null;
-        // get the allocation for the work center. Set refresh to true so that it will always get the latest values from the DB
-        // TODO: if the requiredDate allocation is full next possible date should be taken
-        List<WorkCenterOpAllocModel> workCenterAlloc = DataReader.getWorkCenterOpAllocDetails(true).stream()
+        
+        // get the date and the time portion of the required datetime
+        currentDate = requiredDateTime.toLocalDate();
+        currentTimeBlockName = new WorkCenterOpAllocModel().getTimeBlockName(requiredDateTime.toLocalTime());
+        
+        // get the work center allocation details, filter it by the current work center no.
+        // TODO: The filteration should happen when taking from the database.
+        currentWorkCenterOpAllocs = DataReader.getWorkCenterOpAllocDetails(true).stream()
                 .filter(rec -> rec.getWorkCenterNo().equals(this.getWorkCenterNo()))
                 .collect(Collectors.toList());
-
-        if (workCenterAlloc != null)
+        
+        // sort the work center allocations by date on the ascending order
+        Collections.sort(currentWorkCenterOpAllocs, (WorkCenterOpAllocModel o1, WorkCenterOpAllocModel o2) -> o1.getOperationDate().compareTo(o2.getOperationDate()));
+        
+        while(bestDateTimeOffer == null)
         {
-            // sort the work center allocations by date on the ascending order
-            Collections.sort(workCenterAlloc, (WorkCenterOpAllocModel o1, WorkCenterOpAllocModel o2) -> o1.getOperationDate().compareTo(o2.getOperationDate()));
-
-            bestDateTimeOffer = getBestDateOffer(workCenterAlloc, requiredDate);
+            // get the WorkCenterOpAllocModel object from the list, related to the currentDate
+            WorkCenterOpAllocModel workCenterOpAlloc = currentWorkCenterOpAllocs.stream().filter(aloc -> aloc.getOperationDate().toLocalDate().equals(currentDate)).
+                                                                    collect(Collectors.toList()).get(0);
+            
+            // get timeBlock allocation for the given currentDate
+            HashMap<String, Integer> timeBlockAllocation = workCenterOpAlloc.getTimeBlockAllocation();
+            
+            // if the currentTimeBlock is not allocated
+            if(timeBlockAllocation.get(currentTimeBlockName) == 0) 
+            {
+                // check if there's enough consecutive time available in the work center to allocate the workCenterRuntime
+                if(checkConsecutiveTimeBlockAvailability(workCenterRuntime))
+                {
+                    bestDateTimeOffer = DateTimeUtil.concatenateDateTime(currentDate, new WorkCenterOpAllocModel().getTimeBlockValue(currentTimeBlockName));
+                }
+                else
+                {
+                    // increment the time by workCenterRuntime factor and get the timeblock name and assign it;
+                    // the reason for incrementing by the workCenterRuntime rather than evaluatin each and every timeblock, is to increase the performance
+                    List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, workCenterRuntime);
+                    currentTimeBlockName = incrementDetails.get(0).toString();
+                    currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(1).toString()));
+                }
+            }
+            // if the currentTimeBlock is already allocated 
+            else
+            {
+                // increment the time by 1 (an hour) and get the timeblock name and assign it;
+                List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, 1);
+                currentTimeBlockName = incrementDetails.get(0).toString();
+                currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(1).toString()));
+            }
         }
+        
         return bestDateTimeOffer;
     }
     
-
-    private DateTime getBestDateOffer(List<WorkCenterOpAllocModel> workCenterAlloc, DateTime requiredDate)
-    {
-        DateTime bestDate = null;
-        // convert the required date to joda datetime
-        DateTime requiredDateTime = new DateTime(requiredDate);
-
-        for (WorkCenterOpAllocModel workCenterOpAlloc : workCenterAlloc)
-        {
-            // convert the work center date to joda datetime
-            DateTime workCenterOpDate = new DateTime(workCenterOpAlloc.getOperationDate());
-            if (workCenterOpDate.toLocalDate().equals(requiredDateTime.toLocalDate()) || workCenterOpDate.toLocalDate().isAfter(requiredDateTime.toLocalDate()))
-            {
-                bestDate = getBestTimeOffer(workCenterOpAlloc, requiredDateTime.toLocalTime());
-                break;
-            }
-        }
-
-        return bestDate;
-    }
-    
-
-    /**
-     * *
-     * this method will get the date allocation and return the earliest
-     * available timeblock value
-     *
-     * @param allocation
-     * @param reqTime
-     * @return
-     */
-    public DateTime getBestTimeOffer(WorkCenterOpAllocModel allocation, LocalTime reqTime)
-    {
-        DateTime bestTimeOffer = null;
-
-        // get the hashmap with timeblock assignment details
-        HashMap<String, Integer> timeBlockDetails = allocation.getTimeBlockAllocation();
-
-        //sort the hashmap by its keys
-        SortedSet<String> keys = new TreeSet<>(timeBlockDetails.keySet());
-        for (String key : keys)
-        {
-            LocalTime timeBlockStartTime = new DateTime(allocation.getTimeBlockValue(key)).toLocalTime();
-            if ((timeBlockStartTime.equals(reqTime) || timeBlockStartTime.isAfter(reqTime)) && timeBlockDetails.get(key) == 0)
-            {
-                bestTimeOffer = DateTimeUtil.concatenateDateTime(allocation.getOperationDate(), allocation.getTimeBlockValue(key));
-                break;
-            }
-        }
-        return bestTimeOffer;
-    }
     
     public void updateWorkCenterOpAllocDetails(String workCenterNo, DateTime bestOfferedDate, int operationId, int workCenterRuntime)
     {
@@ -228,5 +216,11 @@ public class WorkCenterModel extends DataModel
         DataWriter.updateWorkCenterAllocData(workCenterOpAllocations, workCenterNo);
     }
     
+    private boolean checkConsecutiveTimeBlockAvailability(int workCenterRuntime)
+    {
+        return true;
+    }
+    
     // </editor-fold> 
+
 }

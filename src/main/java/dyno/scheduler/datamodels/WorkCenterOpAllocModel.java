@@ -5,8 +5,12 @@
  */
 package dyno.scheduler.datamodels;
 
+import dyno.scheduler.data.DataEnums;
 import dyno.scheduler.utils.DateTimeUtil;
+import dyno.scheduler.utils.GeneralSettings;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
@@ -20,7 +24,7 @@ import org.joda.time.format.DateTimeFormatter;
 public class WorkCenterOpAllocModel extends DataModel
 {
     // <editor-fold desc="properties"> 
-    
+
     private String workCenterNo;
     private DateTime operationDate;
     private HashMap<String, Integer> timeBlockAllocation;
@@ -59,7 +63,7 @@ public class WorkCenterOpAllocModel extends DataModel
     {
         this.timeBlockAllocation = timeBlockAllocation;
     }
-    
+
     public void addToTimeBlockAllocation(String timBlockName, int operationId)
     {
         this.timeBlockAllocation.put(timBlockName, operationId);
@@ -77,14 +81,14 @@ public class WorkCenterOpAllocModel extends DataModel
     @Override
     public WorkCenterOpAllocModel getModelObject(Object row)
     {
-         // Create a DataFormatter to format and get each cell's value as String
+        // Create a DataFormatter to format and get each cell's value as String
         DataFormatter dataFormatter = new DataFormatter();
         DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
         int noOfTimeBlocks = 8;
 
         if (row instanceof Row)
         {
-            Row excelRow = (Row)row;
+            Row excelRow = (Row) row;
             int i = -1;
 
             this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
@@ -124,10 +128,9 @@ public class WorkCenterOpAllocModel extends DataModel
     }
 
     // </editor-fold> 
-    
-    public DateTime getTimeBlockValue(String timeBlock)
+    public LocalTime getTimeBlockValue(String timeBlock)
     {
-        DateTime timeBlockValue = null;
+        DateTime timeBlockValue;
 
         DateTimeFormatter timeFormat = DateTimeUtil.getTimeFormat();
         switch (timeBlock)
@@ -157,44 +160,181 @@ public class WorkCenterOpAllocModel extends DataModel
                 timeBlockValue = timeFormat.parseDateTime("16:00:00");
                 break;
             default:
-                break;
+                return null;
         }
-        return timeBlockValue;
+        return timeBlockValue.toLocalTime();
     }
 
     public String getTimeBlockName(LocalTime startTime)
     {
         String timeBlockValue = null;
         String startTimeString = startTime.toString();
-        switch (startTimeString)
+        switch (GeneralSettings.getCapacityType())
         {
-            case "08:00:00.000":
-                timeBlockValue = "TB1";
+            case FiniteCapacity:
+            {
+                switch (startTimeString)
+                {
+                    case "08:00:00.000":
+                        timeBlockValue = "TB1";
+                        break;
+                    case "09:00:00.000":
+                        timeBlockValue = "TB2";
+                        break;
+                    case "10:00:00.000":
+                        timeBlockValue = "TB3";
+                        break;
+                    case "11:00:00.000":
+                        timeBlockValue = "TB4";
+                        break;
+                    // special case: 12.00 should be taken as the next time block
+                    case "12:00:00.000":
+                        timeBlockValue = "TB5";
+                        break;
+                    case "13:00:00.000":
+                        timeBlockValue = "TB5";
+                        break;
+                    case "14:00:00.000":
+                        timeBlockValue = "TB6";
+                        break;
+                    case "15:00:00.000":
+                        timeBlockValue = "TB7";
+                        break;
+                    case "16:00:00.000":
+                        timeBlockValue = "TB8";
+                        break;
+                    default:
+                        break;
+                }
                 break;
-            case "09:00:00.000":
-                timeBlockValue = "TB2";
+            }
+            case InfiniteCapacity:
+            {
+                switch (startTimeString)
+                {
+                    case "00:00:00.000":
+                        timeBlockValue = "TB1";
+                        break;
+                    case "01:00:00.000":
+                        timeBlockValue = "TB2";
+                        break;
+                    case "02:00:00.000":
+                        timeBlockValue = "TB3";
+                        break;
+                    case "03:00:00.000":
+                        timeBlockValue = "TB4";
+                        break;
+                    case "04:00:00.000":
+                        timeBlockValue = "TB5";
+                        break;
+                    case "05:00:00.000":
+                        timeBlockValue = "TB6";
+                        break;
+                    case "06:00:00.000":
+                        timeBlockValue = "TB7";
+                        break;
+                    case "07:00:00.000":
+                        timeBlockValue = "TB8";
+                        break;
+                    case "08:00:00.000":
+                        timeBlockValue = "TB9";
+                        break;
+                    case "09:00:00.000":
+                        timeBlockValue = "TB10";
+                        break;
+                    case "10:00:00.000":
+                        timeBlockValue = "TB11";
+                        break;
+                    case "11:00:00.000":
+                        timeBlockValue = "TB12";
+                        break;
+                    case "12:00:00.000":
+                        timeBlockValue = "TB13";
+                        break;
+                    case "13:00:00.000":
+                        timeBlockValue = "TB14";
+                        break;
+                    case "14:00:00.000":
+                        timeBlockValue = "TB15";
+                        break;
+                    case "15:00:00.000":
+                        timeBlockValue = "TB16";
+                        break;
+                    case "16:00:00.000":
+                        timeBlockValue = "TB17";
+                        break;
+                    case "17:00:00.000":
+                        timeBlockValue = "TB18";
+                        break;
+                    case "18:00:00.000":
+                        timeBlockValue = "TB19";
+                        break;
+                    case "19:00:00.000":
+                        timeBlockValue = "TB20";
+                        break;
+                    case "20:00:00.000":
+                        timeBlockValue = "TB21";
+                        break;
+                    case "21:00:00.000":
+                        timeBlockValue = "TB22";
+                        break;
+                    case "22:00:00.000":
+                        timeBlockValue = "TB23";
+                        break;
+                    case "23:00:00.000":
+                        timeBlockValue = "TB24";
+                        break;
+
+                    default:
+                        break;
+                }
                 break;
-            case "10:00:00.000":
-                timeBlockValue = "TB3";
-                break;
-            case "11:00:00.000":
-                timeBlockValue = "TB4";
-                break;
-            case "13:00:00.000":
-                timeBlockValue = "TB5";
-                break;
-            case "14:00:00.000":
-                timeBlockValue = "TB6";
-                break;
-            case "15:00:00.000":
-                timeBlockValue = "TB7";
-                break;
-            case "16:00:00.000":
-                timeBlockValue = "TB8";
-                break;
-            default:
-                break;
+            }
         }
         return timeBlockValue;
+    }
+
+    /**
+     * this method is used to increment a given time block value by an integer.
+     * if the timeblock TB4 of a given day is incremented by 13, the
+     * newTimeBlock value is 17 (more than 8) and if the capacity type is finite
+     * (only 8 hrs), then after incrementing, the new time block should be the
+     * TB1 after 2 days (4 + 8 + "1"). Therefore returns newTimeBlock value as
+     * T1 and daysAdded as 2 in a list
+     *
+     * @param timeBlock current time block
+     * @param incrementBy the value to be incremented by
+     * @return a list: first element is the new Time block name, second element
+     * is the daysAdded after incrementing
+     */
+    public List<Object> incrementTimeBlock(String timeBlock, int incrementBy)
+    {
+        List<Object> returnList = new ArrayList<>();
+        int currentTimeBlock = Integer.parseInt(timeBlock.substring(2));
+        int newTimeBlock = currentTimeBlock + incrementBy;
+        int daysAdded = 0;
+
+        if (newTimeBlock > 8 && GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+        {
+            while (newTimeBlock <= 8)
+            {
+                newTimeBlock = newTimeBlock - 8;
+                daysAdded++;
+            }
+        } else if (newTimeBlock > 24 && GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
+        {
+            while (newTimeBlock <= 24)
+            {
+                newTimeBlock = newTimeBlock - 24;
+                daysAdded++;
+            }
+        }
+
+        String newTimeBlockName = "TB" + newTimeBlock;
+
+        returnList.add(newTimeBlockName);
+        returnList.add(daysAdded);
+
+        return returnList;
     }
 }

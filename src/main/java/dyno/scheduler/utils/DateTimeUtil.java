@@ -6,6 +6,8 @@
 package dyno.scheduler.utils;
 
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -54,6 +56,12 @@ public class DateTimeUtil
     }
     
     public static DateTime concatenateDateTime(DateTime date, DateTime time)
+    {
+        String concatStringDate = date.toString(getDateFormat()) + " " + time.toString(getTimeFormat());
+        return getDateTimeFormat().parseDateTime(concatStringDate);
+    }
+    
+    public static DateTime concatenateDateTime(LocalDate date, LocalTime time)
     {
         String concatStringDate = date.toString(getDateFormat()) + " " + time.toString(getTimeFormat());
         return getDateTimeFormat().parseDateTime(concatStringDate);
