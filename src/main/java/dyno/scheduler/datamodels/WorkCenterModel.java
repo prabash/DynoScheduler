@@ -241,6 +241,7 @@ public class WorkCenterModel extends DataModel
                 getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, i);
             }
         }
+        workCenterOpAllocUpdate.add(allocObj);
     }
     
     /**
