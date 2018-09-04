@@ -82,7 +82,6 @@ public class WorkCenterModel extends DataModel
     
     /**
      * get WorkCenterModel object by passing Excel or MySql table row
-     * @param rowData relevant data object
      * @return WorkCenterModel object
      */
     @Override
@@ -138,6 +137,7 @@ public class WorkCenterModel extends DataModel
      * and time factors
      *
      * @param requiredDateTime
+     * @param workCenterRuntime
      * @return
      */
     public DateTime getBestDateTimeOffer(DateTime requiredDateTime, int workCenterRuntime)

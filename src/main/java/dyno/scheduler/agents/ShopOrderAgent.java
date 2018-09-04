@@ -96,7 +96,7 @@ public class ShopOrderAgent extends Agent
                         {
                             // find the agents belonging to the certain work center type
                             DFAgentDescription[] result = DFService.search(myAgent, template);
-                            System.out.println("Found the following seller agents:");
+                            System.out.println("Found the WorkCenterAgents :");
                             workCenterAgents = new AID[result.length];
                             for (int i = 0; i < result.length; ++i)
                             {
