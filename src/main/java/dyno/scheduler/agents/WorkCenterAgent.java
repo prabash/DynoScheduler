@@ -180,7 +180,7 @@ public class WorkCenterAgent extends Agent
                 {
                     reply.setPerformative(ACLMessage.INFORM);
                     
-                    workCenter.updateWorkCenterOpAllocDetails(workCenter.getWorkCenterNo(), bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
+                    workCenter.updateWorkCenterOpAllocDetails(bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);
                 }

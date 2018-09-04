@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class DataWriter
 {
-    public static boolean updateWorkCenterAllocData(List<WorkCenterOpAllocModel> dataList, String storageName)
+    public static boolean updateWorkCenterAllocData(List<WorkCenterOpAllocModel> dataList)
     {
         return DataFactory.getDataWriteManagerInstance().updateData(dataList, DataModelEnums.DataModelType.WorkCenterAllocation);
     }

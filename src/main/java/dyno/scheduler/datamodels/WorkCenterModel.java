@@ -170,7 +170,7 @@ public class WorkCenterModel extends DataModel
             if(timeBlockAllocation.get(currentTimeBlockName) == 0) 
             {
                 // check if there's enough consecutive time available in the work center to allocate the workCenterRuntime
-                if(checkConsecutiveTimeBlockAvailability(workCenterRuntime))
+                if(checkConsecutiveTimeBlockAvailability(currentDate, currentTimeBlockName, workCenterRuntime))
                 {
                     bestDateTimeOffer = DateTimeUtil.concatenateDateTime(currentDate, new WorkCenterOpAllocModel().getTimeBlockValue(currentTimeBlockName));
                 }
@@ -196,29 +196,97 @@ public class WorkCenterModel extends DataModel
         return bestDateTimeOffer;
     }
     
+    List<WorkCenterOpAllocModel> workCenterOpAllocUpdate = new ArrayList<>();
     
-    public void updateWorkCenterOpAllocDetails(String workCenterNo, DateTime bestOfferedDate, int operationId, int workCenterRuntime)
+    public void updateWorkCenterOpAllocDetails(DateTime bestOfferedDate, int operationId, int workCenterRuntime)
     {
-        List<WorkCenterOpAllocModel> workCenterOpAllocations = new ArrayList<>();
-        WorkCenterOpAllocModel alloc = new WorkCenterOpAllocModel();
-        // bestOfferedDate value also has the time portion in it. Therefore, convert it to string and only add the Date portion
-        alloc.setOperationDate(DateTimeUtil.getDateFormat().parseDateTime(bestOfferedDate.toString(DateTimeUtil.getDateFormat())));
-        alloc.setWorkCenterNo(workCenterNo);
+        workCenterOpAllocUpdate = new ArrayList<>();
+        String bestOfferStartTimeBlock = new WorkCenterOpAllocModel().getTimeBlockName(bestOfferedDate.toLocalTime());
         
-        // time blocks should be updated for the given runtime factor
-        for (int i = 0; i < workCenterRuntime; i++)
-        {
-            alloc.addToTimeBlockAllocation(alloc.getTimeBlockName(new DateTime(bestOfferedDate.plusHours(i)).toLocalTime()), operationId);
-        }
-        workCenterOpAllocations.add(alloc);
-
+        getWorkCenterOpAllocObjectForUpdate(bestOfferedDate, bestOfferStartTimeBlock, operationId, workCenterRuntime);
+        
         // update work center allocation data with provided information
-        DataWriter.updateWorkCenterAllocData(workCenterOpAllocations, workCenterNo);
+        DataWriter.updateWorkCenterAllocData(workCenterOpAllocUpdate);
     }
     
-    private boolean checkConsecutiveTimeBlockAvailability(int workCenterRuntime)
+    /**
+     * this method will recursively add WorkCenterOpAllocModel objects to the workCenterOpAllocUpdate list
+     * @param currentDate initially this should be the bestOfferedDate, afterwards, the subsequent days depending on the workCenterRuntime
+     * @param timeBlockName startingTimeBlock name for the day
+     * @param operationId operationId that should be allocated for
+     * @param workCenterRuntime workCenterRuntime
+     */
+    private void getWorkCenterOpAllocObjectForUpdate(DateTime currentDate, String timeBlockName, int operationId, int workCenterRuntime)
     {
-        return true;
+        WorkCenterOpAllocModel allocObj = new WorkCenterOpAllocModel();
+        
+        // bestOfferedDate value also has the time portion in it. Therefore, convert it to string and only add the Date portion
+        allocObj.setOperationDate(DateTimeUtil.getDateFormat().parseDateTime(currentDate.toString(DateTimeUtil.getDateFormat())));
+        allocObj.setWorkCenterNo(this.getWorkCenterNo());
+        
+        for (int i = workCenterRuntime; i > 0; i--)
+        {
+            // add the timeblock to the allocObj
+            allocObj.addToTimeBlockAllocation(timeBlockName, operationId);
+            
+            // increment the timeblock by 1
+            List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(timeBlockName, 1);
+            timeBlockName =  incrementDetails.get(0).toString();
+            // if days are added when incrementing the timeblock, recursively call this method again
+            // by sending the currentDate as the currentDate+daysAdded, currentTimeBlockName, and the remaining workCenterRuntime (i)
+            int daysAdded = Integer.parseInt(incrementDetails.get(1).toString());
+            if (daysAdded > 0)
+            {
+                workCenterOpAllocUpdate.add(allocObj);
+                getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, i);
+            }
+        }
+    }
+    
+    /**
+     * This method will check if the set of TimeBlocks are available from the given given date and the timeBlock Name for the amount of
+     * work center runtime
+     * @param currentDate the date to be checked
+     * @param timeBlockName the starting timeblock name
+     * @param workCenterRuntime amount of timeblocks to be checked is taken from the workCenterRuntime
+     * @return return true if available, false if not.
+     */
+    private boolean checkConsecutiveTimeBlockAvailability(LocalDate currentDate, String timeBlockName, int workCenterRuntime)
+    {
+        boolean timeBlocksAvailable = true;
+        
+        WorkCenterOpAllocModel workCenterOpAlloc = currentWorkCenterOpAllocs.stream().filter(aloc -> aloc.getOperationDate().toLocalDate().equals(currentDate)).
+                                                                    collect(Collectors.toList()).get(0);
+        // get timeBlock allocation for the currentDate
+        HashMap<String, Integer> timeBlockAllocation = workCenterOpAlloc.getTimeBlockAllocation();
+        
+        for (int i = workCenterRuntime; i > 0; i--)
+        {
+            // timeblock is allocated to an operation, therefore time blocks are not consecutively available to be allocated
+            // for the workCenterRuntime of the operation 
+            if(timeBlockAllocation.get(timeBlockName) != 0)
+            {
+                timeBlocksAvailable = false;
+                // break the loop since there's no need of checking the consequent timeblocks
+                break;
+            }
+            // timeblock is free, increment the timeblock by one and check for the next time block
+            else
+            {
+                // increment the timeblock by 1
+                List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(timeBlockName, 1);
+                timeBlockName =  incrementDetails.get(0).toString();
+                // if days are added when incrementing the timeblock, recursively call this method again
+                // by sending the currentDate as the currentDate+daysAdded, currentTimeBlockName, and the remaining workCenterRuntime (i)
+                int daysAdded = Integer.parseInt(incrementDetails.get(1).toString());
+                if (daysAdded > 0)
+                {
+                    timeBlocksAvailable = checkConsecutiveTimeBlockAvailability(currentDate.plusDays(daysAdded), timeBlockName, i);
+                }
+            }
+        }
+        
+        return timeBlocksAvailable;
     }
     
     // </editor-fold> 
