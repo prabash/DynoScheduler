@@ -237,10 +237,12 @@ public class WorkCenterModel extends DataModel
             int daysAdded = Integer.parseInt(incrementDetails.get(1).toString());
             if (daysAdded > 0)
             {
+                // add the currentDay timeblock details to the updateList first, and then invoke this method recursively
                 workCenterOpAllocUpdate.add(allocObj);
                 getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, i);
             }
         }
+        // add the operation to the update list when all the timeblocks are on the same day
         workCenterOpAllocUpdate.add(allocObj);
     }
     
