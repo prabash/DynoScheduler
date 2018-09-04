@@ -8,6 +8,7 @@ package dyno.scheduler.datamodels;
 import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.utils.DateTimeUtil;
+import dyno.scheduler.utils.GeneralSettings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,6 +148,7 @@ public class WorkCenterModel extends DataModel
         // get the date and the time portion of the required datetime
         currentDate = requiredDateTime.toLocalDate();
         currentTimeBlockName = new WorkCenterOpAllocModel().getTimeBlockName(requiredDateTime.toLocalTime());
+        System.out.println("%%%%%%%%%%%%%  " + this.getWorkCenterNo() + "  " + currentDate + "  " + currentTimeBlockName);
         
         // get the work center allocation details, filter it by the current work center no.
         // TODO: The filteration should happen when taking from the database.
@@ -178,18 +180,18 @@ public class WorkCenterModel extends DataModel
                 {
                     // increment the time by workCenterRuntime factor and get the timeblock name and assign it;
                     // the reason for incrementing by the workCenterRuntime rather than evaluatin each and every timeblock, is to increase the performance
-                    List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, workCenterRuntime);
-                    currentTimeBlockName = incrementDetails.get(0).toString();
-                    currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(1).toString()));
+                    HashMap<String, Object>  incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, workCenterRuntime);
+                    currentTimeBlockName = incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString();
+                    currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
                 }
             }
             // if the currentTimeBlock is already allocated 
             else
             {
                 // increment the time by 1 (an hour) and get the timeblock name and assign it;
-                List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, 1);
-                currentTimeBlockName = incrementDetails.get(0).toString();
-                currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(1).toString()));
+                HashMap<String, Object>  incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, 1);
+                currentTimeBlockName = incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString();
+                currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
             }
         }
         
@@ -198,15 +200,33 @@ public class WorkCenterModel extends DataModel
     
     List<WorkCenterOpAllocModel> workCenterOpAllocUpdate = new ArrayList<>();
     
-    public void updateWorkCenterOpAllocDetails(DateTime bestOfferedDate, int operationId, int workCenterRuntime)
+    /**
+     * update the work center operation allocation details
+     * @param bestOfferedDate
+     * @param operationId
+     * @param workCenterRuntime
+     * @return a hashmap will return next time timeblock name and the days added so that the subsequent operations can be scheduled
+     */
+    public HashMap<String, Object> updateWorkCenterOpAllocDetails(DateTime bestOfferedDate, int operationId, int workCenterRuntime)
     {
         workCenterOpAllocUpdate = new ArrayList<>();
+        
+        System.out.println("*************** UPDATING : " + this.getWorkCenterNo() + " " + bestOfferedDate + " " + workCenterRuntime);
+        
+        // this hashmap will return next time timeblock name and the days added so that the subsequent operations can be scheduled
+        HashMap<String, Object> timeBlockDetails;
+        
         String bestOfferStartTimeBlock = new WorkCenterOpAllocModel().getTimeBlockName(bestOfferedDate.toLocalTime());
         
-        getWorkCenterOpAllocObjectForUpdate(bestOfferedDate, bestOfferStartTimeBlock, operationId, workCenterRuntime);
+        System.out.println("*************** UPDATING : bestOfferStartTimeBlock " + bestOfferStartTimeBlock);
+        
+        // this will return the the next timeblock after the last timeblock where the operation is scheduled on
+        timeBlockDetails = getWorkCenterOpAllocObjectForUpdate(bestOfferedDate, bestOfferStartTimeBlock, operationId, workCenterRuntime);
         
         // update work center allocation data with provided information
         DataWriter.updateWorkCenterAllocData(workCenterOpAllocUpdate);
+        
+        return timeBlockDetails;
     }
     
     /**
@@ -216,9 +236,11 @@ public class WorkCenterModel extends DataModel
      * @param operationId operationId that should be allocated for
      * @param workCenterRuntime workCenterRuntime
      */
-    private void getWorkCenterOpAllocObjectForUpdate(DateTime currentDate, String timeBlockName, int operationId, int workCenterRuntime)
+    private HashMap<String, Object> getWorkCenterOpAllocObjectForUpdate(DateTime currentDate, String timeBlockName, int operationId, int workCenterRuntime)
     {
         WorkCenterOpAllocModel allocObj = new WorkCenterOpAllocModel();
+        // this hashmap will return the last timeblock name and the days added 
+        HashMap<String, Object> timeBlockDetails = new HashMap<>();
         
         // bestOfferedDate value also has the time portion in it. Therefore, convert it to string and only add the Date portion
         allocObj.setOperationDate(DateTimeUtil.getDateFormat().parseDateTime(currentDate.toString(DateTimeUtil.getDateFormat())));
@@ -226,24 +248,33 @@ public class WorkCenterModel extends DataModel
         
         for (int i = workCenterRuntime; i > 0; i--)
         {
+            timeBlockDetails.clear();
             // add the timeblock to the allocObj
             allocObj.addToTimeBlockAllocation(timeBlockName, operationId);
             
             // increment the timeblock by 1
-            List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(timeBlockName, 1);
-            timeBlockName =  incrementDetails.get(0).toString();
+            HashMap<String, Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(timeBlockName, 1);
+            timeBlockName =  incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString();
             // if days are added when incrementing the timeblock, recursively call this method again
             // by sending the currentDate as the currentDate+daysAdded, currentTimeBlockName, and the remaining workCenterRuntime (i)
-            int daysAdded = Integer.parseInt(incrementDetails.get(1).toString());
+            int daysAdded = Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString());
+            
+            // add the timeblock name and the time added
+            timeBlockDetails.put(GeneralSettings.getStrTimeBlockName(), timeBlockName);
+            timeBlockDetails.put(GeneralSettings.getStrDaysAdded(), daysAdded);
+            
             if (daysAdded > 0)
             {
                 // add the currentDay timeblock details to the updateList first, and then invoke this method recursively
                 workCenterOpAllocUpdate.add(allocObj);
-                getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, i);
+                timeBlockDetails = getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, --i);  // decrement i value before sending recursively
             }
+            
         }
         // add the operation to the update list when all the timeblocks are on the same day
         workCenterOpAllocUpdate.add(allocObj);
+        
+        return timeBlockDetails;
     }
     
     /**
@@ -277,14 +308,14 @@ public class WorkCenterModel extends DataModel
             else
             {
                 // increment the timeblock by 1
-                List<Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(timeBlockName, 1);
-                timeBlockName =  incrementDetails.get(0).toString();
+                HashMap<String, Object> incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(timeBlockName, 1);
+                timeBlockName =  incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString();
                 // if days are added when incrementing the timeblock, recursively call this method again
                 // by sending the currentDate as the currentDate+daysAdded, currentTimeBlockName, and the remaining workCenterRuntime (i)
-                int daysAdded = Integer.parseInt(incrementDetails.get(1).toString());
+                int daysAdded = Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString());
                 if (daysAdded > 0)
                 {
-                    timeBlocksAvailable = checkConsecutiveTimeBlockAvailability(currentDate.plusDays(daysAdded), timeBlockName, i);
+                    timeBlocksAvailable = checkConsecutiveTimeBlockAvailability(currentDate.plusDays(daysAdded), timeBlockName, --i); // decrement i value before sending recursively
                 }
             }
         }

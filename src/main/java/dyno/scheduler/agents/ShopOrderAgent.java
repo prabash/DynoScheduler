@@ -204,7 +204,7 @@ public class ShopOrderAgent extends Agent
                             // This is an offer, recieved with the date and the time
                             offeredDate = DateTimeUtil.getDateTimeFormat().parseDateTime(reply.getContent());
 
-                            System.out.println("++++++ offeredDate : " + offeredDate);
+                            System.out.println("++++++ offeredDate : " + offeredDate + " by Work Center Agent : " + reply.getSender());
                             System.out.println("++++++ targetOperationDate : " + targetOperationDate);
                             System.out.println("++++++ bestOfferedDate : " + bestOfferedDate);
 
@@ -216,8 +216,10 @@ public class ShopOrderAgent extends Agent
                                 bestWorkCenter = reply.getSender();
                                 System.out.println("Current best offered time : " + bestOfferedDate + " by Work Center Agent : " + bestWorkCenter);
                             }
+                            
+                            repliesCount++;
                         }
-                        repliesCount++;
+                        
                         if (repliesCount >= workCenterAgents.length)
                         {
                             // We received all replies
@@ -243,9 +245,6 @@ public class ShopOrderAgent extends Agent
                     msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
                             MessageTemplate.MatchInReplyTo(order.getReplyWith()));
 
-                    // after accepting the offer, the new targetOperationDate should be the accepted date, for the next operation to begin
-                    targetOperationDate = bestOfferedDate.plusHours((int)currentOperation.getWorkCenterRuntime());
-
                     step = 3;
                     break;
                 }
@@ -258,6 +257,10 @@ public class ShopOrderAgent extends Agent
                         // confirmation reply received
                         if (reply.getPerformative() == ACLMessage.INFORM)
                         {
+                            
+                            // the next possible op start date is sent by the work center agent in the reply
+                            targetOperationDate = DateTime.parse(reply.getContent(), DateTimeUtil.getDateTimeFormat());
+                            
                             // Date set successfully. We can terminate
                             System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
                             System.out.println("______________________________________________________________________________________________________________________________________");

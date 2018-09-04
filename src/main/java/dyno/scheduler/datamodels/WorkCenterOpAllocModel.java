@@ -8,9 +8,7 @@ package dyno.scheduler.datamodels;
 import dyno.scheduler.data.DataEnums;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.joda.time.DateTime;
@@ -307,23 +305,23 @@ public class WorkCenterOpAllocModel extends DataModel
      * @return a list: first element is the new Time block name, second element
      * is the daysAdded after incrementing
      */
-    public List<Object> incrementTimeBlock(String timeBlock, int incrementBy)
+    public HashMap<String, Object> incrementTimeBlock(String timeBlock, int incrementBy)
     {
-        List<Object> returnList = new ArrayList<>();
+        HashMap<String, Object> returnList = new HashMap<>();
         int currentTimeBlock = Integer.parseInt(timeBlock.substring(2));
         int newTimeBlock = currentTimeBlock + incrementBy;
         int daysAdded = 0;
 
         if (newTimeBlock > 8 && GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
-            while (newTimeBlock <= 8)
+            while (newTimeBlock >= 8)
             {
                 newTimeBlock = newTimeBlock - 8;
                 daysAdded++;
             }
         } else if (newTimeBlock > 24 && GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
         {
-            while (newTimeBlock <= 24)
+            while (newTimeBlock >= 24)
             {
                 newTimeBlock = newTimeBlock - 24;
                 daysAdded++;
@@ -332,8 +330,8 @@ public class WorkCenterOpAllocModel extends DataModel
 
         String newTimeBlockName = "TB" + newTimeBlock;
 
-        returnList.add(newTimeBlockName);
-        returnList.add(daysAdded);
+        returnList.put(GeneralSettings.getStrTimeBlockName(), newTimeBlockName);
+        returnList.put(GeneralSettings.getStrDaysAdded(), daysAdded);
 
         return returnList;
     }

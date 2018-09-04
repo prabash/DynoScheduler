@@ -21,6 +21,9 @@ public class GeneralSettings
     private static final String EXCEL_FILE = "data.xlsx";
     private static final DataAccessMethod DATA_ACCESS_METHOD = DataEnums.DataAccessMethod.Excel;
     private static final CapacityType CAPACITY_TYPE = CapacityType.FiniteCapacity;
+    
+    private static final String STR_TIME_BLOCK_NAME = "TimeBlockName";
+    private static final String STR_DAYS_ADDED = "DaysAdded";
 
     // </editor-fold>
     
@@ -59,6 +62,22 @@ public class GeneralSettings
     }
     
     // </editor-fold>
+
+    /**
+     * @return the STR_TIME_BLOCK_NAME
+     */
+    public static String getStrTimeBlockName()
+    {
+        return STR_TIME_BLOCK_NAME;
+    }
+
+    /**
+     * @return the STR_DAYS_ADDED
+     */
+    public static String getStrDaysAdded()
+    {
+        return STR_DAYS_ADDED;
+    }
 
 
 }

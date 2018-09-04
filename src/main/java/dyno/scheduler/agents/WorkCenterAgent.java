@@ -6,7 +6,9 @@
 package dyno.scheduler.agents;
 
 import dyno.scheduler.datamodels.WorkCenterModel;
+import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.DateTimeUtil;
+import dyno.scheduler.utils.GeneralSettings;
 import dyno.scheduler.utils.LogUtil;
 import dyno.scheduler.utils.StringUtil;
 import jade.core.Agent;
@@ -17,7 +19,10 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import java.util.HashMap;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -115,6 +120,7 @@ public class WorkCenterAgent extends Agent
         @Override
         public void action()
         {
+            
             MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
             ACLMessage msg = myAgent.receive(mt);
             if (msg != null)
@@ -124,7 +130,7 @@ public class WorkCenterAgent extends Agent
                 requestedOpDate = dateTimeFormat.parseDateTime(messageContent[0]);
                 int workCenterRuntime = Double.valueOf(messageContent[1]).intValue();
                 ACLMessage reply = msg.createReply();
-
+                
                 // you should get the date related to the work center that is the earliest date after the target date
                 bestOfferedDate = workCenter.getBestDateTimeOffer(requestedOpDate, workCenterRuntime);
 
@@ -180,7 +186,18 @@ public class WorkCenterAgent extends Agent
                 {
                     reply.setPerformative(ACLMessage.INFORM);
                     
-                    workCenter.updateWorkCenterOpAllocDetails(bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
+                    // return the time block date and the days added
+                    HashMap<String, Object> timeBlockDetails = workCenter.updateWorkCenterOpAllocDetails(bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
+                    // set the end time of the operation to be taken as the beginning of the next operation when scheduling
+                    // in order to do so, increment the received TimeBlockName by 1
+
+                    // calculate the next possible op start date by adding the values taken from the timeBlockDetails
+                    LocalDate nextPossibleOpStartDate = bestOfferedDate.plusDays(Integer.parseInt(timeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString())).toLocalDate();
+                    LocalTime nextPossibleOpStartTime = new WorkCenterOpAllocModel().getTimeBlockValue(timeBlockDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
+                    DateTime nextPossibleDate = DateTimeUtil.concatenateDateTime(nextPossibleOpStartDate, nextPossibleOpStartTime);
+                    
+                    reply.setContent(nextPossibleDate.toString(DateTimeUtil.getDateTimeFormat()));
+                    
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);
                 }
