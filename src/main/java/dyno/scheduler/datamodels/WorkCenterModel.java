@@ -178,9 +178,8 @@ public class WorkCenterModel extends DataModel
                 }
                 else
                 {
-                    // increment the time by workCenterRuntime factor and get the timeblock name and assign it;
-                    // the reason for incrementing by the workCenterRuntime rather than evaluatin each and every timeblock, is to increase the performance
-                    HashMap<String, Object>  incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, workCenterRuntime);
+                    // increment the time by 1 (an hour) and get the timeblock name and assign it;
+                    HashMap<String, Object>  incrementDetails = new WorkCenterOpAllocModel().incrementTimeBlock(currentTimeBlockName, 1);
                     currentTimeBlockName = incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString();
                     currentDate = currentDate.plusDays(Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
                 }
@@ -269,7 +268,13 @@ public class WorkCenterModel extends DataModel
             {
                 // add the currentDay timeblock details to the updateList first, and then invoke this method recursively
                 workCenterOpAllocUpdate.add(allocObj);
-                timeBlockDetails = getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, workCenterRuntime);  // decrement i value before sending recursively
+                // from the inner time block details, replace the existing timeblock name, but have to add the daysAdded value to find how many days have been added in total
+                HashMap<String, Object> innerTimeBlockDetails = getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, workCenterRuntime);
+                
+                timeBlockDetails.clear();
+                // add the timeblock name and the time added
+                timeBlockDetails.put(GeneralSettings.getStrTimeBlockName(), innerTimeBlockDetails.get(GeneralSettings.getStrTimeBlockName()));
+                timeBlockDetails.put(GeneralSettings.getStrDaysAdded(), daysAdded + Integer.parseInt(innerTimeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
                 break;
             }
         }
