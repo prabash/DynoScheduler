@@ -5,8 +5,11 @@
  */
 package dyno.scheduler.datamodels;
 
+import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.utils.DateTimeUtil;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -262,6 +265,13 @@ public class ShopOrderOperationModel extends DataModel
         {
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.    
         }
+    }
+    
+    public boolean UpdateOperationDetails()
+    {
+        List<ShopOrderOperationModel> updateList = new ArrayList<>();
+        updateList.add(this);
+        return DataWriter.updateWorkShopOrderOperationData(updateList);
     }
 
     @Override

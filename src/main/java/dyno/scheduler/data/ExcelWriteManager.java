@@ -125,6 +125,7 @@ public class ExcelWriteManager extends DataWriteManager
             // Obtain a workbook from the excel file
             inputStream = new FileInputStream(xlsxFilePath);
             // Create a DataFormatter to format and get each cell's value as String
+            int totalColumnCount = 0;
             try (Workbook workbook = WorkbookFactory.create(inputStream))
             {
                 // Create a DataFormatter to format and get each cell's value as String
@@ -135,30 +136,34 @@ public class ExcelWriteManager extends DataWriteManager
                 // Get Sheet at index 0
                 Sheet sheet = workbook.getSheet(storageName);
 
-                shopOrderOperations.forEach((shopOrderOperation) ->
+                for (ShopOrderOperationModel shopOrderOperation : shopOrderOperations)
                 {
                     for (Row row : sheet)
                     {
                         //skip the header row of the excel
                         if (row.getRowNum() == 0)
                         {
+                            Iterator<Cell> iterator = row.cellIterator();
+                            while (iterator.hasNext())
+                            {
+                                iterator.next();
+                                totalColumnCount++;
+                            }
                             continue;
                         }
                         
                         if (dataFormatter.formatCellValue(row.getCell(1)).equals(Integer.toString(shopOrderOperation.getOperationId())))
                         {
-                            Iterator<Cell> iterator = row.cellIterator();
-                            int counter = 0;
-                            while(iterator.hasNext())
+                            for (int i = 0; i < totalColumnCount; i++)
                             {
-                                Cell cell = iterator.next();
+                                Cell cell = row.getCell(i);
                                 if (cell == null)
                                 {
-                                    cell = row.createCell(counter);
+                                    cell = row.createCell(i);
                                 }
                                 
                                 // Update the cell's value
-                                switch(counter)
+                                switch(i)
                                 {
                                     case 0: cell.setCellValue(shopOrderOperation.getOrderNo()); break;
                                     case 1: cell.setCellValue(shopOrderOperation.getOperationId()); break;
@@ -176,12 +181,10 @@ public class ExcelWriteManager extends DataWriteManager
                                     case 13: cell.setCellValue(shopOrderOperation.getWorkCenterNo()); break;
                                     case 14: cell.setCellValue(shopOrderOperation.getOperationStatus().toString()); break;
                                 }
-                                
-                                counter++;
                             }
                         }
                     }
-                });
+                }
 
                 inputStream.close();
                 // Write the output to the file
@@ -214,6 +217,7 @@ public class ExcelWriteManager extends DataWriteManager
 
         return true;
     }
+    
 
     @Override
     public boolean updateWorkCenterData(List<WorkCenterModel> dataList, String storageName)

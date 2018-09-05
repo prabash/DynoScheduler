@@ -47,6 +47,7 @@ public class DataModelEnums
     public enum OperationStatus
     {
         Created,
+        Scheduled,
         Reserved,
         Issued,
         InProgress,

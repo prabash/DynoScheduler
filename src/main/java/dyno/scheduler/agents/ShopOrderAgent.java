@@ -5,6 +5,7 @@
  */
 package dyno.scheduler.agents;
 
+import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -258,8 +259,13 @@ public class ShopOrderAgent extends Agent
                         if (reply.getPerformative() == ACLMessage.INFORM)
                         {
                             
-                            // the next possible op start date is sent by the work center agent in the reply
-                            targetOperationDate = DateTime.parse(reply.getContent(), DateTimeUtil.getDateTimeFormat());
+                            // the next possible op start date and the work center no. is sent by the work center agent in the reply
+                            String [] msgContent = StringUtil.readMessageContent(reply.getContent());
+                            targetOperationDate = DateTime.parse(msgContent[0], DateTimeUtil.getDateTimeFormat());
+                            String workCenterNo = msgContent[1];
+                            
+                            // current operation details should be updated
+                            updateOperationDetails(bestOfferedDate, targetOperationDate, workCenterNo, DataModelEnums.OperationStatus.Scheduled);
                             
                             // Date set successfully. We can terminate
                             System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
@@ -290,6 +296,17 @@ public class ShopOrderAgent extends Agent
                 System.out.println("Attempt failed: there are no work centers available for the date" + targetOperationDate);
             }
             return ((step == 2 && bestWorkCenter == null) || step == 4);
+        }
+        
+        private void updateOperationDetails(DateTime opStartDate, DateTime opFinishDate, String workCenterNo, DataModelEnums.OperationStatus opStatus)
+        {
+            currentOperation.setOpStartDate(opStartDate);
+            currentOperation.setOpStartTime(opStartDate);
+            currentOperation.setOpFinishDate(opFinishDate);
+            currentOperation.setOpFinishTime(opFinishDate);
+            currentOperation.setWorkCenterNo(workCenterNo);
+            currentOperation.setOperationStatus(opStatus);
+            currentOperation.UpdateOperationDetails();
         }
 
         // </editor-fold>

@@ -196,7 +196,10 @@ public class WorkCenterAgent extends Agent
                     LocalTime nextPossibleOpStartTime = new WorkCenterOpAllocModel().getTimeBlockValue(timeBlockDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
                     DateTime nextPossibleDate = DateTimeUtil.concatenateDateTime(nextPossibleOpStartDate, nextPossibleOpStartTime);
                     
-                    reply.setContent(nextPossibleDate.toString(DateTimeUtil.getDateTimeFormat()));
+                    // set the possible start date of the next operation (end of thec current operation)
+                    // and the work center no in the reply content
+                    reply.setContent(StringUtil.generateMessageContent(nextPossibleDate.toString(DateTimeUtil.getDateTimeFormat()), 
+                            workCenter.getWorkCenterNo()));
                     
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);
