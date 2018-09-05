@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -117,9 +118,101 @@ public class ExcelWriteManager extends DataWriteManager
     }
 
     @Override
-    public boolean updateShopOrderOperationData(List<ShopOrderOperationModel> dataList, String storageName)
+    public boolean updateShopOrderOperationData(List<ShopOrderOperationModel> shopOrderOperations, String storageName)
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try
+        {
+            // Obtain a workbook from the excel file
+            inputStream = new FileInputStream(xlsxFilePath);
+            // Create a DataFormatter to format and get each cell's value as String
+            try (Workbook workbook = WorkbookFactory.create(inputStream))
+            {
+                // Create a DataFormatter to format and get each cell's value as String
+                DataFormatter dataFormatter = new DataFormatter();
+                DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+                DateTimeFormatter timeFormat = DateTimeUtil.getTimeFormat();
+                
+                // Get Sheet at index 0
+                Sheet sheet = workbook.getSheet(storageName);
+
+                shopOrderOperations.forEach((shopOrderOperation) ->
+                {
+                    for (Row row : sheet)
+                    {
+                        //skip the header row of the excel
+                        if (row.getRowNum() == 0)
+                        {
+                            continue;
+                        }
+                        
+                        if (dataFormatter.formatCellValue(row.getCell(1)).equals(Integer.toString(shopOrderOperation.getOperationId())))
+                        {
+                            Iterator<Cell> iterator = row.cellIterator();
+                            int counter = 0;
+                            while(iterator.hasNext())
+                            {
+                                Cell cell = iterator.next();
+                                if (cell == null)
+                                {
+                                    cell = row.createCell(counter);
+                                }
+                                
+                                // Update the cell's value
+                                switch(counter)
+                                {
+                                    case 0: cell.setCellValue(shopOrderOperation.getOrderNo()); break;
+                                    case 1: cell.setCellValue(shopOrderOperation.getOperationId()); break;
+                                    case 2: cell.setCellValue(shopOrderOperation.getOperationNo()); break;
+                                    case 3: cell.setCellValue(shopOrderOperation.getOperationDescription()); break;
+                                    case 4: cell.setCellValue(shopOrderOperation.getOperationSequence()); break;
+                                    case 5: cell.setCellValue(shopOrderOperation.getWorkCenterRuntime()); break;
+                                    case 6: cell.setCellValue(shopOrderOperation.getLaborRunTime()); break;
+                                    case 7: cell.setCellValue(shopOrderOperation.getOpStartDate().toString(dateFormat)); break;
+                                    case 8: cell.setCellValue(shopOrderOperation.getOpStartTime().toString(timeFormat)); break;
+                                    case 9: cell.setCellValue(shopOrderOperation.getOpFinishDate().toString(dateFormat)); break;
+                                    case 10: cell.setCellValue(shopOrderOperation.getOpFinishTime().toString(timeFormat)); break;
+                                    case 11: cell.setCellValue(shopOrderOperation.getQuantity()); break;
+                                    case 12: cell.setCellValue(shopOrderOperation.getWorkCenterType()); break;
+                                    case 13: cell.setCellValue(shopOrderOperation.getWorkCenterNo()); break;
+                                    case 14: cell.setCellValue(shopOrderOperation.getOperationStatus().toString()); break;
+                                }
+                                
+                                counter++;
+                            }
+                        }
+                    }
+                });
+
+                inputStream.close();
+                // Write the output to the file
+                try (FileOutputStream fileOut = new FileOutputStream(xlsxFilePath))
+                {
+                    workbook.write(fileOut);
+                    // Closing the workbook
+                }
+            }
+
+        } catch (FileNotFoundException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        } catch (IOException | InvalidFormatException | EncryptedDocumentException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        } finally
+        {
+            try
+            {
+                inputStream.close();
+            } catch (IOException ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override
