@@ -246,8 +246,10 @@ public class WorkCenterModel extends DataModel
         allocObj.setOperationDate(DateTimeUtil.getDateFormat().parseDateTime(currentDate.toString(DateTimeUtil.getDateFormat())));
         allocObj.setWorkCenterNo(this.getWorkCenterNo());
         
-        for (int i = workCenterRuntime; i > 0; i--)
+        while(workCenterRuntime > 0)
         {
+            workCenterRuntime--;
+            
             timeBlockDetails.clear();
             // add the timeblock to the allocObj
             allocObj.addToTimeBlockAllocation(timeBlockName, operationId);
@@ -267,9 +269,9 @@ public class WorkCenterModel extends DataModel
             {
                 // add the currentDay timeblock details to the updateList first, and then invoke this method recursively
                 workCenterOpAllocUpdate.add(allocObj);
-                timeBlockDetails = getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, --i);  // decrement i value before sending recursively
+                timeBlockDetails = getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, workCenterRuntime);  // decrement i value before sending recursively
+                break;
             }
-            
         }
         // add the operation to the update list when all the timeblocks are on the same day
         workCenterOpAllocUpdate.add(allocObj);
@@ -294,8 +296,9 @@ public class WorkCenterModel extends DataModel
         // get timeBlock allocation for the currentDate
         HashMap<String, Integer> timeBlockAllocation = workCenterOpAlloc.getTimeBlockAllocation();
         
-        for (int i = workCenterRuntime; i > 0; i--)
+        while(workCenterRuntime > 0)
         {
+            workCenterRuntime--;
             // timeblock is allocated to an operation, therefore time blocks are not consecutively available to be allocated
             // for the workCenterRuntime of the operation 
             if(timeBlockAllocation.get(timeBlockName) != 0)
@@ -315,7 +318,8 @@ public class WorkCenterModel extends DataModel
                 int daysAdded = Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString());
                 if (daysAdded > 0)
                 {
-                    timeBlocksAvailable = checkConsecutiveTimeBlockAvailability(currentDate.plusDays(daysAdded), timeBlockName, --i); // decrement i value before sending recursively
+                    timeBlocksAvailable = checkConsecutiveTimeBlockAvailability(currentDate.plusDays(daysAdded), timeBlockName, workCenterRuntime); // decrement i value before sending recursively
+                    break;
                 }
             }
         }
