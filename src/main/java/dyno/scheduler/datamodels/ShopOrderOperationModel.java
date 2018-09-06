@@ -267,7 +267,7 @@ public class ShopOrderOperationModel extends DataModel
         }
     }
     
-    public boolean UpdateOperationDetails()
+    public boolean updateOperationDetails()
     {
         List<ShopOrderOperationModel> updateList = new ArrayList<>();
         updateList.add(this);

@@ -6,6 +6,7 @@
 package dyno.scheduler.datamodels;
 
 import dyno.scheduler.data.DataEnums;
+import dyno.scheduler.datamodels.DataModelEnums.TimeBlockParamType;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
 import java.util.HashMap;
@@ -126,171 +127,102 @@ public class WorkCenterOpAllocModel extends DataModel
     }
 
     // </editor-fold> 
-    public LocalTime getTimeBlockValue(String timeBlock)
+    
+    public static LocalTime getTimeBlockValue(String timeBlock)
     {
-        DateTime timeBlockValue;
-
-        DateTimeFormatter timeFormat = DateTimeUtil.getTimeFormat();
-        switch (timeBlock)
-        {
-            case "TB1":
-                timeBlockValue = timeFormat.parseDateTime("08:00:00");
-                break;
-            case "TB2":
-                timeBlockValue = timeFormat.parseDateTime("09:00:00");
-                break;
-            case "TB3":
-                timeBlockValue = timeFormat.parseDateTime("10:00:00");
-                break;
-            case "TB4":
-                timeBlockValue = timeFormat.parseDateTime("11:00:00");
-                break;
-            case "TB5":
-                timeBlockValue = timeFormat.parseDateTime("13:00:00");
-                break;
-            case "TB6":
-                timeBlockValue = timeFormat.parseDateTime("14:00:00");
-                break;
-            case "TB7":
-                timeBlockValue = timeFormat.parseDateTime("15:00:00");
-                break;
-            case "TB8":
-                timeBlockValue = timeFormat.parseDateTime("16:00:00");
-                break;
-            default:
-                return null;
-        }
-        return timeBlockValue.toLocalTime();
+        return (LocalTime)getTimeBlockDetail(timeBlock, TimeBlockParamType.TimeBlockValue);
     }
 
-    public String getTimeBlockName(LocalTime startTime)
+    public static String getTimeBlockName(LocalTime timeValue)
     {
-        String timeBlockValue = null;
-        String startTimeString = startTime.toString();
-        switch (GeneralSettings.getCapacityType())
-        {
-            case FiniteCapacity:
-            {
-                switch (startTimeString)
-                {
-                    case "08:00:00.000":
-                        timeBlockValue = "TB1";
-                        break;
-                    case "09:00:00.000":
-                        timeBlockValue = "TB2";
-                        break;
-                    case "10:00:00.000":
-                        timeBlockValue = "TB3";
-                        break;
-                    case "11:00:00.000":
-                        timeBlockValue = "TB4";
-                        break;
-                    // special case: 12.00 should be taken as the next time block
-                    case "12:00:00.000":
-                        timeBlockValue = "TB5";
-                        break;
-                    case "13:00:00.000":
-                        timeBlockValue = "TB5";
-                        break;
-                    case "14:00:00.000":
-                        timeBlockValue = "TB6";
-                        break;
-                    case "15:00:00.000":
-                        timeBlockValue = "TB7";
-                        break;
-                    case "16:00:00.000":
-                        timeBlockValue = "TB8";
-                        break;
-                    default:
-                        break;
-                }
-                break;
-            }
-            case InfiniteCapacity:
-            {
-                switch (startTimeString)
-                {
-                    case "00:00:00.000":
-                        timeBlockValue = "TB1";
-                        break;
-                    case "01:00:00.000":
-                        timeBlockValue = "TB2";
-                        break;
-                    case "02:00:00.000":
-                        timeBlockValue = "TB3";
-                        break;
-                    case "03:00:00.000":
-                        timeBlockValue = "TB4";
-                        break;
-                    case "04:00:00.000":
-                        timeBlockValue = "TB5";
-                        break;
-                    case "05:00:00.000":
-                        timeBlockValue = "TB6";
-                        break;
-                    case "06:00:00.000":
-                        timeBlockValue = "TB7";
-                        break;
-                    case "07:00:00.000":
-                        timeBlockValue = "TB8";
-                        break;
-                    case "08:00:00.000":
-                        timeBlockValue = "TB9";
-                        break;
-                    case "09:00:00.000":
-                        timeBlockValue = "TB10";
-                        break;
-                    case "10:00:00.000":
-                        timeBlockValue = "TB11";
-                        break;
-                    case "11:00:00.000":
-                        timeBlockValue = "TB12";
-                        break;
-                    case "12:00:00.000":
-                        timeBlockValue = "TB13";
-                        break;
-                    case "13:00:00.000":
-                        timeBlockValue = "TB14";
-                        break;
-                    case "14:00:00.000":
-                        timeBlockValue = "TB15";
-                        break;
-                    case "15:00:00.000":
-                        timeBlockValue = "TB16";
-                        break;
-                    case "16:00:00.000":
-                        timeBlockValue = "TB17";
-                        break;
-                    case "17:00:00.000":
-                        timeBlockValue = "TB18";
-                        break;
-                    case "18:00:00.000":
-                        timeBlockValue = "TB19";
-                        break;
-                    case "19:00:00.000":
-                        timeBlockValue = "TB20";
-                        break;
-                    case "20:00:00.000":
-                        timeBlockValue = "TB21";
-                        break;
-                    case "21:00:00.000":
-                        timeBlockValue = "TB22";
-                        break;
-                    case "22:00:00.000":
-                        timeBlockValue = "TB23";
-                        break;
-                    case "23:00:00.000":
-                        timeBlockValue = "TB24";
-                        break;
-
-                    default:
-                        break;
-                }
-                break;
-            }
-        }
-        return timeBlockValue;
+        return getTimeBlockDetail(timeValue, TimeBlockParamType.TimeBlockName).toString();
     }
+    
+    /**
+     * this method is used to get the timeBlockValue by giving the timeBlockName or 
+     * get the timeBlockName by giving the timeBlockValue
+     * @param timeBlockParam
+     * @return 
+     */
+    public static Object getTimeBlockDetail(Object timeBlockParam, TimeBlockParamType returnType)
+    {
+        Object returnTimeBlockParam = null;
+
+        int noOfhours;
+        LocalTime currentTimeValue;
+        LocalTime intervalStartTime = null;
+        String currentTimeBlockName;
+        
+        // if finite capacity, set the required parameters
+        if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+        {
+            // interval start time is 12PM for the finite capacity
+            intervalStartTime = LocalTime.parse("12:00:00", DateTimeUtil.getTimeFormat());
+            
+            // when return type is timeBlockName (parameter type would be the timeblockValue of LocalTime)
+            // if the time value equals to the interval start time, skip it by adding an hour to get the next working timeblock
+            if (returnType == TimeBlockParamType.TimeBlockName)
+            {
+                if (timeBlockParam.equals(intervalStartTime))
+                {
+                    timeBlockParam = ((LocalTime)timeBlockParam).plusHours(1);
+                }
+            }
+
+            // there are 9 hours in infinite capacity
+            noOfhours = 9;
+            // initially the currentTimeValue will be the starting hour of the day, then it will increment one by one
+            currentTimeValue = LocalTime.parse("08:00:00", DateTimeUtil.getTimeFormat());
+            // initially the currentTimeBlockValue will be the starting timeblock (TB1), then it will increment one by one
+            currentTimeBlockName = "TB1";
+        }
+        // else infinite capacity, set the required parameters
+        else
+        {
+            // there are 24 hours in finite capacity
+            noOfhours = 24;
+            // initially the currentTimeValue will be the starting hour of the day, then it will increment one by one
+            currentTimeValue = LocalTime.parse("00:00:00", DateTimeUtil.getTimeFormat());
+            // initially the currentTimeBlockValue will be the starting timeblock (TB1), then it will increment one by one
+            currentTimeBlockName = "TB1";
+        }
+            
+        for (int i = 0; i < noOfhours; i++)
+        {
+            // check if the currentTimeValue is equals to the interval value and if so, skip the iteration of the loop
+            if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity && currentTimeValue.equals(intervalStartTime))
+            {
+                // before skipping, we should increment the interval hour by 1, to get the beginning of the next working hour.
+                currentTimeValue = currentTimeValue.plusHours(1);
+                continue;
+            }
+            
+            // if return type is TimeBlockName, we should compare timeBlockValues and get the respective timeBlockName
+            if (returnType == TimeBlockParamType.TimeBlockName)
+            {
+                if (timeBlockParam.equals(currentTimeValue))
+                {
+                    returnTimeBlockParam = currentTimeBlockName;
+                }
+            }
+            // if return type is TimeBlockValue, we should compare timeBlockName and get the respective timeBlockValue
+            else if (returnType == TimeBlockParamType.TimeBlockValue)
+            {
+                if (timeBlockParam.equals(currentTimeBlockName))
+                {
+                    returnTimeBlockParam = currentTimeValue;
+                }
+            }
+
+            // increment the current time value by 1 hr, and assign it to itself
+            currentTimeValue = currentTimeValue.plusHours(1);
+            // increment the current timeblock value by 1, and assign it to itself
+            HashMap<String, Object> incrementDetails = incrementTimeBlock(currentTimeBlockName, 1);
+            currentTimeBlockName = incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString();
+        }
+        return returnTimeBlockParam;
+    }
+    
 
     /**
      * this method is used to increment a given time block value by an integer.
@@ -305,7 +237,7 @@ public class WorkCenterOpAllocModel extends DataModel
      * @return a list: first element is the new Time block name, second element
      * is the daysAdded after incrementing
      */
-    public HashMap<String, Object> incrementTimeBlock(String timeBlock, int incrementBy)
+    public static HashMap<String, Object> incrementTimeBlock(String timeBlock, int incrementBy)
     {
         HashMap<String, Object> returnList = new HashMap<>();
         int currentTimeBlock = Integer.parseInt(timeBlock.substring(2));

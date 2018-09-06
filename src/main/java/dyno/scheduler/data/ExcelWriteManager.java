@@ -180,6 +180,7 @@ public class ExcelWriteManager extends DataWriteManager
                                     case 12: cell.setCellValue(shopOrderOperation.getWorkCenterType()); break;
                                     case 13: cell.setCellValue(shopOrderOperation.getWorkCenterNo()); break;
                                     case 14: cell.setCellValue(shopOrderOperation.getOperationStatus().toString()); break;
+                                    default: break;
                                 }
                             }
                         }

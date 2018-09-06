@@ -193,7 +193,7 @@ public class WorkCenterAgent extends Agent
 
                     // calculate the next possible op start date by adding the values taken from the timeBlockDetails
                     LocalDate nextPossibleOpStartDate = bestOfferedDate.plusDays(Integer.parseInt(timeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString())).toLocalDate();
-                    LocalTime nextPossibleOpStartTime = new WorkCenterOpAllocModel().getTimeBlockValue(timeBlockDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
+                    LocalTime nextPossibleOpStartTime = WorkCenterOpAllocModel.getTimeBlockValue(timeBlockDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
                     DateTime nextPossibleDate = DateTimeUtil.concatenateDateTime(nextPossibleOpStartDate, nextPossibleOpStartTime);
                     
                     // set the possible start date of the next operation (end of thec current operation)

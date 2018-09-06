@@ -306,7 +306,7 @@ public class ShopOrderAgent extends Agent
             currentOperation.setOpFinishTime(opFinishDate);
             currentOperation.setWorkCenterNo(workCenterNo);
             currentOperation.setOperationStatus(opStatus);
-            currentOperation.UpdateOperationDetails();
+            currentOperation.updateOperationDetails();
         }
 
         // </editor-fold>

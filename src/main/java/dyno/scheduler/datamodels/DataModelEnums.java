@@ -61,5 +61,10 @@ public class DataModelEnums
         WorkCenter,
         WorkCenterAllocation
     }
-
+    
+    public enum TimeBlockParamType
+    {
+        TimeBlockValue,
+        TimeBlockName
+    }
 }
