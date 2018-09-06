@@ -142,7 +142,8 @@ public class WorkCenterOpAllocModel extends DataModel
      * this method is used to get the timeBlockValue by giving the timeBlockName or 
      * get the timeBlockName by giving the timeBlockValue
      * @param timeBlockParam
-     * @return 
+     * @param returnType the type of the value to be returned
+     * @return timeBlockValue or timeBlockName depending on the returnType value
      */
     public static Object getTimeBlockDetail(Object timeBlockParam, TimeBlockParamType returnType)
     {
