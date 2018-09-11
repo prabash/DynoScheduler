@@ -13,11 +13,13 @@ import dyno.scheduler.utils.StringUtil;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 import java.util.List;
 import org.joda.time.format.DateTimeFormatter;
@@ -52,6 +54,7 @@ public class SOTestAgent extends Agent
             System.out.println("Error with the Shop Order arguments");
         }
         addBehaviour(new BProcessOperationQueue(shopOrder.getOperations()));
+        addBehaviour(new BStartOperationScheduler());
 
         System.out.println("the Shop Order Agent " + this.getLocalName() + " is started");
     }
@@ -122,5 +125,36 @@ class BProcessOperationQueue extends Behaviour
     {
         return operationsQueued;
     }
+}
 
+  
+class BStartOperationScheduler extends CyclicBehaviour
+{
+    private static final long serialVersionUID = -1131845958921042476L;
+    
+    @Override
+    public void action()
+    {
+        MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPAGATE);
+        ACLMessage msg = myAgent.receive(mt);
+        if (msg != null)
+        {
+            System.out.println(msg.getContent() + " will be scheduled!");
+            ACLMessage reply = msg.createReply();
+            
+            try
+            {
+                Thread.sleep(2000L);
+            } catch (InterruptedException ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            }
+            
+            reply.setPerformative(ACLMessage.INFORM);
+
+            reply.setContent("Release Lock");
+
+            myAgent.send(reply);
+        }
+    }        
 }

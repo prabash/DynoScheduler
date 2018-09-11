@@ -10,9 +10,10 @@ import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.jade.ISchedulerAgent;
 import dyno.scheduler.utils.LogUtil;
+import jade.core.AID;
 import jade.core.Agent;
-import static jade.core.Agent.MSG_QUEUE_CLASS;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.TickerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
@@ -36,7 +37,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     private static final long serialVersionUID = 3369137004053108334L;
     private transient List<AgentController> agentList;// agents's ref
     
-    private static Queue<ACLMessage> operationScheduleRequests;
+    private static final Queue<ACLMessage> OPERATION_SCHEDULING_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
 
     @Override
     protected void setup()
@@ -64,7 +65,11 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
+        
         addBehaviour(new BQueueScheduleOperationRequests());
+        addBehaviour(new BProcessOperationScheduleQueue(this, 5000L));
+        addBehaviour(new BNotifyOperationScheduleQueue());
+        
         AgentsManager.startAgents(agentList);
     }
 
@@ -94,7 +99,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             DFService.register(this, dfAgentDesc);
         } catch (FIPAException fe)
         {
-            LogUtil.logSevereErrorMessage(this, MSG_QUEUE_CLASS, fe);
+            LogUtil.logSevereErrorMessage(this, fe.getMessage(), fe);
         }
     }
 
@@ -106,44 +111,172 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     
     public static void addScheduleOperationRequest(ACLMessage scheduleOpRequest)
     {
-        if (operationScheduleRequests == null)
-        {
-            operationScheduleRequests = new ConcurrentLinkedQueue<>();
-        }
-        operationScheduleRequests.add(scheduleOpRequest);
+        OPERATION_SCHEDULING_REQUESTS_QUEUE.add(scheduleOpRequest);
     }
     
     public static void clearScheduleOperationRequestsQueue()
     {
-        operationScheduleRequests.clear();
+        OPERATION_SCHEDULING_REQUESTS_QUEUE.clear();
+    }
+    
+    public static boolean scheduleOperationsQueueIsEmpty()
+    {
+        if (OPERATION_SCHEDULING_REQUESTS_QUEUE != null)
+            return OPERATION_SCHEDULING_REQUESTS_QUEUE.isEmpty();
+        else 
+            return true;
+    }
+    
+    public static ACLMessage getNextFromScheduleOperationsQueue()
+    {
+        if (OPERATION_SCHEDULING_REQUESTS_QUEUE != null)
+        {
+            if (!OPERATION_SCHEDULING_REQUESTS_QUEUE.isEmpty())
+                return OPERATION_SCHEDULING_REQUESTS_QUEUE.poll();
+            else
+                return null;
+        }
+        else
+            return null;
+    }
+    
+    static class BQueueScheduleOperationRequests extends CyclicBehaviour
+    {
+        private static final long serialVersionUID = 8948436530894606064L;
+
+        // <editor-fold desc="overriden methods" defaultstate="collapsed">
+
+        /**
+         * action overridden method
+         */
+        @Override
+        public void action()
+        {
+
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+            ACLMessage msg = myAgent.receive(mt);
+            if (msg != null)
+            {
+                ManagerAgent.addScheduleOperationRequest(msg);
+                System.out.println("+++ Operation queued!");
+            } else
+            {
+                block();
+            }
+        }
+        // </editor-fold>
+    }
+
+    private static boolean OPERATION_SCHEDULED;
+    private static final Object OPERATION_SCHEDULE_QUEUE_LOCK = new Object();
+    
+    
+    static class BProcessOperationScheduleQueue extends TickerBehaviour 
+    {
+        private static final long serialVersionUID = -6980306431467493127L;
+
+        public BProcessOperationScheduleQueue(Agent agent, long period)
+        {
+            super(agent, period);
+        }
+
+        @Override
+        protected void onTick()
+        {
+            Thread thread = new Thread(new ProcessOperationScheduleQueue(myAgent));
+            thread.start();
+        }
+    }
+    
+    static class ProcessOperationScheduleQueue implements Runnable
+    {
+        Agent myAgent;
+
+        public ProcessOperationScheduleQueue(Agent agent)
+        {
+            this.myAgent = agent;
+        }
+        
+
+        @Override
+        public void run()
+        {
+            if (!ManagerAgent.scheduleOperationsQueueIsEmpty())
+            {
+                ACLMessage request = ManagerAgent.getNextFromScheduleOperationsQueue();
+                scheduleOperation(request);
+            }
+        }
+        
+        public boolean scheduleOperation(ACLMessage request)
+        {
+            OPERATION_SCHEDULED = false;
+            synchronized (OPERATION_SCHEDULE_QUEUE_LOCK)
+            {
+                try
+                {
+                    OPERATION_SCHEDULED = false;
+                    try
+                    {
+                        AID shopOrderAgent = request.getSender();
+                        String operationId = request.getContent();
+                        ACLMessage startOpScheduleMsg = new ACLMessage(ACLMessage.PROPAGATE);
+                        startOpScheduleMsg.addReceiver(shopOrderAgent);
+                        startOpScheduleMsg.setContent(operationId);
+                        
+                        myAgent.send(startOpScheduleMsg);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                    }
+
+                    if (OPERATION_SCHEDULED == false)
+                    {
+                        System.out.println("operation queue locked!");
+                        OPERATION_SCHEDULE_QUEUE_LOCK.wait();
+                    }
+                }
+                catch (InterruptedException ex)
+                {
+                    LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                }
+            }
+            return OPERATION_SCHEDULED;
+        }
+
+    }
+    
+    
+    static class BNotifyOperationScheduleQueue extends CyclicBehaviour
+    {
+        private static final long serialVersionUID = -8707253852585581218L;
+        @Override
+        public void action()
+        {
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+            ACLMessage msg = myAgent.receive(mt);
+            if (msg != null)
+            {
+                try
+                {
+                    System.out.println(msg.getContent());
+                    synchronized (OPERATION_SCHEDULE_QUEUE_LOCK)
+                    {
+                        OPERATION_SCHEDULED = true;
+                        System.out.println("Notify thread unlock");
+
+                        OPERATION_SCHEDULE_QUEUE_LOCK.notifyAll();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                }
+            }
+        }
+        
     }
 }
  
-class BQueueScheduleOperationRequests extends CyclicBehaviour
-{
 
-    private static final long serialVersionUID = 8948436530894606064L;
-
-    // <editor-fold desc="overriden methods" defaultstate="collapsed">
-
-    /**
-     * action overridden method
-     */
-    @Override
-    public void action()
-    {
-
-        MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
-        ACLMessage msg = myAgent.receive(mt);
-        if (msg != null)
-        {
-            ManagerAgent.addScheduleOperationRequest(msg);
-            System.out.println("+++ Operation queued!");
-        } else
-        {
-            block();
-        }
-    }
-
-    // </editor-fold>
-}
