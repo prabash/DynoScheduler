@@ -187,7 +187,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             {
                 if(OPERATION_SCHEDULE_QUEUE_LOCK.tryLock())
                 {
-                    Thread thread = new Thread(ProcessOperationScheduleQueue.GetInstance(myAgent));
+                    Thread thread = new Thread(new ProcessOperationScheduleQueue(myAgent));
                     thread.start();
                 }
             }
@@ -198,19 +198,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     {
         Agent myAgent;
         
-        private static ProcessOperationScheduleQueue INSTANCE;
-        
-        public static ProcessOperationScheduleQueue GetInstance(Agent agent)
-        {
-            if (INSTANCE == null)
-                INSTANCE = new ProcessOperationScheduleQueue(agent);
-            
-            return INSTANCE;
-        }
-        
-        private ProcessOperationScheduleQueue() {}
-
-        private ProcessOperationScheduleQueue(Agent agent)
+        public ProcessOperationScheduleQueue(Agent agent)
         {
             this.myAgent = agent;
         }

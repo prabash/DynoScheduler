@@ -229,7 +229,7 @@ class BStartOperationScheduler extends CyclicBehaviour
         }
     }
     
-    public void ScheduleOperation()
+    public void scheduleOperation()
     {
         switch (step)
         {
