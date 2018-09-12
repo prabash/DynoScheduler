@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -67,7 +68,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         }
         
         addBehaviour(new BQueueScheduleOperationRequests());
-        addBehaviour(new BProcessOperationScheduleQueue(this, 5000L));
+        addBehaviour(new BProcessOperationScheduleQueue(this, 1000L));
         addBehaviour(new BNotifyOperationScheduleQueue());
         
         AgentsManager.startAgents(agentList);
@@ -168,8 +169,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     }
 
     private static boolean OPERATION_SCHEDULED;
-    private static final Object OPERATION_SCHEDULE_QUEUE_LOCK = new Object();
-    
+    private static final ReentrantLock OPERATION_SCHEDULE_QUEUE_LOCK = new ReentrantLock();
     
     static class BProcessOperationScheduleQueue extends TickerBehaviour 
     {
@@ -183,20 +183,37 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         @Override
         protected void onTick()
         {
-            Thread thread = new Thread(new ProcessOperationScheduleQueue(myAgent));
-            thread.start();
+            if(!OPERATION_SCHEDULE_QUEUE_LOCK.isLocked())
+            {
+                if(OPERATION_SCHEDULE_QUEUE_LOCK.tryLock())
+                {
+                    Thread thread = new Thread(ProcessOperationScheduleQueue.GetInstance(myAgent));
+                    thread.start();
+                }
+            }
         }
     }
     
     static class ProcessOperationScheduleQueue implements Runnable
     {
         Agent myAgent;
+        
+        private static ProcessOperationScheduleQueue INSTANCE;
+        
+        public static ProcessOperationScheduleQueue GetInstance(Agent agent)
+        {
+            if (INSTANCE == null)
+                INSTANCE = new ProcessOperationScheduleQueue(agent);
+            
+            return INSTANCE;
+        }
+        
+        private ProcessOperationScheduleQueue() {}
 
-        public ProcessOperationScheduleQueue(Agent agent)
+        private ProcessOperationScheduleQueue(Agent agent)
         {
             this.myAgent = agent;
         }
-        
 
         @Override
         public void run()
@@ -210,41 +227,24 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         
         public boolean scheduleOperation(ACLMessage request)
         {
-            OPERATION_SCHEDULED = false;
-            synchronized (OPERATION_SCHEDULE_QUEUE_LOCK)
+            try
             {
-                try
-                {
-                    OPERATION_SCHEDULED = false;
-                    try
-                    {
-                        AID shopOrderAgent = request.getSender();
-                        String operationId = request.getContent();
-                        ACLMessage startOpScheduleMsg = new ACLMessage(ACLMessage.PROPAGATE);
-                        startOpScheduleMsg.addReceiver(shopOrderAgent);
-                        startOpScheduleMsg.setContent(operationId);
-                        
-                        myAgent.send(startOpScheduleMsg);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-                    }
+                AID shopOrderAgent = request.getSender();
+                String operationId = request.getContent();
+                ACLMessage startOpScheduleMsg = new ACLMessage(ACLMessage.PROPAGATE);
+                startOpScheduleMsg.addReceiver(shopOrderAgent);
+                startOpScheduleMsg.setContent(operationId);
 
-                    if (OPERATION_SCHEDULED == false)
-                    {
-                        System.out.println("operation queue locked!");
-                        OPERATION_SCHEDULE_QUEUE_LOCK.wait();
-                    }
-                }
-                catch (InterruptedException ex)
-                {
-                    LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-                }
+                myAgent.send(startOpScheduleMsg);
+                System.out.println("operation queue locked to schedule operation : " + operationId);
             }
+            catch (Exception ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            }
+
             return OPERATION_SCHEDULED;
         }
-
     }
     
     
@@ -261,13 +261,11 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                 try
                 {
                     System.out.println(msg.getContent());
-                    synchronized (OPERATION_SCHEDULE_QUEUE_LOCK)
-                    {
-                        OPERATION_SCHEDULED = true;
-                        System.out.println("Notify thread unlock");
+                    
+                    OPERATION_SCHEDULED = true;
+                    System.out.println("Notify thread unlock");
 
-                        OPERATION_SCHEDULE_QUEUE_LOCK.notifyAll();
-                    }
+                    OPERATION_SCHEDULE_QUEUE_LOCK.unlock();
                 }
                 catch (Exception ex)
                 {
@@ -275,7 +273,6 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                 }
             }
         }
-        
     }
 }
  

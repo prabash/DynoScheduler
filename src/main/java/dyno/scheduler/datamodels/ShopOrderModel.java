@@ -5,11 +5,14 @@
  */
 package dyno.scheduler.datamodels;
 
+import dyno.scheduler.data.DataEnums;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderPriority;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderScheduleStatus;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderSchedulingDirection;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderStatus;
 import dyno.scheduler.utils.DateTimeUtil;
+import dyno.scheduler.utils.GeneralSettings;
+import java.util.Collections;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -212,6 +215,7 @@ public class ShopOrderModel extends DataModel
     
     public List<ShopOrderOperationModel> getOperations()
     {
+        Collections.sort(operations, (ShopOrderOperationModel o1, ShopOrderOperationModel o2) -> Integer.compare(o1.getOperationSequence(), o2.getOperationSequence()));
         return operations;
     }
     
@@ -279,6 +283,86 @@ public class ShopOrderModel extends DataModel
     public String getAgentPrefix()
     {
         return this.AGENT_PREFIX;
+    }
+    
+    
+    /**
+     * this method is used to get a target start date for the operation by sending its primary key (operation id)
+     * @param opPrimaryKey primary key
+     * @return target operation start date
+     */
+    public DateTime getOperationTargetStartDate(String opPrimaryKey)
+    {
+        List<ShopOrderOperationModel> currentOperations = getOperations();
+        int index = 0;
+        DateTime opTargetStartDate = null;
+        DateTime previosOpFinishDate = null;
+        
+        for (ShopOrderOperationModel operation : currentOperations)
+        {
+            if (operation.getPrimaryKey().equals(opPrimaryKey))
+            {
+                // first operation
+                if (index == 0)
+                {
+                    // set the shop order created date as the opTargetStartDate for the first operation                    
+                    if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+                    {
+                        // for finite capacity starting time of the day is 0800HRS
+                        opTargetStartDate = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "08:00:00");
+                    } 
+                    else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
+                    {
+                        // for finite capacity starting time of the day is 0000HRS
+                        opTargetStartDate = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "00:00:00");
+                    }   
+                    break;
+                }
+                // subsequent operations
+                else
+                {
+                    // the finish datetime of the previous operation should be the potential starting time for the next operation
+                    opTargetStartDate = previosOpFinishDate;
+                    break;
+                }
+            }
+            else
+            {
+                // set the operation finish date time of this operation to be used as the potential start time for the next operation
+                previosOpFinishDate = DateTimeUtil.concatenateDateTime(operation.getOpFinishDate(), operation.getOpFinishTime());
+            }
+            
+            index++;
+        }
+        
+        return opTargetStartDate;
+    }
+    
+    /**
+     * this method is used to update the operations of the current shop order object by providing the operation object
+     * @param operationOb operation object
+     */
+    public void updateOperation(ShopOrderOperationModel operationOb)
+    {
+        List<ShopOrderOperationModel> currentOperations = getOperations();
+        int index = 0;
+        // for each of the available operations
+        for (ShopOrderOperationModel operation : currentOperations)
+        {
+            // check if the current operationId matches with the sent operation's operationId
+            // and if so break the loop, keeping the index value;
+            if (operation.getPrimaryKey().equals(operationOb.getPrimaryKey()))
+                break;
+            
+            // increment index value
+            index++;
+        }
+        
+        // replace the operation in the index by the nex operation object
+        currentOperations.set(index, operationOb);
+        
+        // update the operations list
+        setOperations(currentOperations);
     }
 
     // </editor-fold> 

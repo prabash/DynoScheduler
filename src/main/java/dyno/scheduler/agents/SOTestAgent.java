@@ -5,6 +5,7 @@
  */
 package dyno.scheduler.agents;
 
+import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -22,6 +23,10 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -33,7 +38,7 @@ public class SOTestAgent extends Agent
     private static final long serialVersionUID = 8846265486536139525L;
 
     // shop order handled by the agent
-    private transient ShopOrderModel shopOrder;
+    private static transient ShopOrderModel shopOrder;
 
     transient DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
     transient DateTimeFormatter dateTimeFormat = DateTimeUtil.getDateTimeFormat();
@@ -57,6 +62,21 @@ public class SOTestAgent extends Agent
         addBehaviour(new BStartOperationScheduler());
 
         System.out.println("the Shop Order Agent " + this.getLocalName() + " is started");
+    }
+    
+    public static ShopOrderOperationModel getOperationById(String operationId)
+    {
+        return shopOrder.getOperations().stream().filter(rec -> rec.getPrimaryKey().equals(operationId)).collect(Collectors.toList()).get(0);
+    }
+    
+    public static DateTime targetOpStartDate(String operationId)
+    {
+        return shopOrder.getOperationTargetStartDate(operationId);
+    }
+    
+    public static void updateShopOrderOperation(ShopOrderOperationModel operationOb)
+    {
+        shopOrder.updateOperation(operationOb);
     }
 }
 
@@ -130,7 +150,24 @@ class BProcessOperationQueue extends Behaviour
   
 class BStartOperationScheduler extends CyclicBehaviour
 {
-    private static final long serialVersionUID = -1131845958921042476L;
+    private static final long serialVersionUID = 3149611413717448878L;
+    
+    final static String CONVERSATION_ID = "work-center-request";
+    transient ShopOrderOperationModel currentOperation;
+    
+    // The target date that the operation should be started (FS) or Ended (BS)
+    private DateTime targetOperationStartDate = null;
+        
+    int step = 0; // is used in the switch statement inside the action method.
+    AID bestWorkCenter; // work center that provides the best target date
+    DateTime bestOfferedDate; // The best possible start date if forward scheduling / end date if backward scheduling
+    int repliesCount = 0; // The counter of replies from work center agents
+    MessageTemplate msgTemplate; // The template to receive replies
+    ACLMessage reply;
+    ACLMessage replyMgr;
+    
+    // The list of known workcenter agents
+    private AID[] workCenterAgents;
     
     @Override
     public void action()
@@ -139,22 +176,200 @@ class BStartOperationScheduler extends CyclicBehaviour
         ACLMessage msg = myAgent.receive(mt);
         if (msg != null)
         {
-            System.out.println(msg.getContent() + " will be scheduled!");
-            ACLMessage reply = msg.createReply();
-            
-            try
+            replyMgr = msg.createReply();
+            String opIdToSchedule = msg.getContent();
+            currentOperation = SOTestAgent.getOperationById(opIdToSchedule);
+            if (currentOperation != null)
             {
-                Thread.sleep(2000L);
-            } catch (InterruptedException ex)
-            {
-                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+//                // get the target operation start date before scheduling
+//                targetOperationStartDate = SOTestAgent.targetOpStartDate(currentOperation.getPrimaryKey());
+//                updateWorkCenterAgents();
+//                ScheduleOperation();
+//                
+                
+                try
+                {
+                    System.out.println(currentOperation.getPrimaryKey() + " is scheduling");
+                    Thread.sleep(5000L);
+                   
+                } catch (InterruptedException ex)
+                {
+                    Logger.getLogger(BStartOperationScheduler.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                notifyManagerAgent();
             }
-            
-            reply.setPerformative(ACLMessage.INFORM);
-
-            reply.setContent("Release Lock");
-
-            myAgent.send(reply);
         }
-    }        
+    }
+    
+    public void updateWorkCenterAgents()
+    {
+        // Update the list of seller agents
+        DFAgentDescription template = new DFAgentDescription();
+        ServiceDescription serviceDesc = new ServiceDescription();
+        // each agent belonging to a certain work center type will have "work-center-<TYPE>" in here.
+        // therefore this should be dynamically set.
+        serviceDesc.setType("work-center-" + currentOperation.getWorkCenterType());
+        serviceDesc.setName("schedule-work-center-service");
+
+        template.addServices(serviceDesc);
+        try
+        {
+            // find the agents belonging to the certain work center type
+            DFAgentDescription[] result = DFService.search(myAgent, template);
+            System.out.println("Found the WorkCenterAgents :");
+            workCenterAgents = new AID[result.length];
+            for (int i = 0; i < result.length; ++i)
+            {
+                workCenterAgents[i] = result[i].getName();
+                System.out.println(workCenterAgents[i].getName());
+            }
+        } catch (FIPAException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+    }
+    
+    public void ScheduleOperation()
+    {
+        switch (step)
+        {
+            case 0:
+            {
+                // Send the cfp (Call for Proposal) to all sellers
+                ACLMessage cfpMessage = new ACLMessage(ACLMessage.CFP);
+                for (int i = 0; i < workCenterAgents.length; ++i)
+                {
+                    cfpMessage.addReceiver(workCenterAgents[i]);
+                }
+                cfpMessage.setContent(StringUtil.generateMessageContent(targetOperationStartDate.toString(DateTimeUtil.getDateTimeFormat()), String.valueOf(currentOperation.getWorkCenterRuntime())));
+                cfpMessage.setConversationId(CONVERSATION_ID);
+                cfpMessage.setReplyWith("cfp" + System.currentTimeMillis()); // Unique value (can be something with the Shop Order No + operation No. and time)
+                myAgent.send(cfpMessage);
+
+                // Prepare the template to get proposals
+                msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
+                        MessageTemplate.MatchInReplyTo(cfpMessage.getReplyWith()));
+                step = 1;
+                break;
+            }
+            case 1:
+            {
+                // Receive all proposals/refusals from seller agents
+                reply = myAgent.receive(msgTemplate);
+                // Date offered by the work center agent
+                DateTime offeredDate;
+                if (reply != null)
+                {
+                    // Reply received
+                    if (reply.getPerformative() == ACLMessage.PROPOSE)
+                    {
+                        // This is an offer, recieved with the date and the time
+                        offeredDate = DateTimeUtil.getDateTimeFormat().parseDateTime(reply.getContent());
+
+                        System.out.println("++++++ offeredDate : " + offeredDate + " by Work Center Agent : " + reply.getSender());
+                        System.out.println("++++++ targetOperationDate : " + targetOperationStartDate);
+                        System.out.println("++++++ bestOfferedDate : " + bestOfferedDate);
+
+                        // if forward scheduling the offered date should be the earliest date/time that comes on or after the target date
+                        if (bestWorkCenter == null || ((offeredDate.equals(targetOperationStartDate) || offeredDate.isAfter(targetOperationStartDate)) && offeredDate.isBefore(bestOfferedDate)))
+                        {
+                            // This is the best offer at present
+                            bestOfferedDate = offeredDate;
+                            bestWorkCenter = reply.getSender();
+                            System.out.println("Current best offered time : " + bestOfferedDate + " by Work Center Agent : " + bestWorkCenter);
+                        }
+
+                        repliesCount++;
+                    }
+
+                    if (repliesCount >= workCenterAgents.length)
+                    {
+                        // We received all replies
+                        step = 2;
+                        System.out.println("++++++ RECEIVED ALL OFFERES! ++++++++");
+                    }
+                } else
+                {
+                    block();
+                }
+                break;
+            }
+            case 2:
+            {
+                // Send the confirmation to the work center that sent the best date
+                ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                order.addReceiver(bestWorkCenter);
+                order.setContent(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime())));
+                order.setConversationId(CONVERSATION_ID);
+                order.setReplyWith("setOperation" + System.currentTimeMillis());
+                myAgent.send(order);
+                // Prepare the template to get the purchase order reply
+                msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
+                        MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+
+                step = 3;
+                break;
+            }
+            case 3:
+            {
+                // Receive the confirmation reply
+                reply = myAgent.receive(msgTemplate);
+                if (reply != null)
+                {
+                    // confirmation reply received
+                    if (reply.getPerformative() == ACLMessage.INFORM)
+                    {
+
+                        // the next possible op start date and the work center no. is sent by the work center agent in the reply
+                        String [] msgContent = StringUtil.readMessageContent(reply.getContent());
+                        targetOperationStartDate = DateTime.parse(msgContent[0], DateTimeUtil.getDateTimeFormat());
+                        String workCenterNo = msgContent[1];
+
+                        
+                        // current operation details should be updated on the database
+                        updateOperationDetails(bestOfferedDate, targetOperationStartDate, workCenterNo, DataModelEnums.OperationStatus.Scheduled);
+
+                        // Date set successfully. We can terminate
+                        System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
+                        System.out.println("______________________________________________________________________________________________________________________________________");
+
+                    } else
+                    {
+                        System.out.println("Operation " + currentOperation.getOperationId() + " could not be scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
+                    }
+                    
+                    notifyManagerAgent();
+                    
+                    step = 4;
+                } else
+                {
+                    block();
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    
+    private void updateOperationDetails(DateTime opStartDate, DateTime opFinishDate, String workCenterNo, DataModelEnums.OperationStatus opStatus)
+    {
+        currentOperation.setOpStartDate(opStartDate);
+        currentOperation.setOpStartTime(opStartDate);
+        currentOperation.setOpFinishDate(opFinishDate);
+        currentOperation.setOpFinishTime(opFinishDate);
+        currentOperation.setWorkCenterNo(workCenterNo);
+        currentOperation.setOperationStatus(opStatus);
+        currentOperation.updateOperationDetails();
+    }
+    
+    private void notifyManagerAgent()
+    {
+        if (replyMgr != null)
+        {
+            replyMgr.setPerformative(ACLMessage.INFORM);
+            replyMgr.setContent("Release Lock");
+            myAgent.send(replyMgr);
+        }
+    }
 }
