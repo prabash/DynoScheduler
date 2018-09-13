@@ -23,9 +23,6 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -38,7 +35,7 @@ public class SOTestAgent extends Agent
     private static final long serialVersionUID = 8846265486536139525L;
 
     // shop order handled by the agent
-    private static transient ShopOrderModel shopOrder;
+    private transient ShopOrderModel shopOrder;
 
     transient DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
     transient DateTimeFormatter dateTimeFormat = DateTimeUtil.getDateTimeFormat();
@@ -59,22 +56,35 @@ public class SOTestAgent extends Agent
             System.out.println("Error with the Shop Order arguments");
         }
         addBehaviour(new BProcessOperationQueue(shopOrder.getOperations()));
-        addBehaviour(new BStartOperationScheduler());
+        addBehaviour(new BStartOperationScheduler(this));
 
         System.out.println("the Shop Order Agent " + this.getLocalName() + " is started");
     }
     
-    public static ShopOrderOperationModel getOperationById(String operationId)
+    public ShopOrderOperationModel getOperationById(String operationId)
     {
-        return shopOrder.getOperations().stream().filter(rec -> rec.getPrimaryKey().equals(operationId)).collect(Collectors.toList()).get(0);
+        ShopOrderOperationModel returnOp = null;
+        for (ShopOrderOperationModel operation : shopOrder.getOperations())
+        {
+            System.out.println(" +++++ operation id : " + operationId);
+            System.out.println(" +++++ primary key : " + operation.getPrimaryKey());
+            if (operation.getPrimaryKey().equals(operationId))
+            {
+                returnOp = operation;
+                break;
+            }
+                
+        }
+        return returnOp;
+        //return shopOrder.getOperations().stream().filter(rec -> rec.getPrimaryKey().equals(operationId)).collect(Collectors.toList()).get(0);
     }
     
-    public static DateTime targetOpStartDate(String operationId)
+    public DateTime targetOpStartDate(String operationId)
     {
         return shopOrder.getOperationTargetStartDate(operationId);
     }
     
-    public static void updateShopOrderOperation(ShopOrderOperationModel operationOb)
+    public void updateShopOrderOperation(ShopOrderOperationModel operationOb)
     {
         shopOrder.updateOperation(operationOb);
     }
@@ -150,9 +160,10 @@ class BProcessOperationQueue extends Behaviour
   
 class BStartOperationScheduler extends CyclicBehaviour
 {
+    private final SOTestAgent currentAgent;
     private static final long serialVersionUID = 3149611413717448878L;
     
-    final static String CONVERSATION_ID = "work-center-request";
+    final String CONVERSATION_ID = "work-center-request";
     transient ShopOrderOperationModel currentOperation;
     
     // The target date that the operation should be started (FS) or Ended (BS)
@@ -169,39 +180,57 @@ class BStartOperationScheduler extends CyclicBehaviour
     // The list of known workcenter agents
     private AID[] workCenterAgents;
     
+    public BStartOperationScheduler(SOTestAgent curreAgent)
+    {
+        this.currentAgent = curreAgent;
+    }
+    
     @Override
     public void action()
     {
-        MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.PROPAGATE);
+        MessageTemplate mt = MessageTemplate.MatchConversationId("OPERATION_PROCESSING_QUEUE");
         ACLMessage msg = myAgent.receive(mt);
+        
         if (msg != null)
         {
-            replyMgr = msg.createReply();
-            String opIdToSchedule = msg.getContent();
-            currentOperation = SOTestAgent.getOperationById(opIdToSchedule);
-            if (currentOperation != null)
+            if (msg.getPerformative() == ACLMessage.PROPAGATE)
             {
-//                // get the target operation start date before scheduling
-//                targetOperationStartDate = SOTestAgent.targetOpStartDate(currentOperation.getPrimaryKey());
-//                updateWorkCenterAgents();
-//                ScheduleOperation();
-//                
-                
-                try
+                replyMgr = msg.createReply();
+                String opIdToSchedule = msg.getContent();
+                currentOperation = currentAgent.getOperationById(opIdToSchedule);
+                if (currentOperation != null)
                 {
-                    System.out.println(currentOperation.getPrimaryKey() + " is scheduling");
-                    Thread.sleep(5000L);
-                   
-                } catch (InterruptedException ex)
-                {
-                    Logger.getLogger(BStartOperationScheduler.class.getName()).log(Level.SEVERE, null, ex);
+                    // get the target operation start date before scheduling
+                    targetOperationStartDate = currentAgent.targetOpStartDate(currentOperation.getPrimaryKey());
+                    getWorkCenterAgents();
+                    
+                    step = 0;
+                    repliesCount = 0;
+                    bestOfferedDate = null;
+                    scheduleOperation();
+
+
+    //                try
+    //                {
+    //                    System.out.println(currentOperation.getPrimaryKey() + " is scheduling");
+    //                    Thread.sleep(5000L);
+    //                   
+    //                } catch (InterruptedException ex)
+    //                {
+    //                    Logger.getLogger(BStartOperationScheduler.class.getName()).log(Level.SEVERE, null, ex);
+    //                }
+    //                notifyManagerAgent();
                 }
-                notifyManagerAgent();
+            }
+            else
+            {
+                reply = msg;
+                scheduleOperation();
             }
         }
     }
     
-    public void updateWorkCenterAgents()
+    public void getWorkCenterAgents()
     {
         // Update the list of seller agents
         DFAgentDescription template = new DFAgentDescription();
@@ -254,8 +283,6 @@ class BStartOperationScheduler extends CyclicBehaviour
             }
             case 1:
             {
-                // Receive all proposals/refusals from seller agents
-                reply = myAgent.receive(msgTemplate);
                 // Date offered by the work center agent
                 DateTime offeredDate;
                 if (reply != null)
@@ -287,6 +314,20 @@ class BStartOperationScheduler extends CyclicBehaviour
                         // We received all replies
                         step = 2;
                         System.out.println("++++++ RECEIVED ALL OFFERES! ++++++++");
+                        
+                        // Send the confirmation to the work center that sent the best date
+                        ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                        order.addReceiver(bestWorkCenter);
+                        order.setContent(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime())));
+                        order.setConversationId(CONVERSATION_ID);
+                        order.setReplyWith("setOperation" + System.currentTimeMillis());
+                        myAgent.send(order);
+                        // Prepare the template to get the purchase order reply
+                        msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
+                                MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+
+                        step = 3;
+                        break;
                     }
                 } else
                 {
@@ -296,24 +337,10 @@ class BStartOperationScheduler extends CyclicBehaviour
             }
             case 2:
             {
-                // Send the confirmation to the work center that sent the best date
-                ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                order.addReceiver(bestWorkCenter);
-                order.setContent(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime())));
-                order.setConversationId(CONVERSATION_ID);
-                order.setReplyWith("setOperation" + System.currentTimeMillis());
-                myAgent.send(order);
-                // Prepare the template to get the purchase order reply
-                msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
-                        MessageTemplate.MatchInReplyTo(order.getReplyWith()));
-
-                step = 3;
-                break;
+                
             }
             case 3:
             {
-                // Receive the confirmation reply
-                reply = myAgent.receive(msgTemplate);
                 if (reply != null)
                 {
                     // confirmation reply received
@@ -325,9 +352,10 @@ class BStartOperationScheduler extends CyclicBehaviour
                         targetOperationStartDate = DateTime.parse(msgContent[0], DateTimeUtil.getDateTimeFormat());
                         String workCenterNo = msgContent[1];
 
-                        
                         // current operation details should be updated on the database
                         updateOperationDetails(bestOfferedDate, targetOperationStartDate, workCenterNo, DataModelEnums.OperationStatus.Scheduled);
+                        // update operation details on the current shop order object
+                        currentAgent.updateShopOrderOperation(currentOperation);
 
                         // Date set successfully. We can terminate
                         System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
@@ -339,8 +367,8 @@ class BStartOperationScheduler extends CyclicBehaviour
                     }
                     
                     notifyManagerAgent();
-                    
                     step = 4;
+                    
                 } else
                 {
                     block();
@@ -367,9 +395,10 @@ class BStartOperationScheduler extends CyclicBehaviour
     {
         if (replyMgr != null)
         {
-            replyMgr.setPerformative(ACLMessage.INFORM);
+            replyMgr.setPerformative(ACLMessage.AGREE);
             replyMgr.setContent("Release Lock");
             myAgent.send(replyMgr);
         }
     }
 }
+

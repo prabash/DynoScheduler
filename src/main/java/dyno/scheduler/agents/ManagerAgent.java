@@ -159,7 +159,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             if (msg != null)
             {
                 ManagerAgent.addScheduleOperationRequest(msg);
-                System.out.println("+++ Operation queued!");
+                System.out.println("+++ Operation " + msg.getContent() + " from " + msg.getSender() + "  is queued!");
             } else
             {
                 block();
@@ -219,7 +219,12 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             {
                 AID shopOrderAgent = request.getSender();
                 String operationId = request.getContent();
+                
+                System.out.println(" ++++++  Shop Order Agent : " +  shopOrderAgent);
+                System.out.println(" ++++++  operationId : " +  operationId);
+                
                 ACLMessage startOpScheduleMsg = new ACLMessage(ACLMessage.PROPAGATE);
+                startOpScheduleMsg.setConversationId("OPERATION_PROCESSING_QUEUE");
                 startOpScheduleMsg.addReceiver(shopOrderAgent);
                 startOpScheduleMsg.setContent(operationId);
 
@@ -242,7 +247,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         @Override
         public void action()
         {
-            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.INFORM);
+            MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.AGREE);
             ACLMessage msg = myAgent.receive(mt);
             if (msg != null)
             {

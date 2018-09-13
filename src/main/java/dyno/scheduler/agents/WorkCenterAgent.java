@@ -140,6 +140,7 @@ public class WorkCenterAgent extends Agent
                 // offer should be included with the time as well, therefore the dateTimeFormat is used
                 reply.setContent(bestOfferedDate.toString(dateTimeFormat));
                 
+                reply.setConversationId("OPERATION_PROCESSING_QUEUE");
                 myAgent.send(reply);
                 
             } else
@@ -204,7 +205,7 @@ public class WorkCenterAgent extends Agent
                     //update the excel sheet with the date
                     System.out.println("WC --> SCHEDULED OPERATION " + Integer.valueOf(operationId) + " ON " + bestOfferedDate);
                 }
-                
+                reply.setConversationId("OPERATION_PROCESSING_QUEUE");
                 myAgent.send(reply);
             } else
             {
