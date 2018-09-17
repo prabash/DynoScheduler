@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -35,29 +34,30 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ManagerAgent extends Agent implements ISchedulerAgent
 {
+
     private static final long serialVersionUID = 3369137004053108334L;
     private transient List<AgentController> agentList;// agents's ref
-    
-    private static final Queue<ACLMessage> OPERATION_SCHEDULING_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
+
+    private static Queue<ACLMessage> OPERATION_SCHEDULING_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
 
     @Override
     protected void setup()
     {
         super.setup();
-        
-        registerAgentService();        
-        
+
+        registerAgentService();
+
         //get the parameters given into the object[]
         final Object[] args = getArguments();
         if (args[0] != null)
         {
-            ContainerController container = (ContainerController)args[0];
-            
+            ContainerController container = (ContainerController) args[0];
+
             agentList = new ArrayList<>();
             agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getShopOrderDetails(false)));
             agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getWorkCenterDetails(false)));
         }
-        
+
         try
         {
             System.out.println("Press a key to start the agents");
@@ -66,11 +66,11 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
-        
+
         addBehaviour(new BQueueScheduleOperationRequests());
-        addBehaviour(new BProcessOperationScheduleQueue(this, 1000L));
+        addBehaviour(new BProcessOperationScheduleQueue(this, 5000L));
         addBehaviour(new BNotifyOperationScheduleQueue());
-        
+
         AgentsManager.startAgents(agentList);
     }
 
@@ -88,7 +88,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         dfAgentDesc.setName(getAID());
 
         ServiceDescription serviceDescription = new ServiceDescription();
-        
+
         // each agent belonging to a certain work center type will have "work-center-<TYPE>" in here.
         // therefore this should be dynamically set.
         serviceDescription.setType("manager-agent");
@@ -109,44 +109,56 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
     public static void addScheduleOperationRequest(ACLMessage scheduleOpRequest)
     {
         OPERATION_SCHEDULING_REQUESTS_QUEUE.add(scheduleOpRequest);
     }
-    
+
     public static void clearScheduleOperationRequestsQueue()
     {
         OPERATION_SCHEDULING_REQUESTS_QUEUE.clear();
     }
-    
+
     public static boolean scheduleOperationsQueueIsEmpty()
     {
         if (OPERATION_SCHEDULING_REQUESTS_QUEUE != null)
+        {
             return OPERATION_SCHEDULING_REQUESTS_QUEUE.isEmpty();
-        else 
+        } else
+        {
             return true;
+        }
     }
-    
+
     public static ACLMessage getNextFromScheduleOperationsQueue()
     {
         if (OPERATION_SCHEDULING_REQUESTS_QUEUE != null)
         {
             if (!OPERATION_SCHEDULING_REQUESTS_QUEUE.isEmpty())
+            {
                 return OPERATION_SCHEDULING_REQUESTS_QUEUE.poll();
-            else
+            } else
+            {
                 return null;
-        }
-        else
+            }
+        } else
+        {
             return null;
+        }
     }
     
+    public static Queue<ACLMessage> getQueueSnapshot()
+    {
+        return OPERATION_SCHEDULING_REQUESTS_QUEUE;
+    }
+
     static class BQueueScheduleOperationRequests extends CyclicBehaviour
     {
+        
         private static final long serialVersionUID = 8948436530894606064L;
 
         // <editor-fold desc="overriden methods" defaultstate="collapsed">
-
         /**
          * action overridden method
          */
@@ -169,9 +181,10 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     }
 
     private static boolean OPERATION_SCHEDULED;
-    private static final ReentrantLock OPERATION_SCHEDULE_QUEUE_LOCK = new ReentrantLock();
-    
-    static class BProcessOperationScheduleQueue extends TickerBehaviour 
+
+    private static final Object OPERATION_SCHEDULE_LOCK = new Object();
+
+    static class BProcessOperationScheduleQueue extends TickerBehaviour
     {
         private static final long serialVersionUID = -6980306431467493127L;
 
@@ -183,67 +196,92 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         @Override
         protected void onTick()
         {
-            if(!OPERATION_SCHEDULE_QUEUE_LOCK.isLocked())
+            System.out.println("operation queue timer thread locked!");
+            Thread thread = new Thread(new ProcessOperationScheduleQueue(myAgent, this));
+            thread.start();                    
+        }    
+    }
+    
+    static class TestAddToQueue implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            for (ACLMessage aCLMessage : ManagerAgent.getQueueSnapshot())
             {
-                if(OPERATION_SCHEDULE_QUEUE_LOCK.tryLock())
-                {
-                    Thread thread = new Thread(new ProcessOperationScheduleQueue(myAgent));
-                    thread.start();
-                }
+                ManagerAgent.addScheduleOperationRequest(aCLMessage);
             }
         }
     }
-    
+
     static class ProcessOperationScheduleQueue implements Runnable
     {
         Agent myAgent;
-        
-        public ProcessOperationScheduleQueue(Agent agent)
+        BProcessOperationScheduleQueue tickerInstance;
+
+        public ProcessOperationScheduleQueue(Agent agent, BProcessOperationScheduleQueue tickerInstance)
         {
             this.myAgent = agent;
+            this.tickerInstance = tickerInstance;
         }
 
         @Override
         public void run()
         {
-            if (!ManagerAgent.scheduleOperationsQueueIsEmpty())
+            // remove the ticker behavior when processing the queue, so the queue processing wont overlap
+            if(!ManagerAgent.scheduleOperationsQueueIsEmpty())
+            {
+                myAgent.removeBehaviour(tickerInstance);
+            }
+            while (!ManagerAgent.scheduleOperationsQueueIsEmpty())
             {
                 ACLMessage request = ManagerAgent.getNextFromScheduleOperationsQueue();
-                scheduleOperation(request);
+                scheduleOperation(request);                    
             }
+            
+            System.out.println(" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NO OPERATIONS TO BE SCHEDULED!! ");
+            myAgent.addBehaviour(tickerInstance);
         }
-        
+
         public boolean scheduleOperation(ACLMessage request)
         {
-            try
+            OPERATION_SCHEDULED = false;
+            synchronized (OPERATION_SCHEDULE_LOCK)
             {
-                AID shopOrderAgent = request.getSender();
-                String operationId = request.getContent();
-                
-                System.out.println(" ++++++  Shop Order Agent : " +  shopOrderAgent);
-                System.out.println(" ++++++  operationId : " +  operationId);
-                
-                ACLMessage startOpScheduleMsg = new ACLMessage(ACLMessage.PROPAGATE);
-                startOpScheduleMsg.setConversationId("OPERATION_PROCESSING_QUEUE");
-                startOpScheduleMsg.addReceiver(shopOrderAgent);
-                startOpScheduleMsg.setContent(operationId);
+                try
+                {
+                    AID shopOrderAgent = request.getSender();
+                    String operationId = request.getContent();
 
-                myAgent.send(startOpScheduleMsg);
-                System.out.println("operation queue locked to schedule operation : " + operationId);
-            }
-            catch (Exception ex)
-            {
-                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                    System.out.println(" ++++++  Shop Order Agent : " + shopOrderAgent);
+                    System.out.println(" ++++++  operationId : " + operationId);
+
+                    ACLMessage startOpScheduleMsg = new ACLMessage(ACLMessage.PROPAGATE);
+                    startOpScheduleMsg.setConversationId("OPERATION_PROCESSING_QUEUE");
+                    startOpScheduleMsg.addReceiver(shopOrderAgent);
+                    startOpScheduleMsg.setContent(operationId);
+                    
+                    if (!OPERATION_SCHEDULED)
+                    {
+                        myAgent.send(startOpScheduleMsg);
+                        OPERATION_SCHEDULE_LOCK.wait();
+                        
+                        System.out.println("operation queue locked to schedule operation : " + operationId);
+                    }
+                } catch (InterruptedException ex)
+                {
+                    LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                }
             }
 
             return OPERATION_SCHEDULED;
         }
     }
-    
-    
+
     static class BNotifyOperationScheduleQueue extends CyclicBehaviour
     {
         private static final long serialVersionUID = -8707253852585581218L;
+
         @Override
         public void action()
         {
@@ -253,14 +291,16 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             {
                 try
                 {
-                    System.out.println(msg.getContent());
-                    
-                    OPERATION_SCHEDULED = true;
-                    System.out.println("Notify thread unlock");
+                    synchronized (OPERATION_SCHEDULE_LOCK)
+                    {
+                        System.out.println(msg.getContent());
+                        System.out.println("Notify queue unlock");
 
-                    OPERATION_SCHEDULE_QUEUE_LOCK.unlock();
-                }
-                catch (Exception ex)
+                        OPERATION_SCHEDULED = true;
+                        OPERATION_SCHEDULE_LOCK.notifyAll();
+                    }
+                    
+                } catch (Exception ex)
                 {
                     LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
                 }
@@ -268,5 +308,3 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         }
     }
 }
- 
-

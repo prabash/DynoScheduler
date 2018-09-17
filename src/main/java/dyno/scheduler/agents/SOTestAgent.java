@@ -210,16 +210,13 @@ class BStartOperationScheduler extends CyclicBehaviour
                     scheduleOperation();
 
 
-    //                try
-    //                {
-    //                    System.out.println(currentOperation.getPrimaryKey() + " is scheduling");
-    //                    Thread.sleep(5000L);
-    //                   
-    //                } catch (InterruptedException ex)
-    //                {
-    //                    Logger.getLogger(BStartOperationScheduler.class.getName()).log(Level.SEVERE, null, ex);
-    //                }
-    //                notifyManagerAgent();
+//                    try
+//                    {
+//                        System.out.println(currentOperation.getPrimaryKey() + " is scheduling");
+//                        Thread.sleep(2000L);
+//                       
+//                    } catch (InterruptedException ex) {}
+//                    notifyManagerAgent();
                 }
             }
             else
