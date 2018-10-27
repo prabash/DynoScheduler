@@ -299,7 +299,6 @@ public class ShopOrderModel extends DataModel
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
         DateTime opTargetStartDate = null;
-        int tet = getShopOrderTotalRunTimeDays();
         
         for (ShopOrderOperationModel operation : currentOperations)
         {
