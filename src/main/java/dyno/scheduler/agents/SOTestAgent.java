@@ -208,15 +208,6 @@ class BStartOperationScheduler extends CyclicBehaviour
                     repliesCount = 0;
                     bestOfferedDate = null;
                     scheduleOperation();
-
-
-//                    try
-//                    {
-//                        System.out.println(currentOperation.getPrimaryKey() + " is scheduling");
-//                        Thread.sleep(2000L);
-//                       
-//                    } catch (InterruptedException ex) {}
-//                    notifyManagerAgent();
                 }
             }
             else

@@ -192,14 +192,14 @@ public class WorkCenterAgent extends Agent
                     // set the end time of the operation to be taken as the beginning of the next operation when scheduling
                     // in order to do so, increment the received TimeBlockName by 1
 
-                    // calculate the next possible op start date by adding the values taken from the timeBlockDetails
-                    LocalDate nextPossibleOpStartDate = bestOfferedDate.plusDays(Integer.parseInt(timeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString())).toLocalDate();
-                    LocalTime nextPossibleOpStartTime = WorkCenterOpAllocModel.getTimeBlockValue(timeBlockDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
-                    DateTime nextPossibleDate = DateTimeUtil.concatenateDateTime(nextPossibleOpStartDate, nextPossibleOpStartTime);
+                    // calculate the finish date time of the current operation (to update on the table/ to be used as the start operation of the next sequential operation)
+                    LocalDate currentOpFinishDate = bestOfferedDate.plusDays(Integer.parseInt(timeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString())).toLocalDate();
+                    LocalTime currentOpFinishTime = WorkCenterOpAllocModel.getTimeBlockValue(timeBlockDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
+                    DateTime currentOpFinishDateTime = DateTimeUtil.concatenateDateTime(currentOpFinishDate, currentOpFinishTime);
                     
-                    // set the possible start date of the next operation (end of thec current operation)
+                    // set the end date time of the current operation (possible start date of the next operation)
                     // and the work center no in the reply content
-                    reply.setContent(StringUtil.generateMessageContent(nextPossibleDate.toString(DateTimeUtil.getDateTimeFormat()), 
+                    reply.setContent(StringUtil.generateMessageContent(currentOpFinishDateTime.toString(DateTimeUtil.getDateTimeFormat()), 
                             workCenter.getWorkCenterNo()));
                     
                     //update the excel sheet with the date

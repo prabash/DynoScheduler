@@ -72,7 +72,7 @@ public class ExcelWriteManager extends DataWriteManager
                 }
                 case WorkCenterAllocation:
                 {
-                    return updateWorkCenterOpALlocData((List<WorkCenterOpAllocModel>) dataList, excelSheetName);
+                    return updateWorkCenterOpAllocData((List<WorkCenterOpAllocModel>) dataList, excelSheetName);
                 }
                 default:
                 {
@@ -227,7 +227,7 @@ public class ExcelWriteManager extends DataWriteManager
     }
 
     @Override
-    public boolean updateWorkCenterOpALlocData(List<WorkCenterOpAllocModel> workCenterOpAllocs, String storageName)
+    public boolean updateWorkCenterOpAllocData(List<WorkCenterOpAllocModel> workCenterOpAllocs, String storageName)
     {
         try
         {

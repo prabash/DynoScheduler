@@ -32,5 +32,5 @@ public abstract class DataWriteManager
     
     public abstract boolean updateWorkCenterData(List<WorkCenterModel> dataList, String storageName);
     
-    public abstract boolean updateWorkCenterOpALlocData(List<WorkCenterOpAllocModel> dataList, String storageName);
+    public abstract boolean updateWorkCenterOpAllocData(List<WorkCenterOpAllocModel> dataList, String storageName);
 }

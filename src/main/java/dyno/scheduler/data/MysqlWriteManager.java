@@ -75,7 +75,7 @@ public class MysqlWriteManager extends DataWriteManager
     }
 
     @Override
-    public boolean updateWorkCenterOpALlocData(List<WorkCenterOpAllocModel> dataList, String storageName)
+    public boolean updateWorkCenterOpAllocData(List<WorkCenterOpAllocModel> dataList, String storageName)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

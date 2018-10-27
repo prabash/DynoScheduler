@@ -32,7 +32,7 @@ public class ShopOrderOperationModel extends DataModel
     private String workCenterType;
     private String operationDescription;
     private int operationSequence;
-    private int precedingOperation;
+    private int precedingOperationId;
     private double workCenterRuntimeFactor;
     private double workCenterRuntime;
     private double laborRuntimeFactor;
@@ -142,14 +142,14 @@ public class ShopOrderOperationModel extends DataModel
         this.operationSequence = operationSequence;
     }
     
-    public int getPrecedingOperation()
+    public int getPrecedingOperationId()
     {
-        return precedingOperation;
+        return precedingOperationId;
     }
 
-    public void setPrecedingOperation(int precedingOperation)
+    public void setPrecedingOperationId(int precedingOperationId)
     {
-        this.precedingOperation = precedingOperation;
+        this.precedingOperationId = precedingOperationId;
     }
 
     public double getWorkCenterRuntimeFactor()
@@ -281,7 +281,7 @@ public class ShopOrderOperationModel extends DataModel
                 this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
                 this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-                this.setPrecedingOperation(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setPrecedingOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setWorkCenterRuntimeFactor(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setWorkCenterRuntime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setLaborRuntimeFactor(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
