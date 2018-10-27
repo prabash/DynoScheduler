@@ -32,7 +32,10 @@ public class ShopOrderOperationModel extends DataModel
     private String workCenterType;
     private String operationDescription;
     private int operationSequence;
+    private int precedingOperation;
+    private double workCenterRuntimeFactor;
     private double workCenterRuntime;
+    private double laborRuntimeFactor;
     private double laborRunTime;
     private DateTime opStartDate;
     private DateTime opStartTime;
@@ -138,6 +141,26 @@ public class ShopOrderOperationModel extends DataModel
     {
         this.operationSequence = operationSequence;
     }
+    
+    public int getPrecedingOperation()
+    {
+        return precedingOperation;
+    }
+
+    public void setPrecedingOperation(int precedingOperation)
+    {
+        this.precedingOperation = precedingOperation;
+    }
+
+    public double getWorkCenterRuntimeFactor()
+    {
+        return workCenterRuntimeFactor;
+    }
+
+    public void setWorkCenterRuntimeFactor(double workCenterRuntimeFactor)
+    {
+        this.workCenterRuntimeFactor = workCenterRuntimeFactor;
+    }
 
     public double getWorkCenterRuntime()
     {
@@ -147,6 +170,16 @@ public class ShopOrderOperationModel extends DataModel
     public void setWorkCenterRuntime(double workCenterRuntime)
     {
         this.workCenterRuntime = workCenterRuntime;
+    }
+
+    public double getLaborRuntimeFactor()
+    {
+        return laborRuntimeFactor;
+    }
+
+    public void setLaborRuntimeFactor(double laborRuntimeFactor)
+    {
+        this.laborRuntimeFactor = laborRuntimeFactor;
     }
 
     public double getLaborRunTime()
@@ -248,7 +281,10 @@ public class ShopOrderOperationModel extends DataModel
                 this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
                 this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setPrecedingOperation(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setWorkCenterRuntimeFactor(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setWorkCenterRuntime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setLaborRuntimeFactor(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setLaborRunTime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOpStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
                 this.setOpStartTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
