@@ -47,6 +47,7 @@ public class ShopOrderModel extends DataModel
     private List<ShopOrderOperationModel> operations;
 
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="constructors">
     public ShopOrderModel()
     {
@@ -298,8 +299,8 @@ public class ShopOrderModel extends DataModel
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
         DateTime opTargetStartDate = null;
-        DateTime previosOpFinishDate = null;
-
+        int tet = getShopOrderTotalRunTimeDays();
+        
         for (ShopOrderOperationModel operation : currentOperations)
         {
             if (operation.getPrimaryKey().equals(opPrimaryKey))
@@ -317,8 +318,7 @@ public class ShopOrderModel extends DataModel
                     ShopOrderOperationModel precedingOp = currentOperations.stream().
                             filter(rec -> rec.getPrimaryKey().equals(String.valueOf(operation.getPrecedingOperationId()))).
                             collect(Collectors.toList()).get(0);
-                    previosOpFinishDate = DateTimeUtil.concatenateDateTime(precedingOp.getOpFinishDate(), precedingOp.getOpFinishTime());
-                    opTargetStartDate = previosOpFinishDate;
+                    opTargetStartDate = DateTimeUtil.concatenateDateTime(precedingOp.getOpFinishDate(), precedingOp.getOpFinishTime());
                     break;
                 }
             }
@@ -327,10 +327,14 @@ public class ShopOrderModel extends DataModel
         return opTargetStartDate;
     }
 
+    /**
+     * Return the startDate of a Shop Order by considering various parameters
+     * @return Starting Date Time of the Shop Order
+     */
     public DateTime getShopOrderStartDateTime()
     {
         DateTime shopOrderStartDateTime = null;
-        if (getSchedulingDirection() == schedulingDirection.Forward)
+        if (getSchedulingDirection() == ShopOrderSchedulingDirection.Forward)
         {
             if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
             {
@@ -343,18 +347,45 @@ public class ShopOrderModel extends DataModel
                 shopOrderStartDateTime = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "00:00:00");
             }
         }
+        else if (getSchedulingDirection() == ShopOrderSchedulingDirection.Backward)
+        {
+            double bufferPercentage = 20.0; // percentage of the total runtime duration that will be a buffer, minimum buffer value is 1 day
+            
+            int runtimeInDays = getShopOrderTotalRunTimeDays();
+            int bufferDays = Math.round((float)Math.ceil(runtimeInDays * bufferPercentage / 100.0));
+            // set the minimum buffer days
+            if (bufferDays < 1)
+            {
+                bufferDays = 1;
+            }
+            
+            // total runtime and the buffer will be reducted from the required date and calculate the start date
+            shopOrderStartDateTime = getRequiredDate().minusDays(bufferDays + runtimeInDays);
+        }
+        
         return shopOrderStartDateTime;
     }
+    
     
     public int getShopOrderTotalRunTimeDays()
     {
         double totalRuntTimeInHours = 0.0;
         int totalRuntimeDays = 0;
-        for (ShopOrderOperationModel operation : getOperations())
+        // calculate the total number of runtime hours 
+        totalRuntTimeInHours = getOperations().stream().map((operation) -> operation.getWorkCenterRuntime()).reduce(totalRuntTimeInHours, (accumulator, _item) -> accumulator + _item);
+        
+        // for finite capacity, get the number of runtime in days by dividing the no. of hours by 8
+        if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
-            totalRuntTimeInHours += operation.getWorkCenterRuntime();
+            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 8));
         }
-        return 0;
+        // for infinite capacity, get the number of runtime in days by dividing the no. of hours by 24
+        else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
+        {
+            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 24));
+        }
+        
+        return totalRuntimeDays;
     }
 
     /**

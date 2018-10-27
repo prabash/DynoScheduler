@@ -38,7 +38,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     private static final long serialVersionUID = 3369137004053108334L;
     private transient List<AgentController> agentList;// agents's ref
 
-    private static Queue<ACLMessage> OPERATION_SCHEDULING_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
+    private static final Queue<ACLMessage> OPERATION_SCHEDULING_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
 
     @Override
     protected void setup()

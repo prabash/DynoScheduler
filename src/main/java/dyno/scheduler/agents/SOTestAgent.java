@@ -163,7 +163,7 @@ class BStartOperationScheduler extends CyclicBehaviour
     private final SOTestAgent currentAgent;
     private static final long serialVersionUID = 3149611413717448878L;
     
-    final String CONVERSATION_ID = "work-center-request";
+    static final String CONVERSATION_ID = "work-center-request";
     transient ShopOrderOperationModel currentOperation;
     
     // The target date that the operation should be started (FS) or Ended (BS)
