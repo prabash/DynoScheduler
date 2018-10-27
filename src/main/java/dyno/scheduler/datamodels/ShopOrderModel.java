@@ -14,6 +14,7 @@ import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -27,6 +28,7 @@ import org.joda.time.format.DateTimeFormatter;
 @XmlRootElement
 public class ShopOrderModel extends DataModel
 {
+
     //<editor-fold defaultstate="collapsed" desc="properties">
     private String orderNo;
     private String description;
@@ -43,15 +45,14 @@ public class ShopOrderModel extends DataModel
     private ShopOrderStatus shopOrderStatus;
     private ShopOrderPriority priority;
     private List<ShopOrderOperationModel> operations;
-    
-    //</editor-fold>
 
+    //</editor-fold>
     //<editor-fold defaultstate="collapsed" desc="constructors">
     public ShopOrderModel()
     {
         AGENT_PREFIX = "SHOP_ORDER_AGENT";
     }
-    
+
     public ShopOrderModel(String orderNo, String description, DateTime createdDate, String partNo, String structureRevision, String routingRevision, DateTime requiredDate,
             DateTime startDate, DateTime finishDate, ShopOrderSchedulingDirection schedulingDirection, String customerNo, ShopOrderStatus shopOrderStatus, ShopOrderPriority priority, List<ShopOrderOperationModel> operaitons)
     {
@@ -77,148 +78,148 @@ public class ShopOrderModel extends DataModel
     {
         return orderNo;
     }
-    
+
     public void setOrderNo(String orderNo)
     {
         this.orderNo = orderNo;
     }
-    
+
     public String getDescription()
     {
         return description;
     }
-    
+
     public void setDescription(String description)
     {
         this.description = description;
     }
-    
+
     public DateTime getCreatedDate()
     {
         return createdDate;
     }
-    
+
     public void setCreatedDate(DateTime createdDate)
     {
         this.createdDate = createdDate;
     }
-    
+
     public String getPartNo()
     {
         return partNo;
     }
-    
+
     public void setPartNo(String partNo)
     {
         this.partNo = partNo;
     }
-    
+
     public String getStructureRevision()
     {
         return structureRevision;
     }
-    
+
     public void setStructureRevision(String structureRevision)
     {
         this.structureRevision = structureRevision;
     }
-    
+
     public String getRoutingRevision()
     {
         return routingRevision;
     }
-    
+
     public void setRoutingRevision(String routingRevision)
     {
         this.routingRevision = routingRevision;
     }
-    
+
     public DateTime getRequiredDate()
     {
         return requiredDate;
     }
-    
+
     public void setRequiredDate(DateTime requiredDate)
     {
         this.requiredDate = requiredDate;
     }
-    
+
     public DateTime getStartDate()
     {
         return startDate;
     }
-    
+
     public void setStartDate(DateTime startDate)
     {
         this.startDate = startDate;
     }
-    
+
     public DateTime getFinishDate()
     {
         return finishDate;
     }
-    
+
     public void setFinishDate(DateTime finishDate)
     {
         this.finishDate = finishDate;
     }
-    
+
     public ShopOrderSchedulingDirection getSchedulingDirection()
     {
         return schedulingDirection;
     }
-    
+
     public void setSchedulingDirection(ShopOrderSchedulingDirection schedulingDirection)
     {
         this.schedulingDirection = schedulingDirection;
     }
-    
+
     public String getCustomerNo()
     {
         return customerNo;
     }
-    
+
     public void setCustomerNo(String customerNo)
     {
         this.customerNo = customerNo;
     }
-    
+
     public ShopOrderScheduleStatus getSchedulingStatus()
     {
         return schedulingStatus;
     }
-    
+
     public void setSchedulingStatus(ShopOrderScheduleStatus schedulingStatus)
     {
         this.schedulingStatus = schedulingStatus;
     }
-    
+
     public ShopOrderStatus getShopOrderStatus()
     {
         return shopOrderStatus;
     }
-    
+
     public void setShopOrderStatus(ShopOrderStatus thisStatus)
     {
         this.shopOrderStatus = thisStatus;
     }
-    
+
     public ShopOrderPriority getPriority()
     {
         return priority;
     }
-    
+
     public void setPriority(ShopOrderPriority priority)
     {
         this.priority = priority;
     }
-    
+
     public List<ShopOrderOperationModel> getOperations()
     {
         Collections.sort(operations, (ShopOrderOperationModel o1, ShopOrderOperationModel o2) -> Integer.compare(o1.getOperationSequence(), o2.getOperationSequence()));
         return operations;
     }
-    
+
     public void setOperations(List<ShopOrderOperationModel> operations)
     {
         this.operations = operations;
@@ -226,7 +227,6 @@ public class ShopOrderModel extends DataModel
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
-    
     /**
      * get ShopOrderModel object by passing Excel or MySql table row
      *
@@ -239,10 +239,10 @@ public class ShopOrderModel extends DataModel
         // Create a DataFormatter to format and get each cell's value as String
         DataFormatter dataFormatter = new DataFormatter();
         DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
-        
+
         if (row instanceof Row)
         {
-            Row excelRow = (Row)row;
+            Row excelRow = (Row) row;
             int i = -1;
 
             this.setOrderNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
@@ -259,7 +259,7 @@ public class ShopOrderModel extends DataModel
             this.setSchedulingStatus(ShopOrderScheduleStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             this.setShopOrderStatus(ShopOrderStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             this.setPriority(ShopOrderPriority.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-            
+
             return this;
         } else
         {
@@ -284,62 +284,83 @@ public class ShopOrderModel extends DataModel
     {
         return this.AGENT_PREFIX;
     }
-    
-    
+
     /**
-     * this method is used to get a target start date for the operation by sending its primary key (operation id)
+     * this method is used to get a target start date for the operation by
+     * sending its primary key (operation id) If the precedingOperation ID is 0,
+     * get the shopOrder start date or else get the precedingOperation ID's
+     * operation finish date/time
+     *
      * @param opPrimaryKey primary key
      * @return target operation start date
      */
     public DateTime getOperationTargetStartDate(String opPrimaryKey)
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
-        int index = 0;
         DateTime opTargetStartDate = null;
         DateTime previosOpFinishDate = null;
-        
+
         for (ShopOrderOperationModel operation : currentOperations)
         {
             if (operation.getPrimaryKey().equals(opPrimaryKey))
             {
-                // first operation
-                if (index == 0)
+                // first operation sequence
+                if (operation.getPrecedingOperationId() == 0)
                 {
-                    // set the shop order created date as the opTargetStartDate for the first operation                    
-                    if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
-                    {
-                        // for finite capacity starting time of the day is 0800HRS
-                        opTargetStartDate = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "08:00:00");
-                    } 
-                    else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
-                    {
-                        // for finite capacity starting time of the day is 0000HRS
-                        opTargetStartDate = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "00:00:00");
-                    }   
+                    // set the shop order created date as the opTargetStartDate for the first operation     
+                    opTargetStartDate = getShopOrderStartDateTime();
                     break;
-                }
-                // subsequent operations
+                } // subsequent operations
                 else
                 {
-                    // the finish datetime of the previous operation should be the potential starting time for the next operation
+                    // the finish datetime of the Preceding Operation Id, should be taken as the target start date/time of the operations
+                    ShopOrderOperationModel precedingOp = currentOperations.stream().
+                            filter(rec -> rec.getPrimaryKey().equals(String.valueOf(operation.getPrecedingOperationId()))).
+                            collect(Collectors.toList()).get(0);
+                    previosOpFinishDate = DateTimeUtil.concatenateDateTime(precedingOp.getOpFinishDate(), precedingOp.getOpFinishTime());
                     opTargetStartDate = previosOpFinishDate;
                     break;
                 }
             }
-            else
-            {
-                // set the operation finish date time of this operation to be used as the potential start time for the next operation
-                previosOpFinishDate = DateTimeUtil.concatenateDateTime(operation.getOpFinishDate(), operation.getOpFinishTime());
-            }
-            
-            index++;
         }
-        
+
         return opTargetStartDate;
     }
+
+    public DateTime getShopOrderStartDateTime()
+    {
+        DateTime shopOrderStartDateTime = null;
+        if (getSchedulingDirection() == schedulingDirection.Forward)
+        {
+            if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+            {
+                // for finite capacity starting time of the day is 0800HRS
+                shopOrderStartDateTime = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "08:00:00");
+            } 
+            else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
+            {
+                // for finite capacity starting time of the day is 0000HRS
+                shopOrderStartDateTime = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "00:00:00");
+            }
+        }
+        return shopOrderStartDateTime;
+    }
     
+    public int getShopOrderTotalRunTimeDays()
+    {
+        double totalRuntTimeInHours = 0.0;
+        int totalRuntimeDays = 0;
+        for (ShopOrderOperationModel operation : getOperations())
+        {
+            totalRuntTimeInHours += operation.getWorkCenterRuntime();
+        }
+        return 0;
+    }
+
     /**
-     * this method is used to update the operations of the current shop order object by providing the operation object
+     * this method is used to update the operations of the current shop order
+     * object by providing the operation object
+     *
      * @param operationOb operation object
      */
     public void updateOperation(ShopOrderOperationModel operationOb)
@@ -352,15 +373,17 @@ public class ShopOrderModel extends DataModel
             // check if the current operationId matches with the sent operation's operationId
             // and if so break the loop, keeping the index value;
             if (operation.getPrimaryKey().equals(operationOb.getPrimaryKey()))
+            {
                 break;
-            
+            }
+
             // increment index value
             index++;
         }
-        
+
         // replace the operation in the index by the nex operation object
         currentOperations.set(index, operationOb);
-        
+
         // update the operations list
         setOperations(currentOperations);
     }
