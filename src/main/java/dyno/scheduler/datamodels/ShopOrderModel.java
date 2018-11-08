@@ -359,16 +359,62 @@ public class ShopOrderModel extends DataModel
             }
             
             // total runtime and the buffer will be reducted from the required date and calculate the start date
-            shopOrderStartDateTime = getRequiredDate().minusDays(bufferDays + runtimeInDays);
+            shopOrderStartDateTime = getRequiredDate().minusDays(runtimeInDays + bufferDays);
         }
         
         return shopOrderStartDateTime;
     }
     
+    /**
+     * Get the latest possible start date of the order in order to meet the required date
+     * @return latestPossibleStartDate
+     */
+    private DateTime getLatestOrderStartDate()
+    {
+        int runtimeInDays = getShopOrderTotalRunTimeDays();
+        return getRequiredDate().minusDays(runtimeInDays);
+    }
+    
+    /**
+     * This method is used assign the latest finish  times for operations.
+     */
+    private void assignLatestFinishTimeForOperations()
+    {
+        List<ShopOrderOperationModel> currentOperations = getOperations();
+        DateTime latestOrderStartDate = getLatestOrderStartDate();
+        DateTime latestOpEndDate = null;
+        
+        for (ShopOrderOperationModel operation : currentOperations)
+        {
+            // if the operation is the starting operation/s
+            if (operation.getPrecedingOperationId() == 0)
+            {
+                // use the latest order start date as the operation start date and add  the workCenter runtime to get the total runtime
+                latestOpEndDate = latestOrderStartDate.plusHours(operation.getWorkCenterRuntime());
+                operation.setLatestOpFinishDate(latestOpEndDate);
+                operation.setLatestOpFinishTime(latestOpEndDate);
+            }
+            // else get the previous operation latest finish date time and add the workcenter runtime
+            else
+            {
+                // the finish datetime of the Preceding Operation Id, should be taken as the target start date/time of the operations
+                ShopOrderOperationModel precedingOp = currentOperations.stream().
+                        filter(rec -> rec.getPrimaryKey().equals(String.valueOf(operation.getPrecedingOperationId()))).
+                        collect(Collectors.toList()).get(0);
+                // calculate the current op latestStartDate by concatenating the prev. op finish date and time
+                DateTime latestOpStartDate = DateTimeUtil.concatenateDateTime(precedingOp.getLatestOpFinishDate(), precedingOp.getLatestOpFinishTime());
+                
+                latestOpEndDate = latestOpStartDate.plusHours(operation.getWorkCenterRuntime());
+                operation.setLatestOpFinishDate(latestOpEndDate);
+                operation.setLatestOpFinishTime(latestOpEndDate);
+            }
+        }
+    }
+    
     
     public int getShopOrderTotalRunTimeDays()
     {
-        double totalRuntTimeInHours = 0.0;
+        int totalRuntTimeInHours = 0;
         int totalRuntimeDays = 0;
         // calculate the total number of runtime hours 
         totalRuntTimeInHours = getOperations().stream().map((operation) -> operation.getWorkCenterRuntime()).reduce(totalRuntTimeInHours, (accumulator, _item) -> accumulator + _item);
@@ -376,12 +422,12 @@ public class ShopOrderModel extends DataModel
         // for finite capacity, get the number of runtime in days by dividing the no. of hours by 8
         if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
-            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 8));
+            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 8.0));
         }
         // for infinite capacity, get the number of runtime in days by dividing the no. of hours by 24
         else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
         {
-            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 24));
+            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 24.0));
         }
         
         return totalRuntimeDays;

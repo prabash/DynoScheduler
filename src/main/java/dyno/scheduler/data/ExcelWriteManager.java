@@ -170,16 +170,19 @@ public class ExcelWriteManager extends DataWriteManager
                                     case 2: cell.setCellValue(shopOrderOperation.getOperationNo()); break;
                                     case 3: cell.setCellValue(shopOrderOperation.getOperationDescription()); break;
                                     case 4: cell.setCellValue(shopOrderOperation.getOperationSequence()); break;
-                                    case 5: cell.setCellValue(shopOrderOperation.getWorkCenterRuntime()); break;
-                                    case 6: cell.setCellValue(shopOrderOperation.getLaborRunTime()); break;
-                                    case 7: cell.setCellValue(shopOrderOperation.getOpStartDate().toString(dateFormat)); break;
-                                    case 8: cell.setCellValue(shopOrderOperation.getOpStartTime().toString(timeFormat)); break;
-                                    case 9: cell.setCellValue(shopOrderOperation.getOpFinishDate().toString(dateFormat)); break;
-                                    case 10: cell.setCellValue(shopOrderOperation.getOpFinishTime().toString(timeFormat)); break;
-                                    case 11: cell.setCellValue(shopOrderOperation.getQuantity()); break;
-                                    case 12: cell.setCellValue(shopOrderOperation.getWorkCenterType()); break;
-                                    case 13: cell.setCellValue(shopOrderOperation.getWorkCenterNo()); break;
-                                    case 14: cell.setCellValue(shopOrderOperation.getOperationStatus().toString()); break;
+                                    case 5: cell.setCellValue(shopOrderOperation.getPrecedingOperationId()); break;
+                                    case 6: cell.setCellValue(shopOrderOperation.getWorkCenterRuntimeFactor()); break;
+                                    case 7: cell.setCellValue(shopOrderOperation.getWorkCenterRuntime()); break;
+                                    case 8: cell.setCellValue(shopOrderOperation.getLaborRuntimeFactor()); break;
+                                    case 9: cell.setCellValue(shopOrderOperation.getLaborRunTime()); break;
+                                    case 10: cell.setCellValue(shopOrderOperation.getOpStartDate().toString(dateFormat)); break;
+                                    case 11: cell.setCellValue(shopOrderOperation.getOpStartTime().toString(timeFormat)); break;
+                                    case 12: cell.setCellValue(shopOrderOperation.getOpFinishDate().toString(dateFormat)); break;
+                                    case 13: cell.setCellValue(shopOrderOperation.getOpFinishTime().toString(timeFormat)); break;
+                                    case 14: cell.setCellValue(shopOrderOperation.getQuantity()); break;
+                                    case 15: cell.setCellValue(shopOrderOperation.getWorkCenterType()); break;
+                                    case 16: cell.setCellValue(shopOrderOperation.getWorkCenterNo()); break;
+                                    case 17: cell.setCellValue(shopOrderOperation.getOperationStatus().toString()); break;
                                     default: break;
                                 }
                             }

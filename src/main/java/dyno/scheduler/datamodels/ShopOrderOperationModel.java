@@ -33,14 +33,16 @@ public class ShopOrderOperationModel extends DataModel
     private String operationDescription;
     private int operationSequence;
     private int precedingOperationId;
-    private double workCenterRuntimeFactor;
-    private double workCenterRuntime;
-    private double laborRuntimeFactor;
-    private double laborRunTime;
+    private int workCenterRuntimeFactor;
+    private int workCenterRuntime;
+    private int laborRuntimeFactor;
+    private int laborRunTime;
     private DateTime opStartDate;
     private DateTime opStartTime;
     private DateTime opFinishDate;
     private DateTime opFinishTime;
+    private DateTime latestOpFinishDate;
+    private DateTime latestOpFinishTime;
     private int quantity;
     private OperationStatus operationStatus;
 
@@ -51,7 +53,7 @@ public class ShopOrderOperationModel extends DataModel
     public ShopOrderOperationModel() { }
     
     public ShopOrderOperationModel(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, int operationSequence,
-                double workCenterRunTime, double laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, OperationStatus operationStatus)
+                int workCenterRunTime, int laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, OperationStatus operationStatus)
     {
         this.orderNo = orderNo;
         this.operationId = operationId;
@@ -157,17 +159,17 @@ public class ShopOrderOperationModel extends DataModel
         return workCenterRuntimeFactor;
     }
 
-    public void setWorkCenterRuntimeFactor(double workCenterRuntimeFactor)
+    public void setWorkCenterRuntimeFactor(int workCenterRuntimeFactor)
     {
         this.workCenterRuntimeFactor = workCenterRuntimeFactor;
     }
 
-    public double getWorkCenterRuntime()
+    public int getWorkCenterRuntime()
     {
         return workCenterRuntime;
     }
 
-    public void setWorkCenterRuntime(double workCenterRuntime)
+    public void setWorkCenterRuntime(int workCenterRuntime)
     {
         this.workCenterRuntime = workCenterRuntime;
     }
@@ -177,7 +179,7 @@ public class ShopOrderOperationModel extends DataModel
         return laborRuntimeFactor;
     }
 
-    public void setLaborRuntimeFactor(double laborRuntimeFactor)
+    public void setLaborRuntimeFactor(int laborRuntimeFactor)
     {
         this.laborRuntimeFactor = laborRuntimeFactor;
     }
@@ -187,7 +189,7 @@ public class ShopOrderOperationModel extends DataModel
         return laborRunTime;
     }
 
-    public void setLaborRunTime(double laborRunTime)
+    public void setLaborRunTime(int laborRunTime)
     {
         this.laborRunTime = laborRunTime;
     }
@@ -232,6 +234,26 @@ public class ShopOrderOperationModel extends DataModel
         this.opFinishTime = opFinishTime;
     }
 
+    public DateTime getLatestOpFinishDate()
+    {
+        return latestOpFinishDate;
+    }
+
+    public void setLatestOpFinishDate(DateTime latestOpFinishDate)
+    {
+        this.latestOpFinishDate = latestOpFinishDate;
+    }
+
+    public DateTime getLatestOpFinishTime()
+    {
+        return latestOpFinishTime;
+    }
+
+    public void setLatestOpFinishTime(DateTime latestOpFinishTime)
+    {
+        this.latestOpFinishTime = latestOpFinishTime;
+    }
+    
     public int getQuantity()
     {
         return quantity;
@@ -282,10 +304,10 @@ public class ShopOrderOperationModel extends DataModel
                 this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
                 this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setPrecedingOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-                this.setWorkCenterRuntimeFactor(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-                this.setWorkCenterRuntime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-                this.setLaborRuntimeFactor(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
-                this.setLaborRunTime(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setWorkCenterRuntimeFactor(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setWorkCenterRuntime(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setLaborRuntimeFactor(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setLaborRunTime(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOpStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
                 this.setOpStartTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
                 this.setOpFinishDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));

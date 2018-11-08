@@ -180,9 +180,9 @@ class BStartOperationScheduler extends CyclicBehaviour
     // The list of known workcenter agents
     private AID[] workCenterAgents;
     
-    public BStartOperationScheduler(SOTestAgent curreAgent)
+    public BStartOperationScheduler(SOTestAgent currentAgent)
     {
-        this.currentAgent = curreAgent;
+        this.currentAgent = currentAgent;
     }
     
     @Override
