@@ -5,7 +5,10 @@
  */
 package dyno.scheduler.restservice;
 
+import dyno.scheduler.data.DataReader;
 import dyno.scheduler.datamodels.DataModelEnums;
+import dyno.scheduler.datamodels.ShopOrderModel;
+import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,25 +25,80 @@ import org.joda.time.DateTime;
 @Path("/shop-order")
 public class ShopOrderService implements IDynoService
 {
+
     @Override
     public Response get()
     {
+        List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
+
         List<ShopOrderModelJson> list = new ArrayList<>();
         GenericEntity<List<ShopOrderModelJson>> entity;
-        
-        List<ShopOrderOperationModelJson> operations = new ArrayList<ShopOrderOperationModelJson>();
-        ShopOrderOperationModelJson operation = new ShopOrderOperationModelJson("S01", 1, 1, "WC1", "Milling", "Test", 0, 1, 0, DateTime.now(), DateTime.now(), DateTime.now().plusDays(2), DateTime.now().plusDays(2), 0, DataModelEnums.OperationStatus.Created);
-        operations.add(operation);
-        
-        list.add(new ShopOrderModelJson("SO1", "Test1", DateTime.now().toString(DateTimeUtil.getDateTimeFormatJson()), "P1", "SR1", "RR1", DateTime.now(), DateTime.now(), DateTime.now(), DataModelEnums.ShopOrderSchedulingDirection.Backward, "C1", DataModelEnums.ShopOrderStatus.Created, DataModelEnums.ShopOrderPriority.Trivial, operations));
-        list.add(new ShopOrderModelJson("SO2", "Test2", DateTime.now().toString(DateTimeUtil.getDateTimeFormatJson()), "P2", "SR2", "RR2", DateTime.now(), DateTime.now(), DateTime.now(), DataModelEnums.ShopOrderSchedulingDirection.Backward, "C2", DataModelEnums.ShopOrderStatus.Created, DataModelEnums.ShopOrderPriority.Trivial, operations));
-        
+
+        for (ShopOrderModel shopOrder : shopOrders)
+        {
+            List<ShopOrderOperationModelJson> operations = new ArrayList<ShopOrderOperationModelJson>();
+            for (ShopOrderOperationModel operation : shopOrder.getOperations())
+            {
+
+                //ShopOrderOperationModelJson operation = new ShopOrderOperationModelJson("S01", 1, 1, "WC1", "Milling", "Test", 0, 1, 0, DateTime.now(), DateTime.now(), DateTime.now().plusDays(2), DateTime.now().plusDays(2), 0, DataModelEnums.OperationStatus.Created);
+                DateTime opStartDateTime = null;
+                DateTime opFinishDateTime = null;
+                
+                if(operation.getOpStartDate() != null && operation.getOpStartTime() != null)
+                {
+                    opStartDateTime = DateTimeUtil.concatenateDateTime(operation.getOpStartDate(), operation.getOpStartTime());
+                }
+                if(operation.getOpFinishDate() != null && operation.getOpFinishTime() != null)
+                {
+                    opFinishDateTime = DateTimeUtil.concatenateDateTime(operation.getOpFinishDate(), operation.getOpFinishTime());
+                }
+               
+                ShopOrderOperationModelJson shopOrderOpJsonObj = new ShopOrderOperationModelJson(
+                        operation.getOrderNo(), 
+                        operation.getOperationId(), 
+                        operation.getOperationNo(), 
+                        operation.getWorkCenterNo(), 
+                        operation.getWorkCenterType(), 
+                        operation.getOperationDescription(), 
+                        operation.getOperationSequence(), 
+                        operation.getWorkCenterRuntime(), 
+                        operation.getLaborRunTime(), 
+                        opStartDateTime != null? opStartDateTime.toString(DateTimeUtil.getDateTimeFormatJson()) : "", 
+                        opFinishDateTime != null? opFinishDateTime.toString(DateTimeUtil.getDateTimeFormatJson()) : "",
+                        0, 
+                        DataModelEnums.OperationStatus.Created);
+                operations.add(shopOrderOpJsonObj);
+            }
+
+            ShopOrderModelJson shopOrderJsonObj = new ShopOrderModelJson(
+                    shopOrder.getOrderNo(),
+                    shopOrder.getDescription(),
+                    shopOrder.getCreatedDate()!= null? shopOrder.getCreatedDate().toString(DateTimeUtil.getDateTimeFormatJson()) : "", 
+                    shopOrder.getPartNo(),
+                    shopOrder.getStructureRevision(),
+                    shopOrder.getRoutingRevision(),
+                    shopOrder.getRequiredDate()!= null? shopOrder.getRequiredDate().toString(DateTimeUtil.getDateTimeFormatJson()) : "", 
+                    shopOrder.getStartDate()!= null? shopOrder.getStartDate().toString(DateTimeUtil.getDateTimeFormatJson()) : "", 
+                    shopOrder.getFinishDate()!= null? shopOrder.getFinishDate().toString(DateTimeUtil.getDateTimeFormatJson()) : "", 
+                    shopOrder.getSchedulingDirection().toString(),
+                    shopOrder.getCustomerNo(),
+                    shopOrder.getShopOrderStatus().toString(),
+                    shopOrder.getPriority().toString(), 
+                    operations);
+            
+            list.add(shopOrderJsonObj);
+        }
+//
+//        list.add(new ShopOrderModelJson("SO1", "Test1", DateTime.now().toString(DateTimeUtil.getDateTimeFormatJson()), "P1", "SR1", "RR1", DateTime.now(), DateTime.now(), DateTime.now(), DataModelEnums.ShopOrderSchedulingDirection.Backward, "C1", DataModelEnums.ShopOrderStatus.Created, DataModelEnums.ShopOrderPriority.Trivial, operations));
+//        list.add(new ShopOrderModelJson("SO2", "Test2", DateTime.now().toString(DateTimeUtil.getDateTimeFormatJson()), "P2", "SR2", "RR2", DateTime.now(), DateTime.now(), DateTime.now(), DataModelEnums.ShopOrderSchedulingDirection.Backward, "C2", DataModelEnums.ShopOrderStatus.Created, DataModelEnums.ShopOrderPriority.Trivial, operations));
+
         entity = new GenericEntityImpl(list);
         return Response.ok(entity).build();
-    }    
+    }
 
     private static class GenericEntityImpl extends GenericEntity<List<ShopOrderModelJson>>
     {
+
         public GenericEntityImpl(List<ShopOrderModelJson> entity)
         {
             super(entity);
@@ -51,6 +109,7 @@ public class ShopOrderService implements IDynoService
 @XmlRootElement
 class ShopOrderModelJson
 {
+
     public String orderNo;
     public String description;
     public String createdDate;
@@ -66,9 +125,9 @@ class ShopOrderModelJson
     public String shopOrderStatus;
     public String priority;
     public List<ShopOrderOperationModelJson> operations;
-    
-     public ShopOrderModelJson(String orderNo, String description, String createdDate, String partNo, String structureRevision, String routingRevision, DateTime requiredDate,
-            DateTime startDate, DateTime finishDate, DataModelEnums.ShopOrderSchedulingDirection schedulingDirection, String customerNo, DataModelEnums.ShopOrderStatus shopOrderStatus, DataModelEnums.ShopOrderPriority priority, List<ShopOrderOperationModelJson> operations)
+
+    public ShopOrderModelJson(String orderNo, String description, String createdDate, String partNo, String structureRevision, String routingRevision, String requiredDate,
+            String startDate, String finishDate, String schedulingDirection, String customerNo, String shopOrderStatus, String priority, List<ShopOrderOperationModelJson> operations)
     {
         this.orderNo = orderNo;
         this.description = description;
@@ -76,22 +135,25 @@ class ShopOrderModelJson
         this.partNo = partNo;
         this.structureRevision = structureRevision;
         this.routingRevision = routingRevision;
-        this.requiredDate = "2017-04-01T08:00:00";
-        this.startDate = "2017-04-01T08:00:00";
-        this.finishDate = "2017-04-01T08:00:00";
-        this.schedulingDirection = schedulingDirection.toString();
+        this.requiredDate = requiredDate;
+        this.startDate = startDate;
+        this.finishDate = finishDate;
+        this.schedulingDirection = schedulingDirection;
         this.customerNo = customerNo;
-        this.shopOrderStatus = shopOrderStatus.toString();
-        this.priority = priority.toString();
+        this.shopOrderStatus = shopOrderStatus;
+        this.priority = priority;
         this.operations = operations;
     }
-    
-    public ShopOrderModelJson() {}
+
+    public ShopOrderModelJson()
+    {
+    }
 }
 
 @XmlRootElement
 class ShopOrderOperationModelJson
 {
+
     public String orderNo;
     public int operationId;
     public int operationNo;
@@ -104,19 +166,19 @@ class ShopOrderOperationModelJson
     public int workCenterRuntime;
     public int laborRuntimeFactor;
     public int laborRunTime;
-    public String opStartDate;
-    public String opStartTime;
-    public String opFinishDate;
-    public String opFinishTime;
+    public String opStartDateTime;
+    public String opFinishDateTime;
     public String latestOpFinishDate;
     public String latestOpFinishTime;
     public int quantity;
     public DataModelEnums.OperationStatus operationStatus;
-    
-    public ShopOrderOperationModelJson() {}
-    
+
+    public ShopOrderOperationModelJson()
+    {
+    }
+
     public ShopOrderOperationModelJson(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, int operationSequence,
-                int workCenterRunTime, int laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, DataModelEnums.OperationStatus operationStatus)
+            int workCenterRunTime, int laborRunTime, String opStartDateTime, String opFinishDateTime, int quantity, DataModelEnums.OperationStatus operationStatus)
     {
         this.orderNo = orderNo;
         this.operationId = operationId;
@@ -127,9 +189,7 @@ class ShopOrderOperationModelJson
         this.operationSequence = operationSequence;
         this.workCenterRuntime = workCenterRunTime;
         this.laborRunTime = laborRunTime;
-        this.opStartDate = "2017-04-01T08:00:00";
-        this.opStartTime = "2017-04-01T08:00:00";
-        this.opFinishDate = "2017-04-01T08:00:00";
-        this.opFinishTime = "2017-04-01T08:00:00";
+        this.opStartDateTime = opStartDateTime;
+        this.opFinishDateTime = opFinishDateTime;
     }
 }

@@ -174,7 +174,7 @@ public class ShopOrderOperationModel extends DataModel
         this.workCenterRuntime = workCenterRuntime;
     }
 
-    public double getLaborRuntimeFactor()
+    public int getLaborRuntimeFactor()
     {
         return laborRuntimeFactor;
     }
@@ -184,7 +184,7 @@ public class ShopOrderOperationModel extends DataModel
         this.laborRuntimeFactor = laborRuntimeFactor;
     }
 
-    public double getLaborRunTime()
+    public int getLaborRunTime()
     {
         return laborRunTime;
     }
@@ -290,6 +290,7 @@ public class ShopOrderOperationModel extends DataModel
         // Create a DataFormatter to format and get each cell's value as String
         DataFormatter dataFormatter = new DataFormatter();
         DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+        DateTimeFormatter timeFormat = DateTimeUtil.getTimeFormat();
 
         if (row instanceof Row)
         {
@@ -309,9 +310,9 @@ public class ShopOrderOperationModel extends DataModel
                 this.setLaborRuntimeFactor(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setLaborRunTime(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOpStartDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
-                this.setOpStartTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+                this.setOpStartTime(excelRow.getCell(++i) == null ? null : timeFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
                 this.setOpFinishDate(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
-                this.setOpFinishTime(excelRow.getCell(++i) == null ? null : dateFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
+                this.setOpFinishTime(excelRow.getCell(++i) == null ? null : timeFormat.parseDateTime(dataFormatter.formatCellValue(excelRow.getCell(i))));
                 this.setQuantity(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setWorkCenterType(dataFormatter.formatCellValue(excelRow.getCell(++i)));
                 this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
