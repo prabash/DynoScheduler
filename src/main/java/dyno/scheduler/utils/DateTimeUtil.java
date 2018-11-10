@@ -21,6 +21,7 @@ public class DateTimeUtil
     private static final String DATE_FORMAT = "dd/MM/yyyy";
     private static final String TIME_FORMAT = "HH:mm:ss";
     private static final String DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    private static final String DATE_TIME_FORMAT_JSON = "yyyy-MM-dd HH:mm:ss";
     
     public static DateTimeFormatter getDateFormat()
     {
@@ -35,6 +36,11 @@ public class DateTimeUtil
     public static DateTimeFormatter getDateTimeFormat()
     {
         return DateTimeFormat.forPattern(DATE_TIME_FORMAT);
+    }
+
+    public static DateTimeFormatter getDateTimeFormatJson()
+    {
+        return DateTimeFormat.forPattern(DATE_TIME_FORMAT_JSON);
     }
     
     public static DateTime concatenateDateTime(String date, String time)
