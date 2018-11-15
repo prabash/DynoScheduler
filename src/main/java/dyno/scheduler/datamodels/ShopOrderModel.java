@@ -335,16 +335,7 @@ public class ShopOrderModel extends DataModel
         DateTime shopOrderStartDateTime = null;
         if (getSchedulingDirection() == ShopOrderSchedulingDirection.Forward)
         {
-            if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
-            {
-                // for finite capacity starting time of the day is 0800HRS
-                shopOrderStartDateTime = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "08:00:00");
-            } 
-            else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
-            {
-                // for finite capacity starting time of the day is 0000HRS
-                shopOrderStartDateTime = DateTimeUtil.concatenateDateTime(getCreatedDate().toString(DateTimeUtil.getDateFormat()), "00:00:00");
-            }
+            shopOrderStartDateTime = getStartTimeOnCapacityType(getCreatedDate());
         }
         else if (getSchedulingDirection() == ShopOrderSchedulingDirection.Backward)
         {
@@ -359,7 +350,8 @@ public class ShopOrderModel extends DataModel
             }
             
             // total runtime and the buffer will be reducted from the required date and calculate the start date
-            shopOrderStartDateTime = getRequiredDate().minusDays(runtimeInDays + bufferDays);
+            DateTime shopOrderStartDate = getRequiredDate().minusDays(runtimeInDays + bufferDays);
+            shopOrderStartDateTime = getStartTimeOnCapacityType(shopOrderStartDate);
         }
         
         return shopOrderStartDateTime;
@@ -372,27 +364,49 @@ public class ShopOrderModel extends DataModel
     private DateTime getLatestOrderStartDate()
     {
         int runtimeInDays = getShopOrderTotalRunTimeDays();
-        return getRequiredDate().minusDays(runtimeInDays);
+        DateTime shopOrderStartDate = getRequiredDate().minusDays(runtimeInDays);
+        return getStartTimeOnCapacityType(shopOrderStartDate);
+    }
+    
+    /**
+     * this will concatenate a start-time to a given date based on the capacity type
+     * @param date the date to which the time should be concatenated
+     * @return 
+     */
+    private DateTime getStartTimeOnCapacityType(DateTime date)
+    {
+        // Calcualate the start datetime depending on the capacity type
+        if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+        {
+            // for finite capacity starting time of the day is 0800HRS
+            return DateTimeUtil.concatenateDateTime(date.toString(DateTimeUtil.getDateFormat()), "08:00:00");
+        } 
+        else
+        {
+            // for finite capacity starting time of the day is 0000HRS
+            return DateTimeUtil.concatenateDateTime(date.toString(DateTimeUtil.getDateFormat()), "00:00:00");
+        }
     }
     
     /**
      * This method is used assign the latest finish  times for operations.
      */
-    private void assignLatestFinishTimeForOperations()
+    public void assignLatestFinishTimeForOperations()
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
         DateTime latestOrderStartDate = getLatestOrderStartDate();
-        DateTime latestOpEndDate = null;
+        DateTime latestOpEndDateTime = null;
         
         for (ShopOrderOperationModel operation : currentOperations)
         {
             // if the operation is the starting operation/s
             if (operation.getPrecedingOperationId() == 0)
             {
-                // use the latest order start date as the operation start date and add  the workCenter runtime to get the total runtime
-                latestOpEndDate = latestOrderStartDate.plusHours(operation.getWorkCenterRuntime());
-                operation.setLatestOpFinishDate(latestOpEndDate);
-                operation.setLatestOpFinishTime(latestOpEndDate);
+                // increment the order start datetime (starting date time of the first operation) by the first operation's work center run time
+                latestOpEndDateTime = WorkCenterOpAllocModel.incrementTime(latestOrderStartDate, operation.getWorkCenterRuntime());
+                
+                operation.setLatestOpFinishDate(latestOpEndDateTime);
+                operation.setLatestOpFinishTime(latestOpEndDateTime);
             }
             // else get the previous operation latest finish date time and add the workcenter runtime
             else
@@ -402,13 +416,17 @@ public class ShopOrderModel extends DataModel
                         filter(rec -> rec.getPrimaryKey().equals(String.valueOf(operation.getPrecedingOperationId()))).
                         collect(Collectors.toList()).get(0);
                 // calculate the current op latestStartDate by concatenating the prev. op finish date and time
-                DateTime latestOpStartDate = DateTimeUtil.concatenateDateTime(precedingOp.getLatestOpFinishDate(), precedingOp.getLatestOpFinishTime());
+                DateTime previousOpLatestFinishDateTime = DateTimeUtil.concatenateDateTime(precedingOp.getLatestOpFinishDate(), precedingOp.getLatestOpFinishTime());
                 
-                latestOpEndDate = latestOpStartDate.plusHours(operation.getWorkCenterRuntime());
-                operation.setLatestOpFinishDate(latestOpEndDate);
-                operation.setLatestOpFinishTime(latestOpEndDate);
+                 // increment the previous operation latest finish datetime by current operation work center runtime.
+                latestOpEndDateTime = WorkCenterOpAllocModel.incrementTime(previousOpLatestFinishDateTime, operation.getWorkCenterRuntime());
+                operation.setLatestOpFinishDate(latestOpEndDateTime);
+                operation.setLatestOpFinishTime(latestOpEndDateTime);
             }
+            System.out.println("SO : " + operation.getOrderNo() + " Op No : " + operation.getOperationId() + " Latest Op End Date : " +
+                    DateTimeUtil.concatenateDateTime(operation.getLatestOpFinishDate(), operation.getLatestOpFinishTime()).toString(DateTimeUtil.getDateTimeFormat()));
         }
+        System.out.println("Completed assigning latest finish times for operations");
     }
     
     

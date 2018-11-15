@@ -41,6 +41,7 @@ public class DataReader
                         .filter(op -> op.getOrderNo().equals(shopOrder.getOrderNo()))
                         .collect(Collectors.toList());
                 shopOrder.setOperations(relatedOperations);
+                shopOrder.assignLatestFinishTimeForOperations();
             });
         }
         return shopOrderDetails;

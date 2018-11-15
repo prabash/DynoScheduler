@@ -224,7 +224,26 @@ public class WorkCenterOpAllocModel extends DataModel
         return returnTimeBlockParam;
     }
     
+    /***
+     * This method is used to increment a given datetime by a given number of hours
+     * @param startingDateTime dateTime that should be incremented
+     * @param incrementByHours the no. of hours that should be incremented
+     * @return incrementedDateTime
+     */
+    public static DateTime incrementTime(DateTime startingDateTime, int incrementByHours)
+    {
+        String timeBlockName = getTimeBlockName(startingDateTime.toLocalTime());
+                
+        // use the start date and add  the incrementByHours
+        HashMap<String, Object>  incrementDetails = incrementTimeBlock(timeBlockName, incrementByHours);
+        // from the return value use the time block name and get the time after incrementing
+        LocalTime latestOpEndTime = getTimeBlockValue(incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
+        // use the number of days added (if any) and add it to the starting date.
+        DateTime latestOpEndDate = startingDateTime.plusDays(Integer.parseInt(incrementDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
 
+        return DateTimeUtil.concatenateDateTime(latestOpEndDate.toLocalDate(), latestOpEndTime);
+    }
+    
     /**
      * this method is used to increment a given time block value by an integer.
      * if the timeblock TB4 of a given day is incremented by 13, the
@@ -233,15 +252,15 @@ public class WorkCenterOpAllocModel extends DataModel
      * TB1 after 2 days (4 + 8 + "1"). Therefore returns newTimeBlock value as
      * T1 and daysAdded as 2 in a list
      *
-     * @param timeBlock current time block
+     * @param timeBlockName current time block
      * @param incrementBy the value to be incremented by
      * @return a list: first element is the new Time block name, second element
      * is the daysAdded after incrementing
      */
-    public static HashMap<String, Object> incrementTimeBlock(String timeBlock, int incrementBy)
+    public static HashMap<String, Object> incrementTimeBlock(String timeBlockName, int incrementBy)
     {
         HashMap<String, Object> returnList = new HashMap<>();
-        int currentTimeBlock = Integer.parseInt(timeBlock.substring(2));
+        int currentTimeBlock = Integer.parseInt(timeBlockName.substring(2));
         int newTimeBlock = currentTimeBlock + incrementBy;
         int daysAdded = 0;
 
