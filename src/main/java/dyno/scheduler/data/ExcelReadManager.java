@@ -51,7 +51,7 @@ public class ExcelReadManager extends DataReadManager
                 {
                     return getWorkCenterData(excelSheetName);
                 }
-                case WorkCenterAllocation:
+                case WorkCenterAllocationFinite:
                 {
                     return getWorkCenterOpAllocData(excelSheetName);
                 }

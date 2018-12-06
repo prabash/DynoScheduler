@@ -18,7 +18,7 @@ public class DataWriter
 {
     public static boolean updateWorkCenterAllocData(List<WorkCenterOpAllocModel> workCenterOpAllocations)
     {
-        return DataFactory.getDataWriteManagerInstance().updateData(workCenterOpAllocations, DataModelEnums.DataModelType.WorkCenterAllocation);
+        return DataFactory.getDataWriteManagerInstance().updateData(workCenterOpAllocations, DataModelEnums.DataModelType.WorkCenterAllocationFinite);
     }
     
     public static boolean updateWorkShopOrderOperationData(List<ShopOrderOperationModel> shopOrderOperations)

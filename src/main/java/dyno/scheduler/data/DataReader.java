@@ -91,6 +91,6 @@ public class DataReader
 
     private static void populateWorkCenterOpAllocDetails()
     {
-        workCenterOpAllocDetails = (List<WorkCenterOpAllocModel>) DataFactory.getDataReadManagerInstance().getData(DataModelEnums.DataModelType.WorkCenterAllocation);
+        workCenterOpAllocDetails = (List<WorkCenterOpAllocModel>) DataFactory.getDataReadManagerInstance().getData(DataModelEnums.DataModelType.WorkCenterAllocationFinite);
     }
 }

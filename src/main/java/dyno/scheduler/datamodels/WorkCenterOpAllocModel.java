@@ -9,6 +9,9 @@ import dyno.scheduler.data.DataEnums;
 import dyno.scheduler.datamodels.DataModelEnums.TimeBlockParamType;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
+import dyno.scheduler.utils.LogUtil;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
@@ -24,9 +27,20 @@ public class WorkCenterOpAllocModel extends DataModel
 {
     // <editor-fold desc="properties"> 
 
+    private int id;
     private String workCenterNo;
     private DateTime operationDate;
     private HashMap<String, Integer> timeBlockAllocation;
+
+    public int getId()
+    {
+        return id;
+    }
+
+    public void setId(int id)
+    {
+        this.id = id;
+    }
 
     public String getWorkCenterNo()
     {
@@ -69,7 +83,6 @@ public class WorkCenterOpAllocModel extends DataModel
     }
 
     // </editor-fold>
-    
     // <editor-fold desc="overriden methods"> 
     /**
      * get WorkCenterOpAllocModel object by passing Excel or MySql table row
@@ -80,13 +93,15 @@ public class WorkCenterOpAllocModel extends DataModel
     @Override
     public WorkCenterOpAllocModel getModelObject(Object row)
     {
-        // Create a DataFormatter to format and get each cell's value as String
-        DataFormatter dataFormatter = new DataFormatter();
-        DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
         int noOfTimeBlocks = 8;
 
         if (row instanceof Row)
         {
+
+            // Create a DataFormatter to format and get each cell's value as String
+            DataFormatter dataFormatter = new DataFormatter();
+            DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+
             Row excelRow = (Row) row;
             int i = -1;
 
@@ -105,12 +120,29 @@ public class WorkCenterOpAllocModel extends DataModel
                 }
                 timeBlockId++;
             }
-            return this;
-
         } else
         {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.    
+            ResultSet resultSetRow = (ResultSet) row;
+            int i = 0;
+            try
+            {
+                this.setId(resultSetRow.getInt(++i));
+                this.setWorkCenterNo(resultSetRow.getString(++i));
+                this.setOperationDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setTimeBlockAllocation(new HashMap<>());
+                int timeBlockId = 1;
+                for (int j = ++i; j < i + noOfTimeBlocks; j++)
+                {
+                    this.addToTimeBlockAllocation("TB" + timeBlockId, resultSetRow.getInt(j));
+                    timeBlockId++;
+                }
+            } catch (SQLException ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            }
         }
+        return this;
+
     }
 
     @Override
@@ -127,20 +159,20 @@ public class WorkCenterOpAllocModel extends DataModel
     }
 
     // </editor-fold> 
-    
     public static LocalTime getTimeBlockValue(String timeBlock)
     {
-        return (LocalTime)getTimeBlockDetail(timeBlock, TimeBlockParamType.TimeBlockValue);
+        return (LocalTime) getTimeBlockDetail(timeBlock, TimeBlockParamType.TimeBlockValue);
     }
 
     public static String getTimeBlockName(LocalTime timeValue)
     {
         return getTimeBlockDetail(timeValue, TimeBlockParamType.TimeBlockName).toString();
     }
-    
+
     /**
-     * this method is used to get the timeBlockValue by giving the timeBlockName or 
-     * get the timeBlockName by giving the timeBlockValue
+     * this method is used to get the timeBlockValue by giving the timeBlockName
+     * or get the timeBlockName by giving the timeBlockValue
+     *
      * @param timeBlockParam
      * @param returnType the type of the value to be returned
      * @return timeBlockValue or timeBlockName depending on the returnType value
@@ -153,20 +185,20 @@ public class WorkCenterOpAllocModel extends DataModel
         LocalTime currentTimeValue;
         LocalTime intervalStartTime = null;
         String currentTimeBlockName;
-        
+
         // if finite capacity, set the required parameters
         if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
             // interval start time is 12PM for the finite capacity
             intervalStartTime = LocalTime.parse("12:00:00", DateTimeUtil.getTimeFormat());
-            
+
             // when return type is timeBlockName (parameter type would be the timeblockValue of LocalTime)
             // if the time value equals to the interval start time, skip it by adding an hour to get the next working timeblock
             if (returnType == TimeBlockParamType.TimeBlockName)
             {
                 if (timeBlockParam.equals(intervalStartTime))
                 {
-                    timeBlockParam = ((LocalTime)timeBlockParam).plusHours(1);
+                    timeBlockParam = ((LocalTime) timeBlockParam).plusHours(1);
                 }
             }
 
@@ -176,8 +208,7 @@ public class WorkCenterOpAllocModel extends DataModel
             currentTimeValue = LocalTime.parse("08:00:00", DateTimeUtil.getTimeFormat());
             // initially the currentTimeBlockValue will be the starting timeblock (TB1), then it will increment one by one
             currentTimeBlockName = "TB1";
-        }
-        // else infinite capacity, set the required parameters
+        } // else infinite capacity, set the required parameters
         else
         {
             // there are 24 hours in finite capacity
@@ -187,7 +218,7 @@ public class WorkCenterOpAllocModel extends DataModel
             // initially the currentTimeBlockValue will be the starting timeblock (TB1), then it will increment one by one
             currentTimeBlockName = "TB1";
         }
-            
+
         for (int i = 0; i < noOfhours; i++)
         {
             // check if the currentTimeValue is equals to the interval value and if so, skip the iteration of the loop
@@ -197,7 +228,7 @@ public class WorkCenterOpAllocModel extends DataModel
                 currentTimeValue = currentTimeValue.plusHours(1);
                 continue;
             }
-            
+
             // if return type is TimeBlockName, we should compare timeBlockValues and get the respective timeBlockName
             if (returnType == TimeBlockParamType.TimeBlockName)
             {
@@ -205,8 +236,7 @@ public class WorkCenterOpAllocModel extends DataModel
                 {
                     returnTimeBlockParam = currentTimeBlockName;
                 }
-            }
-            // if return type is TimeBlockValue, we should compare timeBlockName and get the respective timeBlockValue
+            } // if return type is TimeBlockValue, we should compare timeBlockName and get the respective timeBlockValue
             else if (returnType == TimeBlockParamType.TimeBlockValue)
             {
                 if (timeBlockParam.equals(currentTimeBlockName))
@@ -223,9 +253,12 @@ public class WorkCenterOpAllocModel extends DataModel
         }
         return returnTimeBlockParam;
     }
-    
-    /***
-     * This method is used to increment a given datetime by a given number of hours
+
+    /**
+     * *
+     * This method is used to increment a given datetime by a given number of
+     * hours
+     *
      * @param startingDateTime dateTime that should be incremented
      * @param incrementByHours the no. of hours that should be incremented
      * @return incrementedDateTime
@@ -233,9 +266,9 @@ public class WorkCenterOpAllocModel extends DataModel
     public static DateTime incrementTime(DateTime startingDateTime, int incrementByHours)
     {
         String timeBlockName = getTimeBlockName(startingDateTime.toLocalTime());
-                
+
         // use the start date and add  the incrementByHours
-        HashMap<String, Object>  incrementDetails = incrementTimeBlock(timeBlockName, incrementByHours);
+        HashMap<String, Object> incrementDetails = incrementTimeBlock(timeBlockName, incrementByHours);
         // from the return value use the time block name and get the time after incrementing
         LocalTime latestOpEndTime = getTimeBlockValue(incrementDetails.get(GeneralSettings.getStrTimeBlockName()).toString());
         // use the number of days added (if any) and add it to the starting date.
@@ -243,7 +276,7 @@ public class WorkCenterOpAllocModel extends DataModel
 
         return DateTimeUtil.concatenateDateTime(latestOpEndDate.toLocalDate(), latestOpEndTime);
     }
-    
+
     /**
      * this method is used to increment a given time block value by an integer.
      * if the timeblock TB4 of a given day is incremented by 13, the

@@ -5,6 +5,12 @@
  */
 package dyno.scheduler.utils;
 
+import java.sql.Date;
+import java.sql.Time;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
@@ -22,17 +28,17 @@ public class DateTimeUtil
     private static final String TIME_FORMAT = "HH:mm:ss";
     private static final String DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss";
     private static final String DATE_TIME_FORMAT_JSON = "yyyy-MM-dd HH:mm:ss";
-    
+
     public static DateTimeFormatter getDateFormat()
     {
         return DateTimeFormat.forPattern(DATE_FORMAT);
     }
-    
+
     public static DateTimeFormatter getTimeFormat()
     {
         return DateTimeFormat.forPattern(TIME_FORMAT);
     }
-    
+
     public static DateTimeFormatter getDateTimeFormat()
     {
         return DateTimeFormat.forPattern(DATE_TIME_FORMAT);
@@ -42,34 +48,81 @@ public class DateTimeUtil
     {
         return DateTimeFormat.forPattern(DATE_TIME_FORMAT_JSON);
     }
-    
+
     public static DateTime concatenateDateTime(String date, String time)
     {
         String concatStringDate = date + " " + time;
         return getDateTimeFormat().parseDateTime(concatStringDate);
     }
-    
+
     public static DateTime concatenateDateTime(DateTime date, String time)
     {
         String concatStringDate = date.toString(getDateFormat()) + " " + time;
         return getDateTimeFormat().parseDateTime(concatStringDate);
     }
-    
+
     public static DateTime concatenateDateTime(String date, DateTime time)
     {
         String concatStringDate = date + " " + time.toString(getTimeFormat());
         return getDateTimeFormat().parseDateTime(concatStringDate);
     }
-    
+
     public static DateTime concatenateDateTime(DateTime date, DateTime time)
     {
         String concatStringDate = date.toString(getDateFormat()) + " " + time.toString(getTimeFormat());
         return getDateTimeFormat().parseDateTime(concatStringDate);
     }
-    
+
     public static DateTime concatenateDateTime(LocalDate date, LocalTime time)
     {
         String concatStringDate = date.toString(getDateFormat()) + " " + time.toString(getTimeFormat());
         return getDateTimeFormat().parseDateTime(concatStringDate);
+    }
+
+    public static Date convertDatetoSqlDate(DateTime date)
+    {
+        java.util.Date parsedUtilDate;
+        java.sql.Date parsedSqlDate = null;
+        try
+        {
+            String dateString = date.toString(getDateFormat());
+            SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+            parsedUtilDate = sdf.parse(dateString);
+            parsedSqlDate = new java.sql.Date(parsedUtilDate.getTime());
+
+        } catch (ParseException ex)
+        {
+            Logger.getLogger(DateTimeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return parsedSqlDate;
+    }
+
+    public static Time convertTimetoSqlTime(DateTime time)
+    {
+        java.util.Date parsedUtilDate;
+        java.sql.Time parsedSqlTime = null;
+        try
+        {
+            String timeString = time.toString(getTimeFormat());
+            SimpleDateFormat sdf = new SimpleDateFormat(TIME_FORMAT);
+            parsedUtilDate = sdf.parse(timeString);
+            parsedSqlTime = new java.sql.Time(parsedUtilDate.getTime());
+
+        } catch (ParseException ex)
+        {
+            Logger.getLogger(DateTimeUtil.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return parsedSqlTime;
+    }
+
+    public static DateTime convertSqlDatetoDateTime(Date date)
+    {
+        return DateTime.parse(date.toString());
+    }
+
+    public static DateTime convertSqlTimetoDateTime(Time time)
+    {
+        return DateTime.parse(time.toString());
     }
 }

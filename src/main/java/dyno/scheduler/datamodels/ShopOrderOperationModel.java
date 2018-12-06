@@ -8,6 +8,9 @@ package dyno.scheduler.datamodels;
 import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.utils.DateTimeUtil;
+import dyno.scheduler.utils.LogUtil;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -49,11 +52,12 @@ public class ShopOrderOperationModel extends DataModel
     // </editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="constructors">
-    
-    public ShopOrderOperationModel() { }
-    
+    public ShopOrderOperationModel()
+    {
+    }
+
     public ShopOrderOperationModel(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, int operationSequence,
-                int workCenterRunTime, int laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, OperationStatus operationStatus)
+            int workCenterRunTime, int laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, OperationStatus operationStatus)
     {
         this.orderNo = orderNo;
         this.operationId = operationId;
@@ -69,11 +73,10 @@ public class ShopOrderOperationModel extends DataModel
         this.opFinishDate = opFinishDate;
         this.opFinishTime = opFinishTime;
     }
-    
-    //</editor-fold>
 
-    //<editor-fold defaultstate="collapsed" desc="getters/setters">
+    //</editor-fold>
     
+    //<editor-fold defaultstate="collapsed" desc="getters/setters">
     public String getOrderNo()
     {
         return orderNo;
@@ -143,7 +146,7 @@ public class ShopOrderOperationModel extends DataModel
     {
         this.operationSequence = operationSequence;
     }
-    
+
     public int getPrecedingOperationId()
     {
         return precedingOperationId;
@@ -154,7 +157,7 @@ public class ShopOrderOperationModel extends DataModel
         this.precedingOperationId = precedingOperationId;
     }
 
-    public double getWorkCenterRuntimeFactor()
+    public int getWorkCenterRuntimeFactor()
     {
         return workCenterRuntimeFactor;
     }
@@ -253,7 +256,7 @@ public class ShopOrderOperationModel extends DataModel
     {
         this.latestOpFinishTime = latestOpFinishTime;
     }
-    
+
     public int getQuantity()
     {
         return quantity;
@@ -275,9 +278,7 @@ public class ShopOrderOperationModel extends DataModel
     }
 
     //</editor-fold>
-    
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
-    
     /**
      * get ShopOrderOperationModel object by passing Excel or MySql table row
      *
@@ -287,13 +288,13 @@ public class ShopOrderOperationModel extends DataModel
     @Override
     public ShopOrderOperationModel getModelObject(Object row)
     {
-        // Create a DataFormatter to format and get each cell's value as String
-        DataFormatter dataFormatter = new DataFormatter();
-        DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
-        DateTimeFormatter timeFormat = DateTimeUtil.getTimeFormat();
-
         if (row instanceof Row)
         {
+            // Create a DataFormatter to format and get each cell's value as String
+            DataFormatter dataFormatter = new DataFormatter();
+            DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+            DateTimeFormatter timeFormat = DateTimeUtil.getTimeFormat();
+
             Row excelRow = (Row) row;
             if (excelRow.getLastCellNum() > 0)
             {
@@ -318,14 +319,38 @@ public class ShopOrderOperationModel extends DataModel
                 this.setWorkCenterNo(dataFormatter.formatCellValue(excelRow.getCell(++i)));
                 this.setOperationStatus(OperationStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             }
-            return this;
-
         } else
         {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.    
+            ResultSet resultSetRow = (ResultSet) row;
+            int i = 0;
+            try
+            {
+                this.setOperationId(resultSetRow.getInt(++i));
+                this.setOperationNo(resultSetRow.getInt(++i));
+                this.setOrderNo(resultSetRow.getString(++i));
+                this.setOperationDescription(resultSetRow.getString(++i));
+                this.setOperationSequence(resultSetRow.getInt(++i));
+                this.setPrecedingOperationId(resultSetRow.getInt(++i));
+                this.setWorkCenterRuntimeFactor(resultSetRow.getInt(++i));
+                this.setWorkCenterRuntime(resultSetRow.getInt(++i));
+                this.setLaborRuntimeFactor(resultSetRow.getInt(++i));
+                this.setLaborRunTime(resultSetRow.getInt(++i));
+                this.setOpStartDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setOpStartTime(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlTimetoDateTime(resultSetRow.getTime(i)));
+                this.setOpFinishDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setOpFinishTime(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlTimetoDateTime(resultSetRow.getTime(i)));
+                this.setQuantity(resultSetRow.getInt(++i));
+                this.setWorkCenterType(resultSetRow.getString(++i));
+                this.setWorkCenterNo(resultSetRow.getString(++i));
+                this.setOperationStatus(OperationStatus.valueOf(resultSetRow.getString(++i)));
+            } catch (SQLException ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            }
         }
+        return this;
     }
-    
+
     public boolean updateOperationDetails()
     {
         List<ShopOrderOperationModel> updateList = new ArrayList<>();

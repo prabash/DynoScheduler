@@ -70,7 +70,7 @@ public class ExcelWriteManager extends DataWriteManager
                 {
                     return updateWorkCenterData((List<WorkCenterModel>) dataList, excelSheetName);
                 }
-                case WorkCenterAllocation:
+                case WorkCenterAllocationFinite:
                 {
                     return updateWorkCenterOpAllocData((List<WorkCenterOpAllocModel>) dataList, excelSheetName);
                 }

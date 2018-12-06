@@ -11,20 +11,20 @@ import dyno.scheduler.datamodels.DataModelEnums;
  *
  * @author Prabash
  */
-public class ExcelUtil
+public class MySqlUtil
 {
     public static String getStorageName(DataModelEnums.DataModelType dataModel)
     {
         switch (dataModel)
         {
             case ShopOrder:
-                return "ShopOrders";
+                return "shop_order_tab";
             case ShopOrderOperation:
-                return "ShopOrderOperations";
+                return "shop_order_operation_tab";
             case WorkCenter:
-                return "WorkCenters";
+                return "work_center_tab";
             case WorkCenterAllocationFinite:
-                return "WorkCenterOpAllocations";
+                return "work_center_op_alloc_finite_tab";
             default:
                 return "";
         }

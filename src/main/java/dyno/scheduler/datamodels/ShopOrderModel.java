@@ -12,6 +12,9 @@ import dyno.scheduler.datamodels.DataModelEnums.ShopOrderSchedulingDirection;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderStatus;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
+import dyno.scheduler.utils.LogUtil;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +33,7 @@ public class ShopOrderModel extends DataModel
 {
 
     //<editor-fold defaultstate="collapsed" desc="properties">
+    private int id;
     private String orderNo;
     private String description;
     private DateTime createdDate;
@@ -44,10 +48,10 @@ public class ShopOrderModel extends DataModel
     private ShopOrderScheduleStatus schedulingStatus;
     private ShopOrderStatus shopOrderStatus;
     private ShopOrderPriority priority;
+    private int revenueValue;
     private List<ShopOrderOperationModel> operations;
 
     //</editor-fold>
-    
     //<editor-fold defaultstate="collapsed" desc="constructors">
     public ShopOrderModel()
     {
@@ -75,6 +79,16 @@ public class ShopOrderModel extends DataModel
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="getters/setters">
+    public int getId()
+    {
+        return id;
+    }
+
+    public void setId(int id)
+    {
+        this.id = id;
+    }
+
     public String getOrderNo()
     {
         return orderNo;
@@ -225,6 +239,16 @@ public class ShopOrderModel extends DataModel
     {
         this.operations = operations;
     }
+
+    public int getRevenueValue()
+    {
+        return revenueValue;
+    }
+
+    public void setRevenueValue(int revenueValue)
+    {
+        this.revenueValue = revenueValue;
+    }
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
@@ -237,12 +261,13 @@ public class ShopOrderModel extends DataModel
     @Override
     public ShopOrderModel getModelObject(Object row)
     {
-        // Create a DataFormatter to format and get each cell's value as String
-        DataFormatter dataFormatter = new DataFormatter();
-        DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
 
         if (row instanceof Row)
         {
+            // Create a DataFormatter to format and get each cell's value as String
+            DataFormatter dataFormatter = new DataFormatter();
+            DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
+
             Row excelRow = (Row) row;
             int i = -1;
 
@@ -261,11 +286,36 @@ public class ShopOrderModel extends DataModel
             this.setShopOrderStatus(ShopOrderStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             this.setPriority(ShopOrderPriority.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
 
-            return this;
         } else
         {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.    
+            ResultSet resultSetRow = (ResultSet) row;
+            int i = 0; // indeces start from 1 on the table
+            try
+            {
+                this.setId(resultSetRow.getInt(++i));
+                this.setOrderNo(resultSetRow.getString(++i));
+                this.setDescription(resultSetRow.getString(++i));
+                this.setCreatedDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setPartNo(resultSetRow.getString(++i));
+                this.setStructureRevision(resultSetRow.getString(++i));
+                this.setRoutingRevision(resultSetRow.getString(++i));
+                this.setRequiredDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setStartDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setFinishDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
+                this.setSchedulingDirection(ShopOrderSchedulingDirection.valueOf(resultSetRow.getString(++i)));
+                this.setCustomerNo(resultSetRow.getString(++i));
+                this.setSchedulingStatus(ShopOrderScheduleStatus.valueOf(resultSetRow.getString(++i)));
+                this.setShopOrderStatus(ShopOrderStatus.valueOf(resultSetRow.getString(++i)));
+                this.setPriority(ShopOrderPriority.valueOf(resultSetRow.getString(++i)));
+                this.setRevenueValue(resultSetRow.getInt(++i));
+
+            } catch (SQLException ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            }
+
         }
+        return this;
     }
 
     @Override
@@ -299,7 +349,7 @@ public class ShopOrderModel extends DataModel
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
         DateTime opTargetStartDate = null;
-        
+
         for (ShopOrderOperationModel operation : currentOperations)
         {
             if (operation.getPrimaryKey().equals(opPrimaryKey))
@@ -328,6 +378,7 @@ public class ShopOrderModel extends DataModel
 
     /**
      * Return the startDate of a Shop Order by considering various parameters
+     *
      * @return Starting Date Time of the Shop Order
      */
     public DateTime getShopOrderStartDateTime()
@@ -336,29 +387,30 @@ public class ShopOrderModel extends DataModel
         if (getSchedulingDirection() == ShopOrderSchedulingDirection.Forward)
         {
             shopOrderStartDateTime = getStartTimeOnCapacityType(getCreatedDate());
-        }
-        else if (getSchedulingDirection() == ShopOrderSchedulingDirection.Backward)
+        } else if (getSchedulingDirection() == ShopOrderSchedulingDirection.Backward)
         {
             double bufferPercentage = 20.0; // percentage of the total runtime duration that will be a buffer, minimum buffer value is 1 day
-            
+
             int runtimeInDays = getShopOrderTotalRunTimeDays();
-            int bufferDays = Math.round((float)Math.ceil(runtimeInDays * bufferPercentage / 100.0));
+            int bufferDays = Math.round((float) Math.ceil(runtimeInDays * bufferPercentage / 100.0));
             // set the minimum buffer days
             if (bufferDays < 1)
             {
                 bufferDays = 1;
             }
-            
+
             // total runtime and the buffer will be reducted from the required date and calculate the start date
             DateTime shopOrderStartDate = getRequiredDate().minusDays(runtimeInDays + bufferDays);
             shopOrderStartDateTime = getStartTimeOnCapacityType(shopOrderStartDate);
         }
-        
+
         return shopOrderStartDateTime;
     }
-    
+
     /**
-     * Get the latest possible start date of the order in order to meet the required date
+     * Get the latest possible start date of the order in order to meet the
+     * required date
+     *
      * @return latestPossibleStartDate
      */
     private DateTime getLatestOrderStartDate()
@@ -367,11 +419,13 @@ public class ShopOrderModel extends DataModel
         DateTime shopOrderStartDate = getRequiredDate().minusDays(runtimeInDays);
         return getStartTimeOnCapacityType(shopOrderStartDate);
     }
-    
+
     /**
-     * this will concatenate a start-time to a given date based on the capacity type
+     * this will concatenate a start-time to a given date based on the capacity
+     * type
+     *
      * @param date the date to which the time should be concatenated
-     * @return 
+     * @return
      */
     private DateTime getStartTimeOnCapacityType(DateTime date)
     {
@@ -380,23 +434,22 @@ public class ShopOrderModel extends DataModel
         {
             // for finite capacity starting time of the day is 0800HRS
             return DateTimeUtil.concatenateDateTime(date.toString(DateTimeUtil.getDateFormat()), "08:00:00");
-        } 
-        else
+        } else
         {
             // for finite capacity starting time of the day is 0000HRS
             return DateTimeUtil.concatenateDateTime(date.toString(DateTimeUtil.getDateFormat()), "00:00:00");
         }
     }
-    
+
     /**
-     * This method is used assign the latest finish  times for operations.
+     * This method is used assign the latest finish times for operations.
      */
     public void assignLatestFinishTimeForOperations()
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
         DateTime latestOrderStartDate = getLatestOrderStartDate();
         DateTime latestOpEndDateTime = null;
-        
+
         for (ShopOrderOperationModel operation : currentOperations)
         {
             // if the operation is the starting operation/s
@@ -404,11 +457,10 @@ public class ShopOrderModel extends DataModel
             {
                 // increment the order start datetime (starting date time of the first operation) by the first operation's work center run time
                 latestOpEndDateTime = WorkCenterOpAllocModel.incrementTime(latestOrderStartDate, operation.getWorkCenterRuntime());
-                
+
                 operation.setLatestOpFinishDate(latestOpEndDateTime);
                 operation.setLatestOpFinishTime(latestOpEndDateTime);
-            }
-            // else get the previous operation latest finish date time and add the workcenter runtime
+            } // else get the previous operation latest finish date time and add the workcenter runtime
             else
             {
                 // the finish datetime of the Preceding Operation Id, should be taken as the target start date/time of the operations
@@ -417,37 +469,35 @@ public class ShopOrderModel extends DataModel
                         collect(Collectors.toList()).get(0);
                 // calculate the current op latestStartDate by concatenating the prev. op finish date and time
                 DateTime previousOpLatestFinishDateTime = DateTimeUtil.concatenateDateTime(precedingOp.getLatestOpFinishDate(), precedingOp.getLatestOpFinishTime());
-                
-                 // increment the previous operation latest finish datetime by current operation work center runtime.
+
+                // increment the previous operation latest finish datetime by current operation work center runtime.
                 latestOpEndDateTime = WorkCenterOpAllocModel.incrementTime(previousOpLatestFinishDateTime, operation.getWorkCenterRuntime());
                 operation.setLatestOpFinishDate(latestOpEndDateTime);
                 operation.setLatestOpFinishTime(latestOpEndDateTime);
             }
-            System.out.println("SO : " + operation.getOrderNo() + " Op No : " + operation.getOperationId() + " Latest Op End Date : " +
-                    DateTimeUtil.concatenateDateTime(operation.getLatestOpFinishDate(), operation.getLatestOpFinishTime()).toString(DateTimeUtil.getDateTimeFormat()));
+            System.out.println("SO : " + operation.getOrderNo() + " Op No : " + operation.getOperationId() + " Latest Op End Date : "
+                    + DateTimeUtil.concatenateDateTime(operation.getLatestOpFinishDate(), operation.getLatestOpFinishTime()).toString(DateTimeUtil.getDateTimeFormat()));
         }
         System.out.println("Completed assigning latest finish times for operations");
     }
-    
-    
+
     public int getShopOrderTotalRunTimeDays()
     {
         int totalRuntTimeInHours = 0;
         int totalRuntimeDays = 0;
         // calculate the total number of runtime hours 
         totalRuntTimeInHours = getOperations().stream().map((operation) -> operation.getWorkCenterRuntime()).reduce(totalRuntTimeInHours, (accumulator, _item) -> accumulator + _item);
-        
+
         // for finite capacity, get the number of runtime in days by dividing the no. of hours by 8
         if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
-            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 8.0));
-        }
-        // for infinite capacity, get the number of runtime in days by dividing the no. of hours by 24
+            totalRuntimeDays = Math.round((float) Math.ceil(totalRuntTimeInHours / 8.0));
+        } // for infinite capacity, get the number of runtime in days by dividing the no. of hours by 24
         else if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.InfiniteCapacity)
         {
-            totalRuntimeDays = Math.round((float)Math.ceil(totalRuntTimeInHours / 24.0));
+            totalRuntimeDays = Math.round((float) Math.ceil(totalRuntTimeInHours / 24.0));
         }
-        
+
         return totalRuntimeDays;
     }
 

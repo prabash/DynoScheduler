@@ -59,7 +59,7 @@ public class DataModelEnums
         ShopOrder,
         ShopOrderOperation,
         WorkCenter,
-        WorkCenterAllocation
+        WorkCenterAllocationFinite
     }
     
     public enum TimeBlockParamType

@@ -25,7 +25,7 @@ public class DataFactory
         switch (dataGetMethod)
         {
             case Database:
-                return new MysqlReadManager();
+                return new MySqlReadManager();
             case Excel:
                 return new ExcelReadManager();
             default:
@@ -43,7 +43,7 @@ public class DataFactory
         switch (dataGetMethod)
         {
             case Database:
-                return new MysqlWriteManager();
+                return new MySqlWriterManager();
             case Excel:
                 return new ExcelWriteManager();
             default:

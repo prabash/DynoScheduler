@@ -15,7 +15,7 @@ import java.sql.SQLException;
  *
  * @author Prabash
  */
-public class MysqlConnection
+public class MySqlConnection
 {
 
     private Connection myConnection;
@@ -23,7 +23,7 @@ public class MysqlConnection
     /**
      * Creates a new instance of MyDBConnection
      */
-    public MysqlConnection()
+    public MySqlConnection()
     {
         
     }
