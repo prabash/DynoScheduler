@@ -336,9 +336,9 @@ public class ShopOrderOperationModel extends DataModel
                 this.setLaborRuntimeFactor(resultSetRow.getInt(++i));
                 this.setLaborRunTime(resultSetRow.getInt(++i));
                 this.setOpStartDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
-                this.setOpStartTime(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlTimetoDateTime(resultSetRow.getTime(i)));
+                this.setOpStartTime(resultSetRow.getTime(++i) == null ? null : DateTimeUtil.convertSqlTimetoDateTime(resultSetRow.getTime(i)));
                 this.setOpFinishDate(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlDatetoDateTime(resultSetRow.getDate(i)));
-                this.setOpFinishTime(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlTimetoDateTime(resultSetRow.getTime(i)));
+                this.setOpFinishTime(resultSetRow.getTime(++i) == null ? null : DateTimeUtil.convertSqlTimetoDateTime(resultSetRow.getTime(i)));
                 this.setQuantity(resultSetRow.getInt(++i));
                 this.setWorkCenterType(resultSetRow.getString(++i));
                 this.setWorkCenterNo(resultSetRow.getString(++i));

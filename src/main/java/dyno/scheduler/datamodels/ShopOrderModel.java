@@ -52,6 +52,7 @@ public class ShopOrderModel extends DataModel
     private List<ShopOrderOperationModel> operations;
 
     //</editor-fold>
+    
     //<editor-fold defaultstate="collapsed" desc="constructors">
     public ShopOrderModel()
     {

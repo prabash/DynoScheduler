@@ -24,9 +24,9 @@ import org.joda.time.format.DateTimeFormatter;
 public class DateTimeUtil
 {
 
-    private static final String DATE_FORMAT = "dd/MM/yyyy";
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
     private static final String TIME_FORMAT = "HH:mm:ss";
-    private static final String DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final String DATE_TIME_FORMAT_JSON = "yyyy-MM-dd HH:mm:ss";
 
     public static DateTimeFormatter getDateFormat()
@@ -118,11 +118,15 @@ public class DateTimeUtil
 
     public static DateTime convertSqlDatetoDateTime(Date date)
     {
-        return DateTime.parse(date.toString());
+        String dateValue = date.toString();
+        DateTime dateTime = DateTime.parse(dateValue);
+        return dateTime;
     }
 
     public static DateTime convertSqlTimetoDateTime(Time time)
     {
-        return DateTime.parse(time.toString());
+        String timeValue = time.toString();
+        DateTime dateTime = DateTime.parse(timeValue, getTimeFormat());
+        return dateTime;
     }
 }
