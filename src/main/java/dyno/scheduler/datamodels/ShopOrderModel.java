@@ -16,6 +16,7 @@ import dyno.scheduler.utils.LogUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -29,7 +30,7 @@ import org.joda.time.format.DateTimeFormatter;
  * @author Prabash
  */
 @XmlRootElement
-public class ShopOrderModel extends DataModel
+public class ShopOrderModel extends DataModel implements Comparator<ShopOrderModel>
 {
 
     //<editor-fold defaultstate="collapsed" desc="properties">
@@ -253,6 +254,7 @@ public class ShopOrderModel extends DataModel
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
+    
     /**
      * get ShopOrderModel object by passing Excel or MySql table row
      *
@@ -262,7 +264,6 @@ public class ShopOrderModel extends DataModel
     @Override
     public ShopOrderModel getModelObject(Object row)
     {
-
         if (row instanceof Row)
         {
             // Create a DataFormatter to format and get each cell's value as String
@@ -286,6 +287,7 @@ public class ShopOrderModel extends DataModel
             this.setSchedulingStatus(ShopOrderScheduleStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             this.setShopOrderStatus(ShopOrderStatus.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
             this.setPriority(ShopOrderPriority.valueOf(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+            this.setRevenueValue(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
 
         } else
         {
@@ -482,6 +484,10 @@ public class ShopOrderModel extends DataModel
         System.out.println("Completed assigning latest finish times for operations");
     }
 
+    /**
+     * This method is used to get the total runtime of a shop order in days
+     * @return 
+     */
     public int getShopOrderTotalRunTimeDays()
     {
         int totalRuntTimeInHours = 0;
@@ -532,6 +538,29 @@ public class ShopOrderModel extends DataModel
         // update the operations list
         setOperations(currentOperations);
     }
+    
+    /**
+     * Get the importance of the shop order in terms of its customer priority and Revenue value.
+     * This is calculated with a weighted average method, with 30% Customer priority and 70% for revenue value.
+     * @return totalImportance value
+     */
+    public double getImportance()
+    {
+        double importance = Math.round((((getPriority().getValue() / 5.0) * 0.3) + ((getRevenueValue() / 5.0) * 0.7)) * 100.0) / 100.0;
+        return importance;
+    }
 
     // </editor-fold> 
+    
+    // <editor-fold defaultstate="collapsed" desc="comparator implementation"> 
+    
+    @Override
+    public int compare(ShopOrderModel o1, ShopOrderModel o2)
+    {
+        int returnVal = o1.getImportance() > o2.getImportance() ? 1 : -1;
+        return returnVal;
+    }
+    
+    // </editor-fold> 
+    
 }

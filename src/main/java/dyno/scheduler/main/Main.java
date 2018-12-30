@@ -1,7 +1,6 @@
 package dyno.scheduler.main;
 
 import dyno.scheduler.agents.ManagerAgent;
-import dyno.scheduler.data.MySqlWriterManager;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.restservice.RESTServiceHandler;
 import jade.core.Runtime;
@@ -41,9 +40,6 @@ public class Main
         List<String> containerNames = new ArrayList<>();
         containerNames.add("Container0");
         Map<String, ContainerController> createdContainers = AgentsManager.createContainers(platformRuntime, containerNames);
-        
-        MySqlWriterManager writer = new MySqlWriterManager();
-        writer.UpdateTestColumn();
         
         // create monitoring agtents and added them to the main container
         AgentsManager.createMonitoringAgents(mainContainer);

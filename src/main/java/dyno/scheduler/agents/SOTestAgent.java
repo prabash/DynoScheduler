@@ -55,7 +55,7 @@ public class SOTestAgent extends Agent
         {
             System.out.println("Error with the Shop Order arguments");
         }
-        addBehaviour(new BProcessOperationQueue(shopOrder.getOperations()));
+        addBehaviour(new BProcessOperationQueue(shopOrder.getOperations(), shopOrder));
         addBehaviour(new BStartOperationScheduler(this));
 
         System.out.println("the Shop Order Agent " + this.getLocalName() + " is started");
@@ -100,11 +100,13 @@ class BProcessOperationQueue extends Behaviour
 
     // shop order operations will be added to the queue to be processed sequentially
     transient List<ShopOrderOperationModel> operations = new ArrayList<>();
+    ShopOrderModel shopOrder;
 
-    public BProcessOperationQueue(List<ShopOrderOperationModel> operations)
+    public BProcessOperationQueue(List<ShopOrderOperationModel> operations, ShopOrderModel shopOrder)
     {
         this.operations.clear();
         this.operations.addAll(operations);
+        this.shopOrder = shopOrder;
     }
 
     @Override
@@ -139,7 +141,11 @@ class BProcessOperationQueue extends Behaviour
                 {
                     cfpMessage.addReceiver(managerAgents[i]);
                 }
-                cfpMessage.setContent(StringUtil.generateMessageContent(operation.getPrimaryKey()));
+                cfpMessage.setContent(StringUtil.generateMessageContent(
+                        String.valueOf(shopOrder.getOrderNo()), // Order No
+                        String.valueOf(shopOrder.getImportance()), // Importance
+                        operation.getPrimaryKey(), // Primary Key
+                        String.valueOf(operation.getOperationSequence()))); // Operation Sequence
                 myAgent.send(cfpMessage);
 
             } catch (FIPAException ex)

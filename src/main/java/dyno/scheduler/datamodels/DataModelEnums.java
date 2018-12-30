@@ -16,11 +16,22 @@ public class DataModelEnums
      */
     public enum ShopOrderPriority
     {
-        Critical,
-        High,
-        Medium,
-        Low,
-        Trivial
+        Critical(1),
+        High(2),
+        Medium(3),
+        Low(4),
+        Trivial(5);
+        
+        private final int value;
+
+        public int getValue()
+        {
+            return value;
+        }
+        private ShopOrderPriority(int value)        
+        {
+            this.value = value;
+        }
     }
 
     public enum ShopOrderScheduleStatus

@@ -10,6 +10,7 @@ import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.jade.ISchedulerAgent;
 import dyno.scheduler.utils.LogUtil;
+import dyno.scheduler.utils.StringUtil;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -24,6 +25,7 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -147,7 +149,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             return null;
         }
     }
-    
+
     public static Queue<ACLMessage> getQueueSnapshot()
     {
         return OPERATION_SCHEDULING_REQUESTS_QUEUE;
@@ -155,7 +157,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 
     static class BQueueScheduleOperationRequests extends CyclicBehaviour
     {
-        
+
         private static final long serialVersionUID = 8948436530894606064L;
 
         // <editor-fold desc="overriden methods" defaultstate="collapsed">
@@ -186,6 +188,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 
     static class BProcessOperationScheduleQueue extends TickerBehaviour
     {
+
         private static final long serialVersionUID = -6980306431467493127L;
 
         public BProcessOperationScheduleQueue(Agent agent, long period)
@@ -198,26 +201,16 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         {
             System.out.println("operation queue timer thread locked!");
             Thread thread = new Thread(new ProcessOperationScheduleQueue(myAgent, this));
-            thread.start();                    
-        }    
-    }
-    
-    static class TestAddToQueue implements Runnable
-    {
-        @Override
-        public void run()
-        {
-            for (ACLMessage aCLMessage : ManagerAgent.getQueueSnapshot())
-            {
-                ManagerAgent.addScheduleOperationRequest(aCLMessage);
-            }
+            thread.start();
         }
     }
 
     static class ProcessOperationScheduleQueue implements Runnable
     {
+
         Agent myAgent;
         BProcessOperationScheduleQueue tickerInstance;
+        ArrayList<ACLMessage> processingQueue;
 
         public ProcessOperationScheduleQueue(Agent agent, BProcessOperationScheduleQueue tickerInstance)
         {
@@ -229,14 +222,21 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         public void run()
         {
             // remove the ticker behavior when processing the queue, so the queue processing wont overlap
-            if(!ManagerAgent.scheduleOperationsQueueIsEmpty())
+            if (!ManagerAgent.scheduleOperationsQueueIsEmpty())
             {
                 myAgent.removeBehaviour(tickerInstance);
             }
+            processingQueue = new ArrayList<>();
             while (!ManagerAgent.scheduleOperationsQueueIsEmpty())
             {
                 ACLMessage request = ManagerAgent.getNextFromScheduleOperationsQueue();
-                scheduleOperation(request);                    
+                processingQueue.add(request);
+            }
+            
+            processingQueue.sort(new ShopOrderACLMessageComparator());
+            for (ACLMessage request : processingQueue)
+            {
+                scheduleOperation(request);
             }
             
             System.out.println(" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NO OPERATIONS TO BE SCHEDULED!! ");
@@ -251,7 +251,10 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                 try
                 {
                     AID shopOrderAgent = request.getSender();
-                    String operationId = request.getContent();
+                    // get the string array of message content
+                    String[] msgContent = StringUtil.readMessageContent(request.getContent());
+                    // second index of the message content array will have the operation id
+                    String operationId = msgContent[2];
 
                     System.out.println(" ++++++  Shop Order Agent : " + shopOrderAgent);
                     System.out.println(" ++++++  operationId : " + operationId);
@@ -260,12 +263,12 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                     startOpScheduleMsg.setConversationId("OPERATION_PROCESSING_QUEUE");
                     startOpScheduleMsg.addReceiver(shopOrderAgent);
                     startOpScheduleMsg.setContent(operationId);
-                    
+
                     if (!OPERATION_SCHEDULED)
                     {
                         myAgent.send(startOpScheduleMsg);
                         OPERATION_SCHEDULE_LOCK.wait();
-                        
+
                         System.out.println("operation queue locked to schedule operation : " + operationId);
                     }
                 } catch (InterruptedException ex)
@@ -278,8 +281,43 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         }
     }
 
+    static class ShopOrderACLMessageComparator implements Comparator<ACLMessage>
+    {
+        @Override
+        public int compare(ACLMessage o1, ACLMessage o2)
+        {
+            String[] o1_msgContent = StringUtil.readMessageContent(o1.getContent());
+            String[] o2_msgContent = StringUtil.readMessageContent(o2.getContent());
+
+            // Sort first by the importance
+            Double o1_importance = Double.parseDouble(o1_msgContent[1]);
+            Double o2_importance = Double.parseDouble(o2_msgContent[1]);
+            int importanceResult = o2_importance.compareTo(o1_importance);
+            if (importanceResult != 0)
+            {
+                return importanceResult;
+            }
+
+            // Sort second by the shop order no.
+            Integer o1_shopOrderNo = Integer.parseInt(o1_msgContent[0]);
+            Integer o2_shopOrderNo = Integer.parseInt(o2_msgContent[0]);
+            int shopOrderNoResult = o1_shopOrderNo.compareTo(o2_shopOrderNo);
+            if (shopOrderNoResult != 0)
+            {
+                return shopOrderNoResult;
+            }
+
+            // Sort last by the operation sequence.
+            Integer o1_operationSequence = Integer.parseInt(o1_msgContent[3]);
+            Integer o2_operationSequence = Integer.parseInt(o2_msgContent[3]);
+            return o1_operationSequence.compareTo(o2_operationSequence);
+        }
+
+    }
+
     static class BNotifyOperationScheduleQueue extends CyclicBehaviour
     {
+
         private static final long serialVersionUID = -8707253852585581218L;
 
         @Override
@@ -299,7 +337,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                         OPERATION_SCHEDULED = true;
                         OPERATION_SCHEDULE_LOCK.notifyAll();
                     }
-                    
+
                 } catch (Exception ex)
                 {
                     LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);

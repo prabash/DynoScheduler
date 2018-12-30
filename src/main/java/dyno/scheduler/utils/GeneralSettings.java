@@ -19,7 +19,7 @@ public class GeneralSettings
     
     private static final String HOST_NAME = "127.0.0.1";
     private static final String EXCEL_FILE = "data.xlsx";
-    private static final DataAccessMethod DATA_ACCESS_METHOD = DataEnums.DataAccessMethod.Database;
+    private static final DataAccessMethod DATA_ACCESS_METHOD = DataEnums.DataAccessMethod.Excel;
     private static final CapacityType CAPACITY_TYPE = CapacityType.FiniteCapacity;
     
     private static final String STR_TIME_BLOCK_NAME = "TimeBlockName";
