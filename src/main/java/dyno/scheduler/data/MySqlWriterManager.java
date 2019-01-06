@@ -18,6 +18,7 @@ import dyno.scheduler.utils.MySqlUtil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -222,7 +223,7 @@ public class MySqlWriterManager extends DataWriteManager
                 int i = 0;
 
                 queryBuilder.append("operation_status = ? ");
-                columnValues.put(++i, OperationStatus.Unscheduled.toString());
+                columnValues.put(++i, OperationStatus.Interrupted.toString());
 
                 queryBuilder.append("WHERE id = ? ");
                 columnValues.put(++i, shopOrderOperation.getOperationId());
@@ -240,10 +241,15 @@ public class MySqlWriterManager extends DataWriteManager
     @Override
     public boolean unscheduleAllOperationsFrom(ShopOrderOperationModel operation, String storageName)
     {
-        //List<ShopOrderOperationModel> operationsList = new List<>();
         return unscheduleOperations(DataReader.getSubsequentOperations(operation), storageName);
     }
 
+    @Override
+    public boolean interruptWorkCenter(String workCenterNo, DateTime startTime, DateTime endTime)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
     public void UpdateTestColumn()
     {
         try

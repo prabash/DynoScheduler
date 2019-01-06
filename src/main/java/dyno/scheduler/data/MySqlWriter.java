@@ -24,12 +24,13 @@ public class MySqlWriter
     public boolean WriteToTable(String query, HashMap<Integer, Object> columnValues)
     {
         Connection connection = null;
+        PreparedStatement preparedStmt = null;
 
         try
         {
-            connection = new MySqlConnection().getConnection();
+            connection = MySqlConnection.getConnection();
             // create the java mysql update preparedstatement
-            PreparedStatement preparedStmt = connection.prepareStatement(query);
+            preparedStmt = connection.prepareStatement(query);
             for (Map.Entry<Integer, Object> entry : columnValues.entrySet())
             {
                 if(entry.getValue() instanceof Integer)
@@ -63,9 +64,9 @@ public class MySqlWriter
         {
             try
             {
-                if (connection != null)
+                if (preparedStmt != null)
                 {
-                    connection.close();
+                    preparedStmt.close();
                 }
 
             } catch (SQLException ex)

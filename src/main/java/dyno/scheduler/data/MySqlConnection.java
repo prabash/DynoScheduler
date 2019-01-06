@@ -17,20 +17,10 @@ import java.sql.SQLException;
  */
 public class MySqlConnection
 {
+    private static Connection myConnection;
 
-    private Connection myConnection;
-
-    /**
-     * Creates a new instance of MyDBConnection
-     */
-    public MySqlConnection()
+    private static void init()
     {
-        
-    }
-
-    public void init()
-    {
-
         try
         {
             Class.forName("com.mysql.jdbc.Driver");
@@ -39,11 +29,11 @@ public class MySqlConnection
             );
         } catch (ClassNotFoundException | SQLException ex)
         {
-            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            LogUtil.logSevereErrorMessage(MySqlConnection.class, ex.getMessage(), ex);
         }
     }
 
-    public Connection getConnection()
+    public static Connection getConnection()
     {
         if (myConnection == null)
         {
@@ -52,7 +42,7 @@ public class MySqlConnection
         return myConnection;
     }
 
-    public void close(ResultSet rs)
+    public static void close(ResultSet rs)
     {
 
         if (rs != null)
@@ -62,13 +52,13 @@ public class MySqlConnection
                 rs.close();
             } catch (SQLException ex)
             {
-                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                LogUtil.logSevereErrorMessage(MySqlConnection.class, ex.getMessage(), ex);
             }
 
         }
     }
 
-    public void close(java.sql.Statement stmt)
+    public static void close(java.sql.Statement stmt)
     {
 
         if (stmt != null)
@@ -78,13 +68,13 @@ public class MySqlConnection
                 stmt.close();
             } catch (SQLException ex)
             {
-                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                LogUtil.logSevereErrorMessage(MySqlConnection.class, ex.getMessage(), ex);
             }
 
         }
     }
 
-    public void destroy()
+    public static void destroy()
     {
 
         if (myConnection != null)
@@ -95,7 +85,7 @@ public class MySqlConnection
                 myConnection.close();
             } catch (SQLException ex)
             {
-                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                LogUtil.logSevereErrorMessage(MySqlConnection.class, ex.getMessage(), ex);
             }
 
         }

@@ -31,7 +31,7 @@ public class MySqlReader
 
         try
         {
-            connection = new MySqlConnection().getConnection();
+            connection = MySqlConnection.getConnection();
             statement = connection.createStatement();
             resultSet = statement.executeQuery("SELECT * FROM shop_order_tab");
             while (resultSet.next())
@@ -59,10 +59,6 @@ public class MySqlReader
                 {
                     statement.close();
                 }
-                if (connection != null)
-                {
-                    connection.close();
-                }
 
             } catch (SQLException ex)
             {
@@ -87,14 +83,14 @@ public class MySqlReader
         
         try
         {
-            connection = new MySqlConnection().getConnection();
+            connection = MySqlConnection.getConnection();
             statement = connection.createStatement();
             
             StringBuilder queryBuilder = new StringBuilder();
             queryBuilder.append("SELECT * FROM ").append(tableName);
                 
             // if there are filters to be added
-            if (filters.size() > 0)
+            if (filters != null && filters.size() > 0)
             {
                 int filtersCount = 1;
                 queryBuilder.append(" WHERE ");
@@ -117,7 +113,7 @@ public class MySqlReader
             }
             
             // if there are orderBy to be added
-            if (orderBy.size()> 0)
+            if (orderBy != null && orderBy.size()> 0)
             {
                 int orderByCount = 1;
                 queryBuilder.append(" ORDER BY ");
@@ -154,10 +150,6 @@ public class MySqlReader
                 if (statement != null)
                 {
                     statement.close();
-                }
-                if (connection != null)
-                {
-                    connection.close();
                 }
 
             } catch (SQLException ex)

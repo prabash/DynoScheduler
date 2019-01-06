@@ -31,6 +31,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -325,6 +326,12 @@ public class ExcelWriteManager extends DataWriteManager
 
     @Override
     public boolean unscheduleAllOperationsFrom(ShopOrderOperationModel operation, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean interruptWorkCenter(String workCenterNo, DateTime startTime, DateTime endTime)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

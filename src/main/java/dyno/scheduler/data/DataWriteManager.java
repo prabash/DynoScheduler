@@ -7,6 +7,7 @@ package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.*;
 import java.util.List;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -49,4 +50,14 @@ public abstract class DataWriteManager
      * @return true if operation is successful
      */
     public abstract boolean unscheduleAllOperationsFrom(ShopOrderOperationModel operation, String storageName);
+    
+    /**
+     * This method is used to interrupt a given work center for the given start and end time
+     * There, all the operation assigned within the time period will be unscheduled
+     * @param workCenterNo work center that will be interrupted
+     * @param startTime start time
+     * @param endTime end time
+     * @return 
+     */
+    public abstract boolean interruptWorkCenter(String workCenterNo, DateTime startTime, DateTime endTime);
 }
