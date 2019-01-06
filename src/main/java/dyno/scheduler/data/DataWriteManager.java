@@ -33,4 +33,20 @@ public abstract class DataWriteManager
     public abstract boolean updateWorkCenterData(List<WorkCenterModel> dataList, String storageName);
     
     public abstract boolean updateWorkCenterOpAllocData(List<WorkCenterOpAllocModel> dataList, String storageName);
+    
+    /**
+     * This method will unschedule all the given operations available in the operationsList
+     * @param operationsList operations to be unscheduled
+     * @param storageName table name
+     * @return true if operation is successful
+     */
+    public abstract boolean unscheduleOperations(List<ShopOrderOperationModel> operationsList, String storageName);
+    
+    /**
+     * This method will unschedule all the subsequent operations (ordered by the operation sequence) starting from the given operation
+     * @param operation operation to be unscheduled from
+     * @param storageName table name
+     * @return true if operation is successful
+     */
+    public abstract boolean unscheduleAllOperationsFrom(ShopOrderOperationModel operation, String storageName);
 }

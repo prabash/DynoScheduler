@@ -10,7 +10,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
+import java.util.ArrayList;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetFactory;
 import javax.sql.rowset.RowSetProvider;
@@ -71,7 +71,14 @@ public class MySqlReader
         }
     }
 
-    public ResultSet ReadTable(String tableName, boolean addFilters, HashMap<String, String> filters)
+    /**
+     * Read a given table name with the provided filters and order by columns
+     * @param tableName
+     * @param filters
+     * @param orderBy
+     * @return 
+     */
+    public ResultSet ReadTable(String tableName, ArrayList<ArrayList<String>> filters, ArrayList<String> orderBy)
     {
         Connection connection = null;
         Statement statement = null;
@@ -82,8 +89,52 @@ public class MySqlReader
         {
             connection = new MySqlConnection().getConnection();
             statement = connection.createStatement();
-            resultSet = statement.executeQuery("SELECT * FROM " + tableName);
- 
+            
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append("SELECT * FROM ").append(tableName);
+                
+            // if there are filters to be added
+            if (filters.size() > 0)
+            {
+                int filtersCount = 1;
+                queryBuilder.append(" WHERE ");
+                for (ArrayList<String> filter : filters)
+                {
+                    // in the filter arraylist, there are 3 values
+                    // 1 - filter ColumnName (ex: operationSequence ), 2 - filter criteria (ex: = , >, <), 3 - filter value (ex: 1)
+                    for (String filterValue : filter)
+                    {
+                        queryBuilder.append(filterValue).append(" ");
+                    }
+                    
+                    // AND should be added only to the middle
+                    if (filtersCount < filters.size())
+                    {
+                        queryBuilder.append("AND ");
+                    }
+                    filtersCount++;
+                }
+            }
+            
+            // if there are orderBy to be added
+            if (orderBy.size()> 0)
+            {
+                int orderByCount = 1;
+                queryBuilder.append(" ORDER BY ");
+                for (String orderByColumn : orderBy)
+                {
+                    queryBuilder.append(orderByColumn);
+                    
+                    // commas should be added in the middle of each order by clause
+                    if (orderByCount < orderBy.size())
+                    {
+                        queryBuilder.append(" , ");
+                    }
+                    orderByCount++;
+                }
+            }
+            
+            resultSet = statement.executeQuery(queryBuilder.toString());
             RowSetFactory factory = RowSetProvider.newFactory();
             rowset = factory.createCachedRowSet();
 

@@ -93,4 +93,9 @@ public class DataReader
     {
         workCenterOpAllocDetails = (List<WorkCenterOpAllocModel>) DataFactory.getDataReadManagerInstance().getData(DataModelEnums.DataModelType.WorkCenterAllocationFinite);
     }
+    
+    public static List<ShopOrderOperationModel> getSubsequentOperations(ShopOrderOperationModel shopOrderOperation)
+    {
+        return DataFactory.getDataReadManagerInstance().getSubsequentOperations(shopOrderOperation);
+    }
 }

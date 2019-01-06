@@ -278,6 +278,7 @@ public class ShopOrderOperationModel extends DataModel
     }
 
     //</editor-fold>
+    
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
     /**
      * get ShopOrderOperationModel object by passing Excel or MySql table row

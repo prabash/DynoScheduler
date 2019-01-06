@@ -7,6 +7,7 @@ package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.datamodels.DataModelEnums;
+import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
@@ -103,7 +104,7 @@ public class MySqlWriterManager extends DataWriteManager
     {
         try
         {
-            String query = "UPDATE dynoschedule_test.shop_order_operation_tab "
+            String query = "UPDATE " + storageName + " "
                     + "SET "
                     + "operation_no = ?, "
                     + "order_no =?, "
@@ -172,7 +173,7 @@ public class MySqlWriterManager extends DataWriteManager
             for (WorkCenterOpAllocModel workCenterOpAlloc : dataList)
             {
                 StringBuilder queryBuilder = new StringBuilder();
-                queryBuilder.append("UPDATE dynoschedule_test.work_center_op_alloc_finite_tab SET ");
+                queryBuilder.append("UPDATE ").append(storageName).append(" SET ");
                 HashMap<Integer, Object> columnValues = new HashMap<>();
                 int i = 0;
 
@@ -182,10 +183,10 @@ public class MySqlWriterManager extends DataWriteManager
                 {
                     if (counter < size)
                     {
-                        queryBuilder.append(timeBlockEntry.getKey() + " = ?, ");
+                        queryBuilder.append(timeBlockEntry.getKey()).append(" = ?, ");
                     } else if (counter == size)
                     {
-                        queryBuilder.append(timeBlockEntry.getKey() + " = ? ");
+                        queryBuilder.append(timeBlockEntry.getKey()).append(" = ? ");
                     }
 
                     columnValues.put(++i, timeBlockEntry.getValue());
@@ -194,7 +195,7 @@ public class MySqlWriterManager extends DataWriteManager
 
                 queryBuilder.append("WHERE work_center_no = ? ");
                 columnValues.put(++i, workCenterOpAlloc.getWorkCenterNo());
-                
+
                 queryBuilder.append("AND operation_date = ? ");
                 columnValues.put(++i, DateTimeUtil.convertDatetoSqlDate(workCenterOpAlloc.getOperationDate()));
 
@@ -207,19 +208,54 @@ public class MySqlWriterManager extends DataWriteManager
             return false;
         }
     }
-    
+
+    @Override
+    public boolean unscheduleOperations(List<ShopOrderOperationModel> operationsList, String storageName)
+    {
+        try
+        {
+            for (ShopOrderOperationModel shopOrderOperation : operationsList)
+            {
+                StringBuilder queryBuilder = new StringBuilder();
+                queryBuilder.append("UPDATE ").append(storageName).append(" SET ");
+                HashMap<Integer, Object> columnValues = new HashMap<>();
+                int i = 0;
+
+                queryBuilder.append("operation_status = ? ");
+                columnValues.put(++i, OperationStatus.Unscheduled.toString());
+
+                queryBuilder.append("WHERE id = ? ");
+                columnValues.put(++i, shopOrderOperation.getOperationId());
+
+                new MySqlWriter().WriteToTable(queryBuilder.toString(), columnValues);
+            }
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean unscheduleAllOperationsFrom(ShopOrderOperationModel operation, String storageName)
+    {
+        //List<ShopOrderOperationModel> operationsList = new List<>();
+        return unscheduleOperations(DataReader.getSubsequentOperations(operation), storageName);
+    }
+
     public void UpdateTestColumn()
     {
         try
         {
             String query = "UPDATE gantt_tasks SET test_column = ? WHERE id = 1";
             HashMap<Integer, Object> columnValues = new HashMap<>();
-            
+
             java.sql.Date date = java.sql.Date.valueOf("2018-08-08");
             columnValues.put(1, date);
-                    
+
             new MySqlWriter().WriteToTable(query, columnValues);
-            
+
         } catch (Exception ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);

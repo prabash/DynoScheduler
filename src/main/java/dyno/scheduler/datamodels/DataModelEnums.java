@@ -59,6 +59,7 @@ public class DataModelEnums
     {
         Created,
         Scheduled,
+        Unscheduled,
         Reserved,
         Issued,
         InProgress,

@@ -13,9 +13,9 @@ import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.LogUtil;
 import dyno.scheduler.utils.MySqlUtil;
+import dyno.scheduler.utils.TableUtil;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -67,11 +67,12 @@ public class MySqlReadManager extends DataReadManager
     protected List<ShopOrderModel> getShopOrderData(String storageName)
     {
         List<ShopOrderModel> shopOrders = new ArrayList<>();
-        HashMap<String, String> filters = null;
+        ArrayList<ArrayList<String>> filters = null;
+        ArrayList<String> orderBy = null;
         ResultSet results = null;
         try
         {
-            results = new MySqlReader().ReadTable(storageName, false, filters);
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
             while (results.next())
             {
                 ShopOrderModel shopOrderObj = new ShopOrderModel().getModelObject(results);
@@ -81,7 +82,7 @@ public class MySqlReadManager extends DataReadManager
         } catch (Exception ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-        } 
+        }
 
         return shopOrders;
     }
@@ -90,11 +91,12 @@ public class MySqlReadManager extends DataReadManager
     protected List<ShopOrderOperationModel> getShopOrderOperationData(String storageName)
     {
         List<ShopOrderOperationModel> shopOrderOperations = new ArrayList<>();
-        HashMap<String, String> filters = null;
+        ArrayList<ArrayList<String>> filters = null;
+        ArrayList<String> orderBy = null;
         ResultSet results = null;
         try
         {
-            results = new MySqlReader().ReadTable(storageName, false, filters);
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
             while (results.next())
             {
                 ShopOrderOperationModel shopOrderOpObj = new ShopOrderOperationModel().getModelObject(results);
@@ -111,11 +113,12 @@ public class MySqlReadManager extends DataReadManager
     protected List<WorkCenterModel> getWorkCenterData(String storageName)
     {
         List<WorkCenterModel> workCenters = new ArrayList<>();
-        HashMap<String, String> filters = null;
+        ArrayList<ArrayList<String>> filters = null;
+        ArrayList<String> orderBy = null;
         ResultSet results = null;
         try
         {
-            results = new MySqlReader().ReadTable(storageName, false, filters);
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
             while (results.next())
             {
                 WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
@@ -132,11 +135,12 @@ public class MySqlReadManager extends DataReadManager
     protected List<WorkCenterOpAllocModel> getWorkCenterOpAllocData(String storageName)
     {
         List<WorkCenterOpAllocModel> workCenterOpAllocs = new ArrayList<>();
-        HashMap<String, String> filters = null;
+        ArrayList<ArrayList<String>> filters = null;
+        ArrayList<String> orderBy = null;
         ResultSet results = null;
         try
         {
-            results = new MySqlReader().ReadTable(storageName, false, filters);
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
             while (results.next())
             {
                 WorkCenterOpAllocModel workCenterOpAlloc = new WorkCenterOpAllocModel().getModelObject(results);
@@ -146,8 +150,38 @@ public class MySqlReadManager extends DataReadManager
         } catch (Exception ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-        } 
+        }
         return workCenterOpAllocs;
     }
 
+    @Override
+    protected List<ShopOrderOperationModel> getSubsequentOperations(ShopOrderOperationModel shopOrderOperation)
+    {
+        List<ShopOrderOperationModel> shopOrderOperations = new ArrayList<>();
+        // filter by operation sequence and order_no
+        ArrayList<ArrayList<String>> filters = new ArrayList<>();
+        filters.add(TableUtil.createTableFilter("operation_sequence", ">=", String.valueOf(shopOrderOperation.getOperationSequence())));
+        filters.add(TableUtil.createTableFilter("order_no", "=", shopOrderOperation.getOrderNo()));
+        
+        // order by opretaion sequence
+        ArrayList<String> orderBy = TableUtil.createOrderByFilters("operation_sequence");;
+        
+        // get the table name
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.ShopOrderOperation);
+        
+        ResultSet results = null;
+        try
+        {
+            results = new MySqlReader().ReadTable(tableName, filters, orderBy);
+            while (results.next())
+            {
+                ShopOrderOperationModel shopOrderOpObj = new ShopOrderOperationModel().getModelObject(results);
+                shopOrderOperations.add(shopOrderOpObj);
+            }
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return shopOrderOperations;
+    }
 }

@@ -18,15 +18,20 @@ public class MySqlUtil
         switch (dataModel)
         {
             case ShopOrder:
-                return "shop_order_tab";
+                return getDbName() + "shop_order_tab";
             case ShopOrderOperation:
-                return "shop_order_operation_tab";
+                return getDbName() + "shop_order_operation_tab";
             case WorkCenter:
-                return "work_center_tab";
+                return getDbName() + "work_center_tab";
             case WorkCenterAllocationFinite:
-                return "work_center_op_alloc_finite_tab";
+                return getDbName() + "work_center_op_alloc_finite_tab";
             default:
                 return "";
         }
+    }
+    
+    public static String getDbName()
+    {
+        return "dynoschedule_test.";
     }
 }

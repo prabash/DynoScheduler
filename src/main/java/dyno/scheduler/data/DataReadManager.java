@@ -24,4 +24,12 @@ public abstract class DataReadManager
     protected abstract List<WorkCenterModel> getWorkCenterData(String storageName);
 
     protected abstract List<WorkCenterOpAllocModel> getWorkCenterOpAllocData(String storageName);
+    
+    /**
+     * Get the subsequent operations of a given operation ordered by operation sequence
+     * @param shopOrderOperation operation to find the subsequent operations
+     * @param storageName table name
+     * @return list of all the subsequent operations
+     */
+    protected abstract List<ShopOrderOperationModel> getSubsequentOperations(ShopOrderOperationModel shopOrderOperation);
 }

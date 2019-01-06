@@ -173,4 +173,10 @@ public class ExcelReadManager extends DataReadManager
         }
         return workCenterOpAllocs;
     }
+
+    @Override
+    protected List<ShopOrderOperationModel> getSubsequentOperations(ShopOrderOperationModel shopOrderOperation)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }
