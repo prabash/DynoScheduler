@@ -5,7 +5,7 @@
  */
 package dyno.scheduler.jade;
 
-import dyno.scheduler.agents.SOTestAgent;
+import dyno.scheduler.agents.ShopOrderAgent;
 import dyno.scheduler.agents.WorkCenterAgent;
 import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
@@ -189,7 +189,7 @@ public class AgentsManager
     {
         if (object instanceof ShopOrderModel)
         {
-            return SOTestAgent.class.getName();
+            return ShopOrderAgent.class.getName();
         }
         else if (object instanceof WorkCenterModel)
         {

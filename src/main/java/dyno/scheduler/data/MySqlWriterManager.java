@@ -169,18 +169,6 @@ public class MySqlWriterManager extends DataWriteManager
     {
         try
         {
-            String query = "UPDATE dynoschedule_test.work_center_op_alloc_finite_tab "
-                    + "SET "
-                    + "TB1 = ?, "
-                    + "TB2 = ?, "
-                    + "TB3 = ?, "
-                    + "TB4 = ?, "
-                    + "TB5 = ?, "
-                    + "TB6 = ?, "
-                    + "TB7 = ?, "
-                    + "TB8 = ? "
-                    + "WHERE id = ?";
-
             for (WorkCenterOpAllocModel workCenterOpAlloc : dataList)
             {
                 StringBuilder queryBuilder = new StringBuilder();
