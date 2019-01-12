@@ -21,8 +21,13 @@ public class DataWriter
         return DataFactory.getDataWriteManagerInstance().updateData(workCenterOpAllocations, DataModelEnums.DataModelType.WorkCenterAllocationFinite);
     }
     
-    public static boolean updateWorkShopOrderOperationData(List<ShopOrderOperationModel> shopOrderOperations)
+    public static boolean updateShopOrderOperationData(List<ShopOrderOperationModel> shopOrderOperations)
     {
         return DataFactory.getDataWriteManagerInstance().updateData(shopOrderOperations, DataModelEnums.DataModelType.ShopOrderOperation);
+    }
+    
+    public static boolean addShopOrderOperationData(List<ShopOrderOperationModel> shopOrderOperations)
+    {
+        return DataFactory.getDataWriteManagerInstance().addData(shopOrderOperations, DataModelEnums.DataModelType.ShopOrderOperation);
     }
 }

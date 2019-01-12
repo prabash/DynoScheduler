@@ -2,7 +2,8 @@ package dyno.scheduler.main;
 
 import dyno.scheduler.agents.ManagerAgent;
 import dyno.scheduler.data.DataReader;
-import dyno.scheduler.datamodels.InterruptedOpDetailsDataModel;
+import dyno.scheduler.datamodels.ShopOrderModel;
+import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.restservice.RESTServiceHandler;
@@ -59,20 +60,30 @@ public class Main
         agentList.add(AgentsManager.createAgent(otherContainer, "ManagerAgent", ManagerAgent.class.getName(), initData));
         
         // start the manager agent
-        AgentsManager.startAgents(agentList);
+        AgentsManager.startAgents(agentList); 
         
         // TEST
-        List<InterruptedOpDetailsDataModel> details = DataReader.getInterruptedOperationDetails(
-                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("10:00:00"),
-                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("15:00:00"),
-                "WC2");
+//        List<InterruptedOpDetailsDataModel> details = DataReader.getInterruptedOperationDetails(
+//                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("10:00:00"),
+//                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("15:00:00"),
+//                "WC2");
         
-        // TEST
+        // TEST TO INTERRUPT WORK CENTER
+        List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
+        ShopOrderModel shopOrder = shopOrders.get(0);
+        for (ShopOrderOperationModel operation : shopOrder.getOperations())
+        {
+            if (operation.getOperationId() == 100)
+            {
+                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
+            }
+        }
+
         WorkCenterModel test = new WorkCenterModel();
-        test.setWorkCenterNo("WC1");
-        test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 101, 2);
-        test.unscheduleOperationOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "11:00:00"), 4);
-        
+        test.setWorkCenterNo("WC2");
+        //test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 0, 2);
+
+        test.unscheduleOperationOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 3);
     }
     
     private static void startRESTService()

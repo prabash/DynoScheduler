@@ -15,9 +15,12 @@ import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.LogUtil;
 import dyno.scheduler.utils.MySqlUtil;
+import java.sql.Date;
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 
 /**
@@ -30,7 +33,38 @@ public class MySqlWriterManager extends DataWriteManager
     @Override
     public boolean addData(List<? extends DataModel> dataList, DataModelEnums.DataModelType dataModelType)
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try
+        {
+            String tableName = MySqlUtil.getStorageName(dataModelType);
+            switch (dataModelType)
+            {
+                case ShopOrder:
+                {
+                    return addShopOrderData((List<ShopOrderModel>) dataList, tableName);
+                }
+                case ShopOrderOperation:
+                {
+                    return addShopOrderOperationData((List<ShopOrderOperationModel>) dataList, tableName);
+                }
+                case WorkCenter:
+                {
+                    return addWorkCenterData((List<WorkCenterModel>) dataList, tableName);
+                }
+                case WorkCenterAllocationFinite:
+                {
+                    return addWorkCenterOpALlocData((List<WorkCenterOpAllocModel>) dataList, tableName);
+                }
+                default:
+                {
+                    return false;
+                }
+
+            }
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
     }
 
     @Override
@@ -79,7 +113,62 @@ public class MySqlWriterManager extends DataWriteManager
     @Override
     public boolean addShopOrderOperationData(List<ShopOrderOperationModel> dataList, String storageName)
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        try
+        {
+            String query = "INSERT INTO " + storageName + " " +
+                    "(operation_no," + "order_no," + "operation_description," + "operation_sequence," + "preceding_operation_id," +
+                    "wc_runtime_factor," + "wc_runtime," + "labor_runtime_factor," + "labor_runtime," + "op_start_date," +
+                    "op_start_time," + "op_finish_date," + "op_finish_time," + "quantity," + "work_center_type," +
+                    "work_center_no," + "operation_status)" +
+                    "VALUES"+
+                    "(?,?,?,?,?,"
+                    + "?,?,?,?,?,"
+                    + "?,?,?,?,?,"
+                    + "?,?)";
+
+            int precedingOpId = 0;
+            for (ShopOrderOperationModel shopOrderOperation : dataList.stream().sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
+            {
+                HashMap<Integer, Object> columnValues = new HashMap<>();
+                int i = 0;
+                columnValues.put(++i, shopOrderOperation.getOperationNo());
+                columnValues.put(++i, shopOrderOperation.getOrderNo());
+                columnValues.put(++i, shopOrderOperation.getOperationDescription());
+                columnValues.put(++i, shopOrderOperation.getOperationSequence());
+
+                if(shopOrderOperation.getPrecedingOperationId() > 0)
+                {
+                    columnValues.put(++i, shopOrderOperation.getPrecedingOperationId());
+                }
+                else
+                {
+                    columnValues.put(++i, precedingOpId);
+                }
+                
+                columnValues.put(++i, shopOrderOperation.getWorkCenterRuntimeFactor());
+                columnValues.put(++i, shopOrderOperation.getWorkCenterRuntime());
+                columnValues.put(++i, shopOrderOperation.getLaborRuntimeFactor());
+                columnValues.put(++i, shopOrderOperation.getLaborRunTime());
+                columnValues.put(++i, shopOrderOperation.getOpStartDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpStartDate()) : new Date(0));
+                
+                columnValues.put(++i, shopOrderOperation.getOpStartTime() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpStartTime()) : new Time(0));
+                columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpFinishDate()) : new Date(0));
+                columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpFinishTime()) : new Time(0));
+                columnValues.put(++i, shopOrderOperation.getQuantity());
+                columnValues.put(++i, shopOrderOperation.getWorkCenterType());
+                
+                columnValues.put(++i, shopOrderOperation.getWorkCenterNo());
+                columnValues.put(++i, shopOrderOperation.getOperationStatus().toString());
+
+                precedingOpId = new MySqlWriter().WriteToTable(query, columnValues);
+            }
+            return true;
+
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
     }
 
     @Override
@@ -249,6 +338,7 @@ public class MySqlWriterManager extends DataWriteManager
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+    
     
     public void UpdateTestColumn()
     {

@@ -5,10 +5,12 @@
  */
 package dyno.scheduler.agents;
 
+import dyno.scheduler.data.DataEnums;
 import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.utils.DateTimeUtil;
+import dyno.scheduler.utils.GeneralSettings;
 import dyno.scheduler.utils.LogUtil;
 import dyno.scheduler.utils.StringUtil;
 import jade.core.AID;
@@ -23,6 +25,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -112,7 +115,9 @@ class BProcessOperationQueue extends Behaviour
     @Override
     public void action()
     {
-        for (ShopOrderOperationModel operation : operations)
+        // for operations that are Created or Interrupted sorted by the operation Sequence
+        for (ShopOrderOperationModel operation : operations.stream().filter(rec -> rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) 
+                || rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
         {
             // Update the list of seller agents
             DFAgentDescription template = new DFAgentDescription();
@@ -378,8 +383,19 @@ class BStartOperationScheduler extends CyclicBehaviour
     {
         currentOperation.setOpStartDate(opStartDate);
         currentOperation.setOpStartTime(opStartDate);
+        
+        // when the capacity type is finite, the operation cannot end at 13:00:00, it should always end at 12:00:00.
+        // therefore if 13:00:00 is set as the end time, reduce 1 hour and set 12:00:00 as the operation finish time
+        if(GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+        {
+            if(opFinishDate.toString(DateTimeUtil.getTimeFormat()).equals("13:00:00"))
+            {
+                opFinishDate = opFinishDate.minusHours(1);
+            }
+        }
         currentOperation.setOpFinishDate(opFinishDate);
         currentOperation.setOpFinishTime(opFinishDate);
+        
         currentOperation.setWorkCenterNo(workCenterNo);
         currentOperation.setOperationStatus(opStatus);
         currentOperation.updateOperationDetails();

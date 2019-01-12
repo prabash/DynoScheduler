@@ -5,6 +5,7 @@
  */
 package dyno.scheduler.datamodels;
 
+import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -12,6 +13,7 @@ import dyno.scheduler.utils.LogUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -24,7 +26,7 @@ import org.joda.time.format.DateTimeFormatter;
  * @author Prabash
  */
 @XmlRootElement
-public class ShopOrderOperationModel extends DataModel
+public class ShopOrderOperationModel extends DataModel implements Comparator<ShopOrderOperationModel>
 {
     // <editor-fold defaultstate="collapsed" desc="properties"> 
 
@@ -56,7 +58,7 @@ public class ShopOrderOperationModel extends DataModel
     {
     }
 
-    public ShopOrderOperationModel(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, int operationSequence,
+    public ShopOrderOperationModel(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, double operationSequence,
             int workCenterRunTime, int laborRunTime, DateTime opStartDate, DateTime opStartTime, DateTime opFinishDate, DateTime opFinishTime, int quantity, OperationStatus operationStatus)
     {
         this.orderNo = orderNo;
@@ -356,7 +358,7 @@ public class ShopOrderOperationModel extends DataModel
     {
         List<ShopOrderOperationModel> updateList = new ArrayList<>();
         updateList.add(this);
-        return DataWriter.updateWorkShopOrderOperationData(updateList);
+        return DataWriter.updateShopOrderOperationData(updateList);
     }
 
     @Override
@@ -371,5 +373,167 @@ public class ShopOrderOperationModel extends DataModel
         return ShopOrderOperationModel.class.getName();
     }
 
+    // </editor-fold> 
+    
+    //<editor-fold defaultstate="collapsed" desc="custom methods">
+    
+    public ShopOrderOperationModel clone()
+    {
+        ShopOrderOperationModel shopOrderOperationModel = new ShopOrderOperationModel();
+        shopOrderOperationModel.setOrderNo(this.getOrderNo());
+        shopOrderOperationModel.setOperationId(this.getOperationId());
+        shopOrderOperationModel.setOperationNo(this.getOperationNo());
+        shopOrderOperationModel.setWorkCenterNo(this.getWorkCenterNo());
+        shopOrderOperationModel.setWorkCenterType(this.getWorkCenterType());
+        shopOrderOperationModel.setOperationDescription(this.getOperationDescription());
+        shopOrderOperationModel.setOperationSequence(this.getOperationSequence());
+        shopOrderOperationModel.setPrecedingOperationId(this.getPrecedingOperationId());
+        shopOrderOperationModel.setWorkCenterRuntimeFactor(this.getWorkCenterRuntimeFactor());
+        shopOrderOperationModel.setWorkCenterRuntime(this.getWorkCenterRuntime());
+        shopOrderOperationModel.setLaborRuntimeFactor(this.getLaborRuntimeFactor());
+        shopOrderOperationModel.setLaborRunTime(this.getLaborRunTime());
+        shopOrderOperationModel.setOpStartDate(this.getOpStartDate());
+        shopOrderOperationModel.setOpStartTime(this.getOpStartTime());
+        shopOrderOperationModel.setOpFinishDate(this.getOpFinishDate());
+        shopOrderOperationModel.setOpFinishTime(this.getOpFinishTime());
+        shopOrderOperationModel.setLatestOpFinishDate(this.getLatestOpFinishDate());
+        shopOrderOperationModel.setLatestOpFinishTime(this.getLatestOpFinishTime());
+        shopOrderOperationModel.setQuantity(this.getQuantity());
+        shopOrderOperationModel.setOperationStatus(this.getOperationStatus());
+        
+        return shopOrderOperationModel;
+    }
+    
+    public boolean splitInterruptedOperation(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime)
+    {
+        List<OperationScheduleTimeBlocksDataModel> operationScheduledTimeBlocks = DataReader.getOperationScheduledTimeBlockDetails(this.getOperationId());
+        
+        int beforeInterruptionRuntime = 0;
+        int withinInterruptionRuntime = 0;
+        int afterInterruptionRuntime = 0;
+        
+        for (OperationScheduleTimeBlocksDataModel operationScheduledTimeBlock : operationScheduledTimeBlocks)
+        {
+            DateTime timeBlockStartDateTime = DateTimeUtil.concatenateDateTime(operationScheduledTimeBlock.getOperationDate(), operationScheduledTimeBlock.getTimeBlockStartTime());
+            // if timeblock comes before the interruption start time, increment beforeInterruptionRuntime variable
+            if (timeBlockStartDateTime.isBefore(interruptionStartDateTime))
+            {
+                beforeInterruptionRuntime++;
+            }
+            // if timeblock comes in between the interruption start and end time, increment withinInterruptionRuntime
+            else if (timeBlockStartDateTime.isEqual(interruptionStartDateTime) || timeBlockStartDateTime.isBefore(interruptionEndDateTime))
+            {
+                withinInterruptionRuntime++;
+            }
+            // if timeblock comes on or after the interruption end time, increment afterInterruptionRuntime
+            else if (timeBlockStartDateTime.isEqual(interruptionEndDateTime) || timeBlockStartDateTime.isAfter(interruptionEndDateTime))
+            {
+                afterInterruptionRuntime++;
+            }
+        }
+        
+        double incOperationSequence = 0.00;
+        ShopOrderOperationModel operationBeforeInterruption = null;
+        ShopOrderOperationModel operationWithinInterruption = null;
+        ShopOrderOperationModel operationAfterInterruption = null;
+
+        ArrayList<ShopOrderOperationModel> operationToUpdate = new ArrayList<>();
+        ArrayList<ShopOrderOperationModel> operationsToAdd = new ArrayList<>();
+
+        if(beforeInterruptionRuntime > 0)
+        {
+            operationBeforeInterruption = clone();
+            //update the current operation with the reduced runtime
+            operationBeforeInterruption.setWorkCenterRuntime(beforeInterruptionRuntime);
+            
+            // this operation will end at the time where the interruption starts
+            operationBeforeInterruption.setOpFinishDate(interruptionStartDateTime);
+            operationBeforeInterruption.setOpFinishTime(interruptionStartDateTime);
+            
+            operationToUpdate.add(operationBeforeInterruption);
+        }
+        
+        if (beforeInterruptionRuntime == 0 && withinInterruptionRuntime > 0)
+        {
+            operationWithinInterruption = clone();
+            //update the current operation with the reduced runtime
+            operationWithinInterruption.setWorkCenterRuntime(withinInterruptionRuntime);
+            operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
+            
+            operationToUpdate.add(operationWithinInterruption);
+        }
+        else if (beforeInterruptionRuntime > 0 && withinInterruptionRuntime > 0)
+        {
+            operationWithinInterruption = clone();
+            operationWithinInterruption.setWorkCenterRuntime(withinInterruptionRuntime);
+            incOperationSequence += 0.01;
+            operationWithinInterruption.setOperationSequence(operationWithinInterruption.getOperationSequence() + incOperationSequence);
+            operationWithinInterruption.setOperationDescription("Spltted From Operation ID " + operationWithinInterruption.getOperationId());
+            // WorkCenter Runtime Factor and quantity is set to -1 for splitted operations, those should be referred to from the original operation
+            operationWithinInterruption.setWorkCenterRuntimeFactor(-1);
+            operationWithinInterruption.setQuantity(-1);
+            operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
+
+            operationWithinInterruption.setOpStartDate(null);
+            operationWithinInterruption.setOpStartTime(null);
+            operationWithinInterruption.setOpFinishDate(null);
+            operationWithinInterruption.setOpFinishTime(null);
+            
+            // if the previous operation was updated, set its operation Id as the preceding operation id of this.
+            operationWithinInterruption.setPrecedingOperationId(operationBeforeInterruption.getOperationId());
+
+            operationsToAdd.add(operationWithinInterruption);
+        }
+        
+        if (afterInterruptionRuntime > 0)
+        {
+            operationAfterInterruption = clone();
+            operationAfterInterruption.setWorkCenterRuntime(afterInterruptionRuntime);
+            incOperationSequence += 0.01;
+            operationAfterInterruption.setOperationSequence(operationAfterInterruption.getOperationSequence() + incOperationSequence);
+            operationAfterInterruption.setOperationDescription("Spltted From Operation ID " + operationAfterInterruption.getOperationId());
+            // WorkCenter Runtime Factor and quantity is set to -1 for splitted operations, those should be referred to from the original operation
+            operationAfterInterruption.setWorkCenterRuntimeFactor(-1);
+            operationAfterInterruption.setQuantity(-1);
+            // Operation after the interruption is should be in the scheduled status
+            operationAfterInterruption.setOperationStatus(OperationStatus.Scheduled);
+
+            // if the previous operation has been only update
+            if (beforeInterruptionRuntime == 0 && withinInterruptionRuntime > 0)
+            {
+                // set the previous operation id as the preceding operation id for this operation
+                operationAfterInterruption.setPrecedingOperationId(operationWithinInterruption.getOperationId());
+            }
+            // if the previous operation has been added newly
+            else if (beforeInterruptionRuntime > 0 && withinInterruptionRuntime > 0)
+            {
+                // set 0 as the preceding operation id so that it will be handled using the operation sequence
+                operationAfterInterruption.setPrecedingOperationId(0);
+            }
+            
+            // this operation should start when the interruption ends and finishes at the previous operation finish time
+            operationAfterInterruption.setOpStartDate(interruptionEndDateTime);
+            operationAfterInterruption.setOpStartTime(interruptionEndDateTime);
+
+            // the operations that comes after will always be splitted and added
+            operationsToAdd.add(operationAfterInterruption);
+        }
+
+        DataWriter.updateShopOrderOperationData(operationToUpdate);
+        DataWriter.addShopOrderOperationData(operationsToAdd);
+        return true;
+    }
+    
+    // </editor-fold>
+    
+    // <editor-fold defaultstate="collapsed" desc="comparator implementation"> 
+    
+    @Override
+    public int compare(ShopOrderOperationModel o1, ShopOrderOperationModel o2)
+    {
+        int returnVal = o1.getOperationSequence() > o2.getOperationSequence() ? 1 : -1;
+        return returnVal;
+    }
+    
     // </editor-fold> 
 }

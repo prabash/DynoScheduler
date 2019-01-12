@@ -9,7 +9,9 @@ import dyno.scheduler.utils.LogUtil;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,16 +23,16 @@ import java.util.Map;
 public class MySqlWriter
 {
 
-    public boolean WriteToTable(String query, HashMap<Integer, Object> columnValues)
+    public int WriteToTable(String query, HashMap<Integer, Object> columnValues)
     {
         Connection connection = null;
         PreparedStatement preparedStmt = null;
-
+        int key = -1;
         try
         {
             connection = MySqlConnection.getConnection();
             // create the java mysql update preparedstatement
-            preparedStmt = connection.prepareStatement(query);
+            preparedStmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             for (Map.Entry<Integer, Object> entry : columnValues.entrySet())
             {
                 if(entry.getValue() instanceof Integer)
@@ -48,22 +50,41 @@ public class MySqlWriter
                 else if (entry.getValue() instanceof Date)
                 {
                     Date date = (Date)entry.getValue();
-                    preparedStmt.setObject(entry.getKey(), date);
+                    if (date.equals(new Date(0)))
+                    {
+                        preparedStmt.setNull(entry.getKey(), java.sql.Types.DATE);
+                    }
+                    else
+                    {
+                        preparedStmt.setObject(entry.getKey(), date);
+                    }
                 }
                 else if (entry.getValue() instanceof Time)
                 {
                     Time time = (Time)entry.getValue();
-                    preparedStmt.setTime(entry.getKey(), time);
+                    if (time.equals(new Time(0)))
+                    {
+                        preparedStmt.setNull(entry.getKey(), java.sql.Types.TIME);
+                    }
+                    else
+                    {
+                        preparedStmt.setTime(entry.getKey(), time);
+                    }
                 }
             }
 
             // execute the java preparedstatement
             preparedStmt.executeUpdate();
+            ResultSet generatedKey = preparedStmt.getGeneratedKeys();
+            if (generatedKey.next())
+            {
+                key = generatedKey.getInt(1);
+            }
 
         } catch (Exception ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-            return false;
+            return key;
         } finally
         {
             try
@@ -78,7 +99,7 @@ public class MySqlWriter
                 LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
             }
 
-            return true;
+            return key;
         }
     }
 }

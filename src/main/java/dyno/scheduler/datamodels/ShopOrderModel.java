@@ -549,7 +549,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         double importance = Math.round((((getPriority().getValue() / 5.0) * 0.3) + ((getRevenueValue() / 5.0) * 0.7)) * 100.0) / 100.0;
         return importance;
     }
-
+    
     // </editor-fold> 
     
     // <editor-fold defaultstate="collapsed" desc="comparator implementation"> 
