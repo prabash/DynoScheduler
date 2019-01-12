@@ -6,6 +6,7 @@
 package dyno.scheduler.utils;
 
 import dyno.scheduler.datamodels.DataModelEnums;
+import dyno.scheduler.datamodels.DataModelEnums.StoredProcedures;
 
 /**
  *
@@ -33,5 +34,18 @@ public class MySqlUtil
     public static String getDbName()
     {
         return "dynoschedule_test.";
+    }
+    
+    public static String getStoredProcedureName(StoredProcedures procedure)
+    {
+        switch (procedure)
+        {
+            case OperationScheduledTimeBlockFinite:
+                return "get_operation_scheduled_time_block_finite";
+            case InterruptedOperaitonDetails:
+                return "get_interrupted_operation_details";
+            default:
+                return "";
+        }
     }
 }

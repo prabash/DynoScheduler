@@ -34,7 +34,7 @@ public class ShopOrderOperationModel extends DataModel
     private String workCenterNo;
     private String workCenterType;
     private String operationDescription;
-    private int operationSequence;
+    private double operationSequence;
     private int precedingOperationId;
     private int workCenterRuntimeFactor;
     private int workCenterRuntime;
@@ -137,12 +137,12 @@ public class ShopOrderOperationModel extends DataModel
         this.operationDescription = operationDescription;
     }
 
-    public int getOperationSequence()
+    public double getOperationSequence()
     {
         return operationSequence;
     }
 
-    public void setOperationSequence(int operationSequence)
+    public void setOperationSequence(double operationSequence)
     {
         this.operationSequence = operationSequence;
     }
@@ -305,7 +305,7 @@ public class ShopOrderOperationModel extends DataModel
                 this.setOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOperationNo(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setOperationDescription(dataFormatter.formatCellValue(excelRow.getCell(++i)));
-                this.setOperationSequence(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
+                this.setOperationSequence(Double.parseDouble(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setPrecedingOperationId(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setWorkCenterRuntimeFactor(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
                 this.setWorkCenterRuntime(Integer.parseInt(dataFormatter.formatCellValue(excelRow.getCell(++i))));
@@ -330,7 +330,7 @@ public class ShopOrderOperationModel extends DataModel
                 this.setOperationNo(resultSetRow.getInt(++i));
                 this.setOrderNo(resultSetRow.getString(++i));
                 this.setOperationDescription(resultSetRow.getString(++i));
-                this.setOperationSequence(resultSetRow.getInt(++i));
+                this.setOperationSequence(resultSetRow.getDouble(++i));
                 this.setPrecedingOperationId(resultSetRow.getInt(++i));
                 this.setWorkCenterRuntimeFactor(resultSetRow.getInt(++i));
                 this.setWorkCenterRuntime(resultSetRow.getInt(++i));

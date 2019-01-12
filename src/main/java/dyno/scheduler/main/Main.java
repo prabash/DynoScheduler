@@ -1,8 +1,12 @@
 package dyno.scheduler.main;
 
 import dyno.scheduler.agents.ManagerAgent;
+import dyno.scheduler.data.DataReader;
+import dyno.scheduler.datamodels.InterruptedOpDetailsDataModel;
+import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.restservice.RESTServiceHandler;
+import dyno.scheduler.utils.DateTimeUtil;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -56,6 +60,18 @@ public class Main
         
         // start the manager agent
         AgentsManager.startAgents(agentList);
+        
+        // TEST
+        List<InterruptedOpDetailsDataModel> details = DataReader.getInterruptedOperationDetails(
+                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("10:00:00"),
+                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("15:00:00"),
+                "WC2");
+        
+        // TEST
+        WorkCenterModel test = new WorkCenterModel();
+        test.setWorkCenterNo("WC1");
+        test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 101, 2);
+        test.unscheduleOperationOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "11:00:00"), 4);
         
     }
     

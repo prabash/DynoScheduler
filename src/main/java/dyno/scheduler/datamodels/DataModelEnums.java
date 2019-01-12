@@ -79,4 +79,10 @@ public class DataModelEnums
         TimeBlockValue,
         TimeBlockName
     }
+    
+    public enum StoredProcedures
+    {
+        OperationScheduledTimeBlockFinite,
+        InterruptedOperaitonDetails
+    }
 }

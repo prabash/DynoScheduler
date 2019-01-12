@@ -83,6 +83,7 @@ public class WorkCenterOpAllocModel extends DataModel
     }
 
     // </editor-fold>
+    
     // <editor-fold desc="overriden methods"> 
     /**
      * get WorkCenterOpAllocModel object by passing Excel or MySql table row
@@ -159,6 +160,7 @@ public class WorkCenterOpAllocModel extends DataModel
     }
 
     // </editor-fold> 
+    
     public static LocalTime getTimeBlockValue(String timeBlock)
     {
         return (LocalTime) getTimeBlockDetail(timeBlock, TimeBlockParamType.TimeBlockValue);

@@ -233,7 +233,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
 
     public List<ShopOrderOperationModel> getOperations()
     {
-        Collections.sort(operations, (ShopOrderOperationModel o1, ShopOrderOperationModel o2) -> Integer.compare(o1.getOperationSequence(), o2.getOperationSequence()));
+        Collections.sort(operations, (ShopOrderOperationModel o1, ShopOrderOperationModel o2) -> Double.compare(o1.getOperationSequence(), o2.getOperationSequence()));
         return operations;
     }
 

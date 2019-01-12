@@ -308,8 +308,8 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             }
 
             // Sort last by the operation sequence.
-            Integer o1_operationSequence = Integer.parseInt(o1_msgContent[3]);
-            Integer o2_operationSequence = Integer.parseInt(o2_msgContent[3]);
+            Double o1_operationSequence = Double.parseDouble(o1_msgContent[3]);
+            Double o2_operationSequence = Double.parseDouble(o2_msgContent[3]);
             return o1_operationSequence.compareTo(o2_operationSequence);
         }
 

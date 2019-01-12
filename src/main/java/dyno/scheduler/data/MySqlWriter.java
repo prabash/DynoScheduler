@@ -37,6 +37,10 @@ public class MySqlWriter
                 {
                     preparedStmt.setInt(entry.getKey(), (int)entry.getValue());
                 }
+                else if (entry.getValue() instanceof Double)
+                {
+                    preparedStmt.setDouble(entry.getKey(), (double)entry.getValue());
+                }
                 else if (entry.getValue() instanceof String)
                 {
                     preparedStmt.setString(entry.getKey(), (String)entry.getValue());

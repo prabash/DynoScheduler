@@ -7,6 +7,7 @@ package dyno.scheduler.utils;
 
 import java.sql.Date;
 import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
@@ -128,5 +129,27 @@ public class DateTimeUtil
         String timeValue = time.toString();
         DateTime dateTime = DateTime.parse(timeValue, getTimeFormat());
         return dateTime;
+    }
+    
+    public static DateTime convertSqlTimestampToDateTime(Timestamp timestamp)
+    {
+        String timestampVal =  new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(timestamp);
+        DateTime dateTime = DateTime.parse(timestampVal, getDateTimeFormat());
+        return dateTime;
+    }
+    
+    public static DateTime convertStringDateToDateTime(String date)
+    {
+        return DateTime.parse(date, getDateFormat());
+    }
+    
+    public static DateTime convertStringTimeToDateTime(String time)
+    {
+        return DateTime.parse(time, getTimeFormat());
+    }
+    
+    public static DateTime convertStringDateTimeToDateTime(String datetime)
+    {
+        return DateTime.parse(datetime, getDateTimeFormat());
     }
 }

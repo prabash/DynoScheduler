@@ -7,16 +7,21 @@ package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.datamodels.DataModelEnums;
+import dyno.scheduler.datamodels.InterruptedOpDetailsDataModel;
+import dyno.scheduler.datamodels.OperationScheduleTimeBlocksDataModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
+import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.LogUtil;
 import dyno.scheduler.utils.MySqlUtil;
 import dyno.scheduler.utils.TableUtil;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -69,7 +74,7 @@ public class MySqlReadManager extends DataReadManager
         List<ShopOrderModel> shopOrders = new ArrayList<>();
         ArrayList<ArrayList<String>> filters = null;
         ArrayList<String> orderBy = null;
-        ResultSet results = null;
+        ResultSet results;
         try
         {
             results = new MySqlReader().ReadTable(storageName, filters, orderBy);
@@ -79,7 +84,7 @@ public class MySqlReadManager extends DataReadManager
                 shopOrders.add(shopOrderObj);
             }
 
-        } catch (Exception ex)
+        } catch (SQLException ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
@@ -93,7 +98,7 @@ public class MySqlReadManager extends DataReadManager
         List<ShopOrderOperationModel> shopOrderOperations = new ArrayList<>();
         ArrayList<ArrayList<String>> filters = null;
         ArrayList<String> orderBy = null;
-        ResultSet results = null;
+        ResultSet results;
         try
         {
             results = new MySqlReader().ReadTable(storageName, filters, orderBy);
@@ -102,7 +107,7 @@ public class MySqlReadManager extends DataReadManager
                 ShopOrderOperationModel shopOrderOpObj = new ShopOrderOperationModel().getModelObject(results);
                 shopOrderOperations.add(shopOrderOpObj);
             }
-        } catch (Exception ex)
+        } catch (SQLException ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
@@ -115,7 +120,7 @@ public class MySqlReadManager extends DataReadManager
         List<WorkCenterModel> workCenters = new ArrayList<>();
         ArrayList<ArrayList<String>> filters = null;
         ArrayList<String> orderBy = null;
-        ResultSet results = null;
+        ResultSet results;
         try
         {
             results = new MySqlReader().ReadTable(storageName, filters, orderBy);
@@ -124,7 +129,7 @@ public class MySqlReadManager extends DataReadManager
                 WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
                 workCenters.add(workCenter);
             }
-        } catch (Exception ex)
+        } catch (SQLException ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
@@ -137,7 +142,7 @@ public class MySqlReadManager extends DataReadManager
         List<WorkCenterOpAllocModel> workCenterOpAllocs = new ArrayList<>();
         ArrayList<ArrayList<String>> filters = null;
         ArrayList<String> orderBy = null;
-        ResultSet results = null;
+        ResultSet results;
         try
         {
             results = new MySqlReader().ReadTable(storageName, filters, orderBy);
@@ -147,7 +152,7 @@ public class MySqlReadManager extends DataReadManager
                 workCenterOpAllocs.add(workCenterOpAlloc);
             }
 
-        } catch (Exception ex)
+        } catch (SQLException ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
@@ -169,7 +174,7 @@ public class MySqlReadManager extends DataReadManager
         // get the table name
         String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.ShopOrderOperation);
         
-        ResultSet results = null;
+        ResultSet results;
         try
         {
             results = new MySqlReader().ReadTable(tableName, filters, orderBy);
@@ -178,10 +183,62 @@ public class MySqlReadManager extends DataReadManager
                 ShopOrderOperationModel shopOrderOpObj = new ShopOrderOperationModel().getModelObject(results);
                 shopOrderOperations.add(shopOrderOpObj);
             }
-        } catch (Exception ex)
+        } catch (SQLException ex)
         {
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
         return shopOrderOperations;
+    }
+
+    @Override
+    protected List<OperationScheduleTimeBlocksDataModel> getOperationScheduledTimeBlockDetails(int operationId)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<OperationScheduleTimeBlocksDataModel> scheduledTimeBlocks = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.OperationScheduledTimeBlockFinite);
+        parameters.add(operationId);
+        
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                OperationScheduleTimeBlocksDataModel scheduledTimeBlock = new OperationScheduleTimeBlocksDataModel().getModelObject(results);
+                scheduledTimeBlocks.add(scheduledTimeBlock);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return scheduledTimeBlocks;
+    }
+
+    @Override
+    protected List<InterruptedOpDetailsDataModel> getInterruptedOperationDetails(DateTime interruptionStartDate, DateTime interruptionStartTime, DateTime interruptionEndDate, DateTime interruptionEndTime, String workCenterNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<InterruptedOpDetailsDataModel> interruptedOpDetails = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.InterruptedOperaitonDetails);
+        parameters.add(DateTimeUtil.convertDatetoSqlDate(interruptionStartDate));
+        parameters.add(DateTimeUtil.convertTimetoSqlTime(interruptionStartTime));
+        parameters.add(DateTimeUtil.convertDatetoSqlDate(interruptionEndDate));
+        parameters.add(DateTimeUtil.convertTimetoSqlTime(interruptionEndTime));
+        parameters.add(workCenterNo);
+        
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                InterruptedOpDetailsDataModel interruptedOp = new InterruptedOpDetailsDataModel().getModelObject(results);
+                interruptedOpDetails.add(interruptedOp);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return interruptedOpDetails;
     }
 }

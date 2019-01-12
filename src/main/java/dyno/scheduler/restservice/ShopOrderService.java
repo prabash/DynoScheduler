@@ -168,7 +168,7 @@ class ShopOrderOperationModelJson
     public String workCenterNo;
     public String workCenterType;
     public String operationDescription;
-    public int operationSequence;
+    public double operationSequence;
     public int precedingOperationId;
     public int workCenterRuntimeFactor;
     public int workCenterRuntime;
@@ -185,7 +185,7 @@ class ShopOrderOperationModelJson
     {
     }
 
-    public ShopOrderOperationModelJson(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, int operationSequence, int precedingOperationId,
+    public ShopOrderOperationModelJson(String orderNo, int operationId, int operationNo, String workCenterNo, String workCenterType, String operationDescription, double operationSequence, int precedingOperationId,
             int workCenterRuntimeFactor, int workCenterRunTime, int laborRuntimeFactor, int laborRunTime, String opStartDateTime, String opFinishDateTime, int quantity, DataModelEnums.OperationStatus operationStatus)
     {
         this.orderNo = orderNo;

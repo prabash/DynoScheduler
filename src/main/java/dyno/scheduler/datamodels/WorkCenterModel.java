@@ -230,7 +230,7 @@ public class WorkCenterModel extends DataModel
      * @return a hashmap will return next time timeblock name and the days added
      * so that the subsequent operations can be scheduled
      */
-    public HashMap<String, Object> updateWorkCenterOpAllocDetails(DateTime bestOfferedDate, int operationId, int workCenterRuntime)
+    public HashMap<String, Object> scheduleOperationFromBestOffer(DateTime bestOfferedDate, int operationId, int workCenterRuntime)
     {
         workCenterOpAllocUpdate = new ArrayList<>();
 
@@ -251,6 +251,23 @@ public class WorkCenterModel extends DataModel
         DataWriter.updateWorkCenterAllocData(workCenterOpAllocUpdate);
 
         return timeBlockDetails;
+    }
+    
+    public void unscheduleOperationOnInterruption(DateTime interruptionStartDateTime, int workCenterRuntime)
+    {
+        workCenterOpAllocUpdate = new ArrayList<>();
+
+        System.out.println("*************** UNSCHEDULING INTERRUPTED OPERATIONS : " + this.getWorkCenterNo() + " " + interruptionStartDateTime + " " + workCenterRuntime);
+
+        String bestOfferStartTimeBlock = WorkCenterOpAllocModel.getTimeBlockName(interruptionStartDateTime.toLocalTime());
+
+        // this method will add necessary and workCenterOpAlloc objects to be updated
+        // return the the next timeblock after the last timeblock where the operation is scheduled on
+        // Operation ID is set to -1 to indicate Interruption
+        getWorkCenterOpAllocObjectForUpdate(interruptionStartDateTime, bestOfferStartTimeBlock, -1, workCenterRuntime);
+
+        // update work center allocation data with provided information
+        DataWriter.updateWorkCenterAllocData(workCenterOpAllocUpdate);
     }
 
     /**

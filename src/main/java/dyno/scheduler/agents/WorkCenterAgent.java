@@ -188,7 +188,7 @@ public class WorkCenterAgent extends Agent
                     reply.setPerformative(ACLMessage.INFORM);
                     
                     // return the time block date and the days added
-                    HashMap<String, Object> timeBlockDetails = workCenter.updateWorkCenterOpAllocDetails(bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
+                    HashMap<String, Object> timeBlockDetails = workCenter.scheduleOperationFromBestOffer(bestOfferedDate, Integer.parseInt(operationId), workCenterRuntime);
                     // set the end time of the operation to be taken as the beginning of the next operation when scheduling
                     // in order to do so, increment the received TimeBlockName by 1
 

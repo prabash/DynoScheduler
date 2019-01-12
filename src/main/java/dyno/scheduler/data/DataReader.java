@@ -8,6 +8,7 @@ package dyno.scheduler.data;
 import dyno.scheduler.datamodels.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -97,5 +98,15 @@ public class DataReader
     public static List<ShopOrderOperationModel> getSubsequentOperations(ShopOrderOperationModel shopOrderOperation)
     {
         return DataFactory.getDataReadManagerInstance().getSubsequentOperations(shopOrderOperation);
+    }
+    
+    public static List<OperationScheduleTimeBlocksDataModel> getOperationScheduledTimeBlockDetails(int operationId)
+    {
+        return DataFactory.getDataReadManagerInstance().getOperationScheduledTimeBlockDetails(operationId);
+    }
+    
+    public static List<InterruptedOpDetailsDataModel> getInterruptedOperationDetails(DateTime interruptionStartDate, DateTime interruptionStartTime, DateTime interruptionEndDate, DateTime interruptionEndTime, String workCenterNo)
+    {
+        return DataFactory.getDataReadManagerInstance().getInterruptedOperationDetails(interruptionStartDate, interruptionStartTime, interruptionEndDate, interruptionEndTime, workCenterNo);
     }
 }

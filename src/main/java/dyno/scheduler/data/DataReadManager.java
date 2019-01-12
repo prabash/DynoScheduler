@@ -8,6 +8,7 @@ package dyno.scheduler.data;
 import dyno.scheduler.datamodels.*;
 import dyno.scheduler.datamodels.DataModelEnums.DataModelType;
 import java.util.List;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -32,4 +33,22 @@ public abstract class DataReadManager
      * @return list of all the subsequent operations
      */
     protected abstract List<ShopOrderOperationModel> getSubsequentOperations(ShopOrderOperationModel shopOrderOperation);
+    
+    /**
+     * Get the operation scheduled time block details
+     * @param operationId
+     * @return  
+     */
+    protected abstract List<OperationScheduleTimeBlocksDataModel> getOperationScheduledTimeBlockDetails(int operationId);
+    
+    /**
+     * Get interrupted operation details of a work center
+     * @param interruptionStartDate
+     * @param interruptionStartTime
+     * @param interruptionEndDate
+     * @param interruptionEndTime
+     * @param workCenterNo
+     * @return 
+     */
+    protected abstract List<InterruptedOpDetailsDataModel> getInterruptedOperationDetails(DateTime interruptionStartDate, DateTime interruptionStartTime, DateTime interruptionEndDate, DateTime interruptionEndTime, String workCenterNo);
 }
