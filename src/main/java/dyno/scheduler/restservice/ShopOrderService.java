@@ -68,8 +68,8 @@ public class ShopOrderService implements IDynoService
                         operation.getLaborRunTime(),
                         opStartDateTime != null ? opStartDateTime.toString(DateTimeUtil.getDateTimeFormatJson()) : "",
                         opFinishDateTime != null ? opFinishDateTime.toString(DateTimeUtil.getDateTimeFormatJson()) : "",
-                        0,
-                        DataModelEnums.OperationStatus.Created);
+                        operation.getQuantity(),
+                        operation.getOperationStatus());
                 operations.add(shopOrderOpJsonObj);
             }
 
