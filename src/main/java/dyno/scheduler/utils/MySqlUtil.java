@@ -14,6 +14,7 @@ import dyno.scheduler.datamodels.DataModelEnums.StoredProcedures;
  */
 public class MySqlUtil
 {
+
     public static String getStorageName(DataModelEnums.DataModelType dataModel)
     {
         switch (dataModel)
@@ -30,12 +31,12 @@ public class MySqlUtil
                 return "";
         }
     }
-    
+
     public static String getDbName()
     {
         return "dynoschedule_test.";
     }
-    
+
     public static String getStoredProcedureName(StoredProcedures procedure)
     {
         switch (procedure)
@@ -44,6 +45,14 @@ public class MySqlUtil
                 return "get_operation_scheduled_time_block_finite";
             case InterruptedOperaitonDetails:
                 return "get_interrupted_operation_details";
+            case UnscheduledOrders:
+                return "get_unscheduled_orders";
+            case UnschedledOperationWorkCenters:
+                return "get_unscheduled_operation_workcenters";
+            case AllOperationsOrdered:
+                return "get_all_shop_order_operations_ordered";
+            case OperationsOrdered:
+                return "get_shop_order_operations_ordered";
             default:
                 return "";
         }

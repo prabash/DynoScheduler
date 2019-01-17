@@ -51,4 +51,16 @@ public abstract class DataReadManager
      * @return 
      */
     protected abstract List<InterruptedOpDetailsDataModel> getInterruptedOperationDetails(DateTime interruptionStartDate, DateTime interruptionStartTime, DateTime interruptionEndDate, DateTime interruptionEndTime, String workCenterNo);
+    
+    /**
+     * Get Unscheduled Shop Orders List
+     * @return 
+     */
+    protected abstract List<ShopOrderModel> getUnscheduledShopOrders();
+    
+    /**
+     * Get Work Centres related unscheduled operations
+     * @return 
+     */
+    protected abstract List<WorkCenterModel> getUnscheduledOperationWorkCenters();
 }

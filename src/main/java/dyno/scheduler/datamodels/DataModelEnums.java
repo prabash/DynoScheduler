@@ -83,6 +83,10 @@ public class DataModelEnums
     public enum StoredProcedures
     {
         OperationScheduledTimeBlockFinite,
-        InterruptedOperaitonDetails
+        InterruptedOperaitonDetails,
+        UnscheduledOrders,
+        UnschedledOperationWorkCenters,
+        AllOperationsOrdered,
+        OperationsOrdered
     }
 }

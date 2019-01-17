@@ -241,4 +241,48 @@ public class MySqlReadManager extends DataReadManager
         }
         return interruptedOpDetails;
     }
+
+    @Override
+    protected List<ShopOrderModel> getUnscheduledShopOrders()
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderModel> unscheduledOrders = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.UnscheduledOrders);
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
+                unscheduledOrders.add(shopOrder);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return unscheduledOrders;
+    }
+
+    @Override
+    protected List<WorkCenterModel> getUnscheduledOperationWorkCenters()
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<WorkCenterModel> unscheduledOpWorkCenters = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.UnschedledOperationWorkCenters);
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
+                unscheduledOpWorkCenters.add(workCenter);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return unscheduledOpWorkCenters;
+    }
 }
