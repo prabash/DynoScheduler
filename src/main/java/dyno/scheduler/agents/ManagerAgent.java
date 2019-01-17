@@ -23,12 +23,15 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
+import jade.wrapper.StaleProxyException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -38,10 +41,16 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 {
 
     private static final long serialVersionUID = 3369137004053108334L;
-    private transient List<AgentController> agentList;// agents's ref
+    private static transient List<AgentController> agentList;// agents's ref
 
-    private static final Queue<ACLMessage> OPERATION_SCHEDULING_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
-
+    private static final Queue<ACLMessage> NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE = new ConcurrentLinkedQueue<>();
+    private static boolean NEW_OPERATION_SCHEDULED;
+    private static final Object NEW_OPERATION_SCHEDULE_LOCK = new Object();
+    
+    static BQueueNewOperationScheduleRequests queueNewOperationScheduleRequests;
+    static BProcessNewOperationScheduleQueue processNewOperationScheduleQueue;
+    static BNotifyNewOperationScheduleQueue notifyNewOperationScheduleQueue;
+            
     @Override
     protected void setup()
     {
@@ -51,29 +60,12 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 
         //get the parameters given into the object[]
         final Object[] args = getArguments();
+
         if (args[0] != null)
         {
             ContainerController container = (ContainerController) args[0];
-
-            agentList = new ArrayList<>();
-            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getShopOrderDetails(false)));
-            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getWorkCenterDetails(false)));
+            addBehaviour(new BCreateAgents(this, 30000L, container));
         }
-
-        try
-        {
-            System.out.println("Press a key to start the agents");
-            System.in.read();
-        } catch (IOException ex)
-        {
-            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-        }
-
-        addBehaviour(new BQueueScheduleOperationRequests());
-        addBehaviour(new BProcessOperationScheduleQueue(this, 5000L));
-        addBehaviour(new BNotifyOperationScheduleQueue());
-
-        AgentsManager.startAgents(agentList);
     }
 
     @Override
@@ -112,21 +104,39 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public static void takeDownAgents()
+    {
+        if (agentList != null)
+        {
+            for (AgentController agentController : agentList)
+            {
+                try
+                {
+                    agentController.kill();
+                } catch (StaleProxyException ex)
+                {
+                    Logger.getLogger(ManagerAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            agentList.clear();
+        }
+    }
+
     public static void addScheduleOperationRequest(ACLMessage scheduleOpRequest)
     {
-        OPERATION_SCHEDULING_REQUESTS_QUEUE.add(scheduleOpRequest);
+        NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE.add(scheduleOpRequest);
     }
 
     public static void clearScheduleOperationRequestsQueue()
     {
-        OPERATION_SCHEDULING_REQUESTS_QUEUE.clear();
+        NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE.clear();
     }
 
     public static boolean scheduleOperationsQueueIsEmpty()
     {
-        if (OPERATION_SCHEDULING_REQUESTS_QUEUE != null)
+        if (NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE != null)
         {
-            return OPERATION_SCHEDULING_REQUESTS_QUEUE.isEmpty();
+            return NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE.isEmpty();
         } else
         {
             return true;
@@ -135,11 +145,11 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 
     public static ACLMessage getNextFromScheduleOperationsQueue()
     {
-        if (OPERATION_SCHEDULING_REQUESTS_QUEUE != null)
+        if (NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE != null)
         {
-            if (!OPERATION_SCHEDULING_REQUESTS_QUEUE.isEmpty())
+            if (!NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE.isEmpty())
             {
-                return OPERATION_SCHEDULING_REQUESTS_QUEUE.poll();
+                return NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE.poll();
             } else
             {
                 return null;
@@ -152,10 +162,59 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 
     public static Queue<ACLMessage> getQueueSnapshot()
     {
-        return OPERATION_SCHEDULING_REQUESTS_QUEUE;
+        return NEW_OPERATION_SCHEDULE_REQUESTS_QUEUE;
     }
 
-    static class BQueueScheduleOperationRequests extends CyclicBehaviour
+    static class BCreateAgents extends TickerBehaviour
+    {
+        private static final long serialVersionUID = 730162033787578690L;
+        private ContainerController container;
+
+        public BCreateAgents(Agent agent, long period, ContainerController container)
+        {
+            super(agent, period);
+            this.container = container;
+        }
+
+        @Override
+        protected void onTick()
+        {
+            agentList = new ArrayList<>();
+            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getUnscheduledOrders()));
+            agentList.addAll(AgentsManager.createAgentsFromData(container, DataReader.getUnscheduledOpWorkCenters()));
+            
+            if (agentList.size() > 0)
+            {
+                try
+                {
+                    queueNewOperationScheduleRequests = new BQueueNewOperationScheduleRequests();
+                    processNewOperationScheduleQueue = new BProcessNewOperationScheduleQueue(super.myAgent, 5000L);
+                    notifyNewOperationScheduleQueue = new BNotifyNewOperationScheduleQueue();
+                    
+                    super.myAgent.addBehaviour(queueNewOperationScheduleRequests);
+                    super.myAgent.addBehaviour(processNewOperationScheduleQueue);
+                    super.myAgent.addBehaviour(notifyNewOperationScheduleQueue);
+                    
+                    System.out.println("Press a key to start the agents");
+                    System.in.read();
+                } catch (IOException ex)
+                {
+                    LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+                }
+
+                AgentsManager.startAgents(agentList);
+            }
+            else
+            {
+                super.myAgent.removeBehaviour(queueNewOperationScheduleRequests);
+                super.myAgent.removeBehaviour(processNewOperationScheduleQueue);
+                super.myAgent.removeBehaviour(notifyNewOperationScheduleQueue);
+                System.out.println(" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NO ORDERS TO BE SCHEDULED!! ");
+            }
+        }
+    }
+
+    static class BQueueNewOperationScheduleRequests extends CyclicBehaviour
     {
 
         private static final long serialVersionUID = 8948436530894606064L;
@@ -182,16 +241,12 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         // </editor-fold>
     }
 
-    private static boolean OPERATION_SCHEDULED;
-
-    private static final Object OPERATION_SCHEDULE_LOCK = new Object();
-
-    static class BProcessOperationScheduleQueue extends TickerBehaviour
+    static class BProcessNewOperationScheduleQueue extends TickerBehaviour
     {
 
         private static final long serialVersionUID = -6980306431467493127L;
 
-        public BProcessOperationScheduleQueue(Agent agent, long period)
+        public BProcessNewOperationScheduleQueue(Agent agent, long period)
         {
             super(agent, period);
         }
@@ -209,10 +264,10 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     {
 
         Agent myAgent;
-        BProcessOperationScheduleQueue tickerInstance;
+        BProcessNewOperationScheduleQueue tickerInstance;
         ArrayList<ACLMessage> processingQueue;
 
-        public ProcessOperationScheduleQueue(Agent agent, BProcessOperationScheduleQueue tickerInstance)
+        public ProcessOperationScheduleQueue(Agent agent, BProcessNewOperationScheduleQueue tickerInstance)
         {
             this.myAgent = agent;
             this.tickerInstance = tickerInstance;
@@ -225,28 +280,35 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             if (!ManagerAgent.scheduleOperationsQueueIsEmpty())
             {
                 myAgent.removeBehaviour(tickerInstance);
-            }
-            processingQueue = new ArrayList<>();
-            while (!ManagerAgent.scheduleOperationsQueueIsEmpty())
+
+                processingQueue = new ArrayList<>();
+                while (!ManagerAgent.scheduleOperationsQueueIsEmpty())
+                {
+                    ACLMessage request = ManagerAgent.getNextFromScheduleOperationsQueue();
+                    processingQueue.add(request);
+                }
+
+                processingQueue.sort(new ShopOrderACLMessageComparator());
+                for (ACLMessage request : processingQueue)
+                {
+                    scheduleOperation(request);
+                }
+                // finally take down the agents created after processing the queue
+                if (processingQueue.size() > 0)
+                {
+                    ManagerAgent.takeDownAgents();
+                }
+            } else
             {
-                ACLMessage request = ManagerAgent.getNextFromScheduleOperationsQueue();
-                processingQueue.add(request);
+                System.out.println(" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NO OPERATIONS TO BE SCHEDULED!! ");
+                ManagerAgent.takeDownAgents();
             }
-            
-            processingQueue.sort(new ShopOrderACLMessageComparator());
-            for (ACLMessage request : processingQueue)
-            {
-                scheduleOperation(request);
-            }
-            
-            System.out.println(" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NO OPERATIONS TO BE SCHEDULED!! ");
-            myAgent.addBehaviour(tickerInstance);
         }
 
         public boolean scheduleOperation(ACLMessage request)
         {
-            OPERATION_SCHEDULED = false;
-            synchronized (OPERATION_SCHEDULE_LOCK)
+            NEW_OPERATION_SCHEDULED = false;
+            synchronized (NEW_OPERATION_SCHEDULE_LOCK)
             {
                 try
                 {
@@ -264,10 +326,10 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                     startOpScheduleMsg.addReceiver(shopOrderAgent);
                     startOpScheduleMsg.setContent(operationId);
 
-                    if (!OPERATION_SCHEDULED)
+                    if (!NEW_OPERATION_SCHEDULED)
                     {
                         myAgent.send(startOpScheduleMsg);
-                        OPERATION_SCHEDULE_LOCK.wait();
+                        NEW_OPERATION_SCHEDULE_LOCK.wait();
 
                         System.out.println("operation queue locked to schedule operation : " + operationId);
                     }
@@ -277,12 +339,13 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                 }
             }
 
-            return OPERATION_SCHEDULED;
+            return NEW_OPERATION_SCHEDULED;
         }
     }
 
     static class ShopOrderACLMessageComparator implements Comparator<ACLMessage>
     {
+
         @Override
         public int compare(ACLMessage o1, ACLMessage o2)
         {
@@ -315,7 +378,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
 
     }
 
-    static class BNotifyOperationScheduleQueue extends CyclicBehaviour
+    static class BNotifyNewOperationScheduleQueue extends CyclicBehaviour
     {
 
         private static final long serialVersionUID = -8707253852585581218L;
@@ -329,13 +392,13 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             {
                 try
                 {
-                    synchronized (OPERATION_SCHEDULE_LOCK)
+                    synchronized (NEW_OPERATION_SCHEDULE_LOCK)
                     {
                         System.out.println(msg.getContent());
                         System.out.println("Notify queue unlock");
 
-                        OPERATION_SCHEDULED = true;
-                        OPERATION_SCHEDULE_LOCK.notifyAll();
+                        NEW_OPERATION_SCHEDULED = true;
+                        NEW_OPERATION_SCHEDULE_LOCK.notifyAll();
                     }
 
                 } catch (Exception ex)

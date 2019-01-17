@@ -87,6 +87,6 @@ public class DataModelEnums
         UnscheduledOrders,
         UnschedledOperationWorkCenters,
         AllOperationsOrdered,
-        OperationsOrdered
+        ByOrderNoOperationsOrdered
     }
 }

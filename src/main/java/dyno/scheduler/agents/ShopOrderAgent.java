@@ -58,8 +58,8 @@ public class ShopOrderAgent extends Agent
         {
             System.out.println("Error with the Shop Order arguments");
         }
-        addBehaviour(new BProcessOperationQueue(shopOrder.getOperations(), shopOrder));
-        addBehaviour(new BStartOperationScheduler(this));
+        addBehaviour(new BQueueNewOperations(shopOrder.getOperations(), shopOrder));
+        addBehaviour(new BStartNewOperationScheduler(this));
 
         System.out.println("the Shop Order Agent " + this.getLocalName() + " is started");
     }
@@ -93,7 +93,11 @@ public class ShopOrderAgent extends Agent
     }
 }
 
-class BProcessOperationQueue extends Behaviour
+/**
+ * This behavior will queue only the newly created operations
+ * @author Prabash
+ */
+class BQueueNewOperations extends Behaviour
 {
     private static final long serialVersionUID = 5767062419481143156L;
     private boolean operationsQueued = false;
@@ -105,7 +109,7 @@ class BProcessOperationQueue extends Behaviour
     transient List<ShopOrderOperationModel> operations = new ArrayList<>();
     ShopOrderModel shopOrder;
 
-    public BProcessOperationQueue(List<ShopOrderOperationModel> operations, ShopOrderModel shopOrder)
+    public BQueueNewOperations(List<ShopOrderOperationModel> operations, ShopOrderModel shopOrder)
     {
         this.operations.clear();
         this.operations.addAll(operations);
@@ -169,7 +173,7 @@ class BProcessOperationQueue extends Behaviour
 }
 
   
-class BStartOperationScheduler extends CyclicBehaviour
+class BStartNewOperationScheduler extends CyclicBehaviour
 {
     private final ShopOrderAgent currentAgent;
     private static final long serialVersionUID = 3149611413717448878L;
@@ -191,7 +195,7 @@ class BStartOperationScheduler extends CyclicBehaviour
     // The list of known workcenter agents
     private AID[] workCenterAgents;
     
-    public BStartOperationScheduler(ShopOrderAgent currentAgent)
+    public BStartNewOperationScheduler(ShopOrderAgent currentAgent)
     {
         this.currentAgent = currentAgent;
     }

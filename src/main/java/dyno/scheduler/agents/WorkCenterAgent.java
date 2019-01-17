@@ -20,6 +20,8 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
@@ -47,7 +49,14 @@ public class WorkCenterAgent extends Agent
     @Override
     protected void takeDown()
     {
-        super.takeDown(); //To change body of generated methods, choose Tools | Templates.
+        try
+        {
+            DFService.deregister(this);
+            super.takeDown(); //To change body of generated methods, choose Tools | Templates.
+        } catch (FIPAException ex)
+        {
+            Logger.getLogger(WorkCenterAgent.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
@@ -95,6 +104,7 @@ public class WorkCenterAgent extends Agent
         System.out.println("the Work Center agent " + this.getLocalName() + " is started");
     }
 
+    
     // </editor-fold>
     
     // <editor-fold desc="behaviors" defaultstate="collapsed"> 

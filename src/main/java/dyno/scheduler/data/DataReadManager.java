@@ -54,13 +54,21 @@ public abstract class DataReadManager
     
     /**
      * Get Unscheduled Shop Orders List
-     * @return 
+     * @return a list of unscheduled orders
      */
     protected abstract List<ShopOrderModel> getUnscheduledShopOrders();
     
     /**
      * Get Work Centres related unscheduled operations
-     * @return 
+     * @return unscheduled operations' work centers list
      */
     protected abstract List<WorkCenterModel> getUnscheduledOperationWorkCenters();
+    
+    /**
+     * Get Shop Order Operations by Providing the Shop Order No.
+     * Operations will be ordered according to their operation sequence and preceding operation id combination
+     * @param orderNo
+     * @return ordered operations list
+     */
+    protected abstract List<ShopOrderOperationModel> getShopOrderOperationsByOrderNo(String orderNo);
 }

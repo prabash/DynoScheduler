@@ -167,13 +167,13 @@ public class MySqlReadManager extends DataReadManager
         ArrayList<ArrayList<String>> filters = new ArrayList<>();
         filters.add(TableUtil.createTableFilter("operation_sequence", ">=", String.valueOf(shopOrderOperation.getOperationSequence())));
         filters.add(TableUtil.createTableFilter("order_no", "=", shopOrderOperation.getOrderNo()));
-        
+
         // order by opretaion sequence
         ArrayList<String> orderBy = TableUtil.createOrderByFilters("operation_sequence");;
-        
+
         // get the table name
         String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.ShopOrderOperation);
-        
+
         ResultSet results;
         try
         {
@@ -197,7 +197,7 @@ public class MySqlReadManager extends DataReadManager
         ArrayList<OperationScheduleTimeBlocksDataModel> scheduledTimeBlocks = new ArrayList<>();
         String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.OperationScheduledTimeBlockFinite);
         parameters.add(operationId);
-        
+
         ResultSet results;
         try
         {
@@ -225,7 +225,7 @@ public class MySqlReadManager extends DataReadManager
         parameters.add(DateTimeUtil.convertDatetoSqlDate(interruptionEndDate));
         parameters.add(DateTimeUtil.convertTimetoSqlTime(interruptionEndTime));
         parameters.add(workCenterNo);
-        
+
         ResultSet results;
         try
         {
@@ -255,6 +255,8 @@ public class MySqlReadManager extends DataReadManager
             while (results.next())
             {
                 ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
+                // set the list of operations
+                shopOrder.setOperations(getShopOrderOperationsByOrderNo(shopOrder.getOrderNo()));
                 unscheduledOrders.add(shopOrder);
             }
         } catch (SQLException ex)
@@ -284,5 +286,30 @@ public class MySqlReadManager extends DataReadManager
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
         return unscheduledOpWorkCenters;
+    }
+
+    @Override
+    protected List<ShopOrderOperationModel> getShopOrderOperationsByOrderNo(String orderNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderOperationModel> shopOrderOperations = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ByOrderNoOperationsOrdered);
+
+        parameters.add(orderNo);
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderOperationModel shopOrderOperation = new ShopOrderOperationModel().getModelObject(results);
+                shopOrderOperations.add(shopOrderOperation);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return shopOrderOperations;
     }
 }

@@ -109,4 +109,14 @@ public class DataReader
     {
         return DataFactory.getDataReadManagerInstance().getInterruptedOperationDetails(interruptionStartDate, interruptionStartTime, interruptionEndDate, interruptionEndTime, workCenterNo);
     }
+    
+    public static List<ShopOrderModel> getUnscheduledOrders()
+    {
+        return DataFactory.getDataReadManagerInstance().getUnscheduledShopOrders();
+    }
+    
+    public static List<WorkCenterModel> getUnscheduledOpWorkCenters()
+    {
+        return DataFactory.getDataReadManagerInstance().getUnscheduledOperationWorkCenters();
+    }
 }

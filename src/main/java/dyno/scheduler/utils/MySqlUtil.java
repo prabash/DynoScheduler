@@ -51,7 +51,7 @@ public class MySqlUtil
                 return "get_unscheduled_operation_workcenters";
             case AllOperationsOrdered:
                 return "get_all_shop_order_operations_ordered";
-            case OperationsOrdered:
+            case ByOrderNoOperationsOrdered:
                 return "get_shop_order_operations_ordered";
             default:
                 return "";
