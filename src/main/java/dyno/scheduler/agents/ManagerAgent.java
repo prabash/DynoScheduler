@@ -50,6 +50,10 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     static BQueueNewOperationScheduleRequests queueNewOperationScheduleRequests;
     static BProcessNewOperationScheduleQueue processNewOperationScheduleQueue;
     static BNotifyNewOperationScheduleQueue notifyNewOperationScheduleQueue;
+    static BCreateAgents createAgentsBehavior;
+    
+    private static final long CREATE_AGENTS_INTERVAL = 30000L;
+    private static final long OPERATION_QUEUE_PROCESS_INTERVAL = 5000L;
             
     @Override
     protected void setup()
@@ -64,7 +68,8 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         if (args[0] != null)
         {
             ContainerController container = (ContainerController) args[0];
-            addBehaviour(new BCreateAgents(this, 30000L, container));
+            createAgentsBehavior = new BCreateAgents(this, CREATE_AGENTS_INTERVAL, container);
+            addBehaviour(createAgentsBehavior);
         }
     }
 
@@ -188,12 +193,16 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                 try
                 {
                     queueNewOperationScheduleRequests = new BQueueNewOperationScheduleRequests();
-                    processNewOperationScheduleQueue = new BProcessNewOperationScheduleQueue(super.myAgent, 5000L);
+                    processNewOperationScheduleQueue = new BProcessNewOperationScheduleQueue(super.myAgent, OPERATION_QUEUE_PROCESS_INTERVAL);
                     notifyNewOperationScheduleQueue = new BNotifyNewOperationScheduleQueue();
                     
+                    // Only add these behaviors when new shop orders are available to be scheduled
                     super.myAgent.addBehaviour(queueNewOperationScheduleRequests);
                     super.myAgent.addBehaviour(processNewOperationScheduleQueue);
                     super.myAgent.addBehaviour(notifyNewOperationScheduleQueue);
+                    
+                    // At that point remove the create agents behavior
+                    super.myAgent.removeBehaviour(createAgentsBehavior);
                     
                     System.out.println("Press a key to start the agents");
                     System.in.read();
@@ -206,9 +215,8 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             }
             else
             {
-                super.myAgent.removeBehaviour(queueNewOperationScheduleRequests);
-                super.myAgent.removeBehaviour(processNewOperationScheduleQueue);
-                super.myAgent.removeBehaviour(notifyNewOperationScheduleQueue);
+                
+                
                 System.out.println(" %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NO ORDERS TO BE SCHEDULED!! ");
             }
         }
@@ -220,6 +228,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
         private static final long serialVersionUID = 8948436530894606064L;
 
         // <editor-fold desc="overriden methods" defaultstate="collapsed">
+        
         /**
          * action overridden method
          */
@@ -297,6 +306,14 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                 if (processingQueue.size() > 0)
                 {
                     ManagerAgent.takeDownAgents();
+                    
+                    // After the scheduling process is done, remove the operation scheduling related behaviors
+                    myAgent.removeBehaviour(queueNewOperationScheduleRequests);
+                    myAgent.removeBehaviour(processNewOperationScheduleQueue);
+                    myAgent.removeBehaviour(notifyNewOperationScheduleQueue);
+                    
+                    // Add the create agents behavior once the queue is processed
+                    myAgent.addBehaviour(createAgentsBehavior);
                 }
             } else
             {
