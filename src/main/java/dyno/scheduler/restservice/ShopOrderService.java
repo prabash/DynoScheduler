@@ -23,7 +23,7 @@ import org.joda.time.DateTime;
  * @author Prabash
  */
 @Path("/shop-order")
-public class ShopOrderService implements IDynoService
+public class ShopOrderService implements IDynoGetService
 {
 
     @Override

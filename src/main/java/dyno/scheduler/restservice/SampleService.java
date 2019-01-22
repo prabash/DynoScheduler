@@ -23,7 +23,7 @@ import org.joda.time.format.DateTimeFormatter;
  * TODO: Remove after the implementation
  */
 @Path("/sample")
-public class SampleService implements IDynoService
+public class SampleService implements IDynoGetService
 {
     @Override
     public Response get()

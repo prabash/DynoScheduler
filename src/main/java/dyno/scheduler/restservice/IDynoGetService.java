@@ -15,7 +15,7 @@ import javax.ws.rs.core.Response;
  *
  * @author Prabash
  */
-public interface IDynoService
+public interface IDynoGetService
 {
     @GET
     @Path("get")

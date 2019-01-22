@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
  * @author Prabash
  */
 @Path("/work-center-op-alloc")
-public class WorkCenterOpAlloc implements IDynoService
+public class WorkCenterOpAlloc implements IDynoGetService
 {
     @Override
     public Response get()
