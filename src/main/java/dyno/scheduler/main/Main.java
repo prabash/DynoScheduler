@@ -1,8 +1,13 @@
 package dyno.scheduler.main;
 
 import dyno.scheduler.agents.ManagerAgent;
+import dyno.scheduler.data.DataReader;
+import dyno.scheduler.datamodels.ShopOrderModel;
+import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.restservice.RESTServiceHandler;
+import dyno.scheduler.utils.DateTimeUtil;
 import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -57,33 +62,37 @@ public class Main
         // start the manager agent
         AgentsManager.startAgents(agentList); 
         
-        // TEST
-//        List<InterruptedOpDetailsDataModel> details = DataReader.getInterruptedOperationDetails(
-//                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("10:00:00"),
-//                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("15:00:00"),
-//                "WC2");
         
-        // TEST TO INTERRUPT WORK CENTER
-//        List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
-//        ShopOrderModel shopOrder = shopOrders.get(0);
-//        for (ShopOrderOperationModel operation : shopOrder.getOperations())
-//        {
-//            if (operation.getOperationId() == 100)
-//            {
-//                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
-//            }
-//        }
-//
-//        WorkCenterModel test = new WorkCenterModel();
-//        test.setWorkCenterNo("WC2");
-//        //test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 0, 2);
-//
-//        test.unscheduleOperationOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 3);
     }
     
     private static void startRESTService()
     {
         Thread restServiceHandler = new Thread(new RESTServiceHandler());
         restServiceHandler.start();
+    }
+    
+    public static void InterruptWorkCenterTest()
+    {
+                // TEST
+//        List<InterruptedOpDetailsDataModel> details = DataReader.getInterruptedOperationDetails(
+//                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("10:00:00"),
+//                DateTimeUtil.convertStringDateToDateTime("2018-08-08"), DateTimeUtil.convertStringTimeToDateTime("15:00:00"),
+//                "WC2");
+        
+        // TEST TO INTERRUPT WORK CENTER
+        List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
+        ShopOrderModel shopOrder = shopOrders.get(0);
+        for (ShopOrderOperationModel operation : shopOrder.getOperations())
+        {
+            if (operation.getOperationId() == 100)
+            {
+                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
+            }
+        }
+
+        WorkCenterModel test = new WorkCenterModel();
+        test.setWorkCenterNo("WC2");
+        //test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 0, 2);
+        test.unscheduleOperationOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 3);
     }
 }

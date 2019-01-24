@@ -24,7 +24,6 @@ import jade.lang.acl.MessageTemplate;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -204,9 +203,9 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                     // At that point remove the create agents behavior
                     super.myAgent.removeBehaviour(createAgentsBehavior);
                     
-                    System.out.println("Press a key to start the agents");
-                    System.in.read();
-                } catch (IOException ex)
+//                    System.out.println("Press a key to start the agents");
+//                    System.in.read();
+                } catch (Exception ex)
                 {
                     LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
                 }
