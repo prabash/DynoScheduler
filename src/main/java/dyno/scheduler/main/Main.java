@@ -93,12 +93,12 @@ public class Main
         {
 //            if (operation.getOperationId() == 100)
 //            {
-//                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
+//                operation.splitAndUnscheduleInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
 //            }
             
             if (operation.getOperationId() == 401)
             {
-                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-06", "08:00:00"), DataModelEnums.InerruptionType.Interruption);
+                operation.splitAndUnscheduleInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-06", "08:00:00"), DataModelEnums.InerruptionType.Interruption);
             }
             
         }

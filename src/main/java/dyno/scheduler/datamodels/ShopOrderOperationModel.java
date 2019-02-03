@@ -411,9 +411,9 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
      * @param interruptionStartDateTime
      * @return 
      */
-    public boolean splitInterruptedOperation(DateTime interruptionStartDateTime, InerruptionType interruptionType)
+    public boolean splitAndUnscheduleInterruptedOperation(DateTime interruptionStartDateTime, InerruptionType interruptionType)
     {
-        return splitInterruptedOperation(interruptionStartDateTime, DateTimeUtil.concatenateDateTime(getOpFinishDate(), getOpFinishTime()), interruptionType);
+        return splitAndUnscheduleInterruptedOperation(interruptionStartDateTime, DateTimeUtil.concatenateDateTime(getOpFinishDate(), getOpFinishTime()), interruptionType);
     }
     
     /**
@@ -422,7 +422,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
      * @param interruptionEndDateTime
      * @return 
      */
-    public boolean splitInterruptedOperation(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, InerruptionType interruptionType)
+    public boolean splitAndUnscheduleInterruptedOperation(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, InerruptionType interruptionType)
     {
         List<OperationScheduleTimeBlocksDataModel> operationScheduledTimeBlocks = DataReader.getOperationScheduledTimeBlockDetails(this.getOperationId());
         

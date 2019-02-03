@@ -587,7 +587,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
             // by the unscheduleFromDateTime to forward
             else if(opStartDateTime.isBefore(unscheduleFromDateTime) && opFinishDateTime.isAfter(unscheduleFromDateTime))
             {
-                operation.splitInterruptedOperation(unscheduleFromDateTime, DataModelEnums.InerruptionType.Priority);
+                operation.splitAndUnscheduleInterruptedOperation(unscheduleFromDateTime, DataModelEnums.InerruptionType.Priority);
             }
             // if the operation start datetime comes after the unscheduleFromDateTime, such operations should just be unscheduled without splitting
             else if (opStartDateTime.isEqual(unscheduleFromDateTime) || opStartDateTime.isAfter(unscheduleFromDateTime))
