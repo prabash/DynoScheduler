@@ -2,6 +2,7 @@ package dyno.scheduler.main;
 
 import dyno.scheduler.agents.ManagerAgent;
 import dyno.scheduler.data.DataReader;
+import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
@@ -81,18 +82,30 @@ public class Main
         
         // TEST TO INTERRUPT WORK CENTER
         List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
-        ShopOrderModel shopOrder = shopOrders.get(0);
+        
+        List<ShopOrderModel> lowPrioShopOrders = DataReader.getLowerPriorityBlockerShopOrders(DateTimeUtil.convertStringDateToDateTime("2018-08-07"), 
+                DateTimeUtil.convertStringTimeToDateTime("08:00:00"), "Milling", 0.54);
+        
+        WorkCenterModel workCenter = DataReader.getWorkCenterByPrimaryKey("WC1");
+        
+        ShopOrderModel shopOrder = shopOrders.get(3);
         for (ShopOrderOperationModel operation : shopOrder.getOperations())
         {
-            if (operation.getOperationId() == 100)
+//            if (operation.getOperationId() == 100)
+//            {
+//                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
+//            }
+            
+            if (operation.getOperationId() == 401)
             {
-                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), DateTimeUtil.concatenateDateTime("2018-08-08", "12:00:00"));
+                operation.splitInterruptedOperation(DateTimeUtil.concatenateDateTime("2018-08-06", "08:00:00"), DataModelEnums.InerruptionType.Interruption);
             }
+            
         }
-
-        WorkCenterModel test = new WorkCenterModel();
-        test.setWorkCenterNo("WC2");
-        //test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 0, 2);
-        test.unscheduleOperationOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 3);
+//
+//        WorkCenterModel test = new WorkCenterModel();
+//        test.setWorkCenterNo("WC2");
+//        //test.scheduleOperationFromBestOffer(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 0, 2);
+//        test.unscheduleWorkCenterOnInterruption(DateTimeUtil.concatenateDateTime("2018-08-08", "09:00:00"), 3);
     }
 }

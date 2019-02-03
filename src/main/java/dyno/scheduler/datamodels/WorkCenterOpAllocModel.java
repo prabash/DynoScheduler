@@ -301,7 +301,7 @@ public class WorkCenterOpAllocModel extends DataModel
 
         if (newTimeBlock > 8 && GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
-            while (newTimeBlock >= 8)
+            while (newTimeBlock > 8)
             {
                 newTimeBlock = newTimeBlock - 8;
                 daysAdded++;

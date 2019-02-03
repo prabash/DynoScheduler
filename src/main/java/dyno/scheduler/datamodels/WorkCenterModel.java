@@ -7,6 +7,7 @@ package dyno.scheduler.datamodels;
 
 import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
+import dyno.scheduler.datamodels.DataModelEnums.InerruptionType;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
 import dyno.scheduler.utils.LogUtil;
@@ -253,18 +254,29 @@ public class WorkCenterModel extends DataModel
         return timeBlockDetails;
     }
     
-    public void unscheduleOperationOnInterruption(DateTime interruptionStartDateTime, int workCenterRuntime)
+    public void unscheduleWorkCenterOnInterruption(DateTime interruptionStartDateTime, int workCenterRuntime)
+    {
+        // when interrupted, the work center cannot be scheduled for that time period, which is indicated by -1
+        unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Interruption.getValue());
+    }
+    
+    public void unscheduleWorkCenterOnPriority(DateTime interruptionStartDateTime, int workCenterRuntime)
+    {
+        // when unscheduling lower priority operations, that time should be utilized by higher priority operations,
+        // which is indicated by 0
+        unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Priority.getValue());
+    }
+    
+    private void unscheduleWorkCenter(DateTime interruptionStartDateTime, int workCenterRuntime, int unscheduleType)
     {
         workCenterOpAllocUpdate = new ArrayList<>();
-
         System.out.println("*************** UNSCHEDULING INTERRUPTED OPERATIONS : " + this.getWorkCenterNo() + " " + interruptionStartDateTime + " " + workCenterRuntime);
-
-        String bestOfferStartTimeBlock = WorkCenterOpAllocModel.getTimeBlockName(interruptionStartDateTime.toLocalTime());
+        String interruptionStartTimeBlock = WorkCenterOpAllocModel.getTimeBlockName(interruptionStartDateTime.toLocalTime());
 
         // this method will add necessary and workCenterOpAlloc objects to be updated
         // return the the next timeblock after the last timeblock where the operation is scheduled on
         // Operation ID is set to -1 to indicate Interruption
-        getWorkCenterOpAllocObjectForUpdate(interruptionStartDateTime, bestOfferStartTimeBlock, -1, workCenterRuntime);
+        getWorkCenterOpAllocObjectForUpdate(interruptionStartDateTime, interruptionStartTimeBlock, unscheduleType, workCenterRuntime);
 
         // update work center allocation data with provided information
         DataWriter.updateWorkCenterAllocData(workCenterOpAllocUpdate);

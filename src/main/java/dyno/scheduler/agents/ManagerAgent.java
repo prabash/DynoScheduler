@@ -51,7 +51,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     static BNotifyNewOperationScheduleQueue notifyNewOperationScheduleQueue;
     static BCreateAgents createAgentsBehavior;
     
-    private static final long CREATE_AGENTS_INTERVAL = 30000L;
+    private static final long CREATE_AGENTS_INTERVAL = 5000L;
     private static final long OPERATION_QUEUE_PROCESS_INTERVAL = 5000L;
             
     @Override
@@ -203,8 +203,8 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
                     // At that point remove the create agents behavior
                     super.myAgent.removeBehaviour(createAgentsBehavior);
                     
-//                    System.out.println("Press a key to start the agents");
-//                    System.in.read();
+                    System.out.println("Press a key to start the agents");
+                    System.in.read();
                 } catch (Exception ex)
                 {
                     LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
@@ -391,7 +391,6 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
             Double o2_operationSequence = Double.parseDouble(o2_msgContent[3]);
             return o1_operationSequence.compareTo(o2_operationSequence);
         }
-
     }
 
     static class BNotifyNewOperationScheduleQueue extends CyclicBehaviour

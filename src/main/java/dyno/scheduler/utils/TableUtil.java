@@ -13,8 +13,11 @@ import java.util.ArrayList;
  */
 public class TableUtil
 {
+
     /**
-     * create a table filter with the given conditions and return an ArrayList<String> filter
+     * create a table filter with the given conditions and return an
+     * ArrayList<String> filter
+     *
      * @param filterColumnName filter column name (ex: "order_no")
      * @param filterExpression filter expression (ex: <, =, >)
      * @param filterCriteria filter criteria (ex: 1, "test")
@@ -25,14 +28,14 @@ public class TableUtil
         ArrayList<String> filter = new ArrayList<>();
         filter.add(filterColumnName);
         filter.add(filterExpression);
-        filter.add(filterCriteria);
-        
+        filter.add("'" + filterCriteria + "'");
+
         return filter;
     }
-    
-    
+
     /**
      * create the orderBy list by taking a set of orderBy columns
+     *
      * @param columnNames set of column names
      * @return order by list
      */

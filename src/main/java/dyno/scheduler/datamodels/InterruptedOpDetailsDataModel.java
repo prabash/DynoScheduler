@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
  */
 public class InterruptedOpDetailsDataModel extends DataModel
 {
-     // <editor-fold defaultstate="collapsed" desc="properties"> 
+    // <editor-fold defaultstate="collapsed" desc="properties"> 
     
     private String WorkCenterNo;
     private int operationId;

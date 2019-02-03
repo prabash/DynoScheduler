@@ -7,6 +7,7 @@ package dyno.scheduler.datamodels;
 
 import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
+import dyno.scheduler.datamodels.DataModelEnums.InerruptionType;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.LogUtil;
@@ -377,6 +378,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
     
     //<editor-fold defaultstate="collapsed" desc="custom methods">
     
+    @Override
     public ShopOrderOperationModel clone()
     {
         ShopOrderOperationModel shopOrderOperationModel = new ShopOrderOperationModel();
@@ -404,13 +406,36 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
         return shopOrderOperationModel;
     }
     
-    public boolean splitInterruptedOperation(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime)
+    /***
+     * This method will split an operation by getting only the interruption start date time, and split the remainder of the operation to a separate operation
+     * @param interruptionStartDateTime
+     * @return 
+     */
+    public boolean splitInterruptedOperation(DateTime interruptionStartDateTime, InerruptionType interruptionType)
+    {
+        return splitInterruptedOperation(interruptionStartDateTime, DateTimeUtil.concatenateDateTime(getOpFinishDate(), getOpFinishTime()), interruptionType);
+    }
+    
+    /**
+     * This method will split an operation within the given start and end time and create new operations accordingly
+     * @param interruptionStartDateTime
+     * @param interruptionEndDateTime
+     * @return 
+     */
+    public boolean splitInterruptedOperation(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, InerruptionType interruptionType)
     {
         List<OperationScheduleTimeBlocksDataModel> operationScheduledTimeBlocks = DataReader.getOperationScheduledTimeBlockDetails(this.getOperationId());
         
         int beforeInterruptionRuntime = 0;
         int withinInterruptionRuntime = 0;
         int afterInterruptionRuntime = 0;
+        
+        if (interruptionStartDateTime.isEqual(DateTimeUtil.concatenateDateTime(getOpStartDate(), getOpStartTime())) && 
+                interruptionEndDateTime.isEqual(DateTimeUtil.concatenateDateTime(getOpFinishDate(), getOpFinishTime())))
+        {
+            System.out.println("Interruption start and end date times are equal to the operation start and end times, therefore no splitting required");
+            return false;
+        }
         
         for (OperationScheduleTimeBlocksDataModel operationScheduledTimeBlock : operationScheduledTimeBlocks)
         {
@@ -474,8 +499,8 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationWithinInterruption.setQuantity(-1);
             operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
 
-            operationWithinInterruption.setOpStartDate(null);
-            operationWithinInterruption.setOpStartTime(null);
+            operationWithinInterruption.setOpStartDate(interruptionStartDateTime);
+            operationWithinInterruption.setOpStartTime(interruptionStartDateTime);
             operationWithinInterruption.setOpFinishDate(null);
             operationWithinInterruption.setOpFinishTime(null);
             
@@ -495,8 +520,8 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             // WorkCenter Runtime Factor and quantity is set to -1 for splitted operations, those should be referred to from the original operation
             operationAfterInterruption.setWorkCenterRuntimeFactor(-1);
             operationAfterInterruption.setQuantity(-1);
-            // Operation after the interruption is should be in the scheduled status
-            operationAfterInterruption.setOperationStatus(OperationStatus.Scheduled);
+            // Operation after the interruption should be in the Unscheduled status
+            operationAfterInterruption.setOperationStatus(OperationStatus.Unscheduled);
 
             // if the previous operation has been only update
             if (beforeInterruptionRuntime == 0 && withinInterruptionRuntime > 0)
@@ -521,6 +546,58 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
 
         DataWriter.updateShopOrderOperationData(operationToUpdate);
         DataWriter.addShopOrderOperationData(operationsToAdd);
+        
+        // After creating new operations by splitting the existing operations, for each of the created operations, the work center should be interrupted
+        for (ShopOrderOperationModel addedOperation : operationsToAdd)
+        {
+            WorkCenterModel workCenter = DataReader.getWorkCenterByPrimaryKey(getWorkCenterNo());
+            
+            // if the current addedOperation is the operation that falls between the interrupted time, check if the given interruptionType is normal interruption, or 
+            // priority unschedule, and call the respective method to unschedule work center accordingly
+            if(addedOperation.getOperationStatus().equals(OperationStatus.Interrupted))
+            {
+                if(interruptionType.equals(InerruptionType.Interruption))
+                {
+                    workCenter.unscheduleWorkCenterOnInterruption(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
+                        addedOperation.getWorkCenterRuntime());
+                }
+                else
+                {
+                    workCenter.unscheduleWorkCenterOnPriority(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
+                        addedOperation.getWorkCenterRuntime());
+                }
+            }
+            // if the operation comes after the interrupted time, the work center should anyway be able to utilize that time, hence it will be unscheduled as a priority
+            // unschedule of the work center
+            else
+            {
+                workCenter.unscheduleWorkCenterOnPriority(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
+                        addedOperation.getWorkCenterRuntime());
+            }
+        }
+        
+        return true;
+    }
+    
+    
+    /**
+     * This method will update the current operation status as unscheduled and update the work center schedule accordingly
+     * @return 
+     */
+    public boolean unscheduleOperation()
+    {
+        ArrayList<ShopOrderOperationModel> operationToUpdate = new ArrayList<>();
+        
+        // Set operation status to unschedule and update the database
+        this.setOperationStatus(OperationStatus.Unscheduled);
+        operationToUpdate.add(this);
+        DataWriter.updateShopOrderOperationData(operationToUpdate);
+        
+        // update the work center allocations as priority unschedule so that the available time can be utilized later
+        WorkCenterModel workCenter = DataReader.getWorkCenterByPrimaryKey(getWorkCenterNo());
+        workCenter.unscheduleWorkCenterOnPriority(DateTimeUtil.concatenateDateTime(this.getOpStartDate(), this.getOpStartTime()), 
+                        this.getWorkCenterRuntime());
+        
         return true;
     }
     

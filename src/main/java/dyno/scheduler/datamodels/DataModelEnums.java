@@ -16,11 +16,11 @@ public class DataModelEnums
      */
     public enum ShopOrderPriority
     {
-        Critical(1),
-        High(2),
+        Critical(5),
+        High(4),
         Medium(3),
-        Low(4),
-        Trivial(5);
+        Low(2),
+        Trivial(1);
         
         private final int value;
 
@@ -29,6 +29,24 @@ public class DataModelEnums
             return value;
         }
         private ShopOrderPriority(int value)        
+        {
+            this.value = value;
+        }
+    }
+    
+    public enum InerruptionType
+    {
+        Interruption(-1),
+        Priority(0);
+        
+        private final int value;
+
+        public int getValue()
+        {
+            return value;
+        }
+        
+        private InerruptionType(int value)        
         {
             this.value = value;
         }
@@ -59,6 +77,7 @@ public class DataModelEnums
     {
         Created,
         Scheduled,
+        Unscheduled,
         Interrupted,
         Reserved,
         Issued,
@@ -87,6 +106,7 @@ public class DataModelEnums
         UnscheduledOrders,
         UnschedledOperationWorkCenters,
         AllOperationsOrdered,
-        ByOrderNoOperationsOrdered
+        ByOrderNoOperationsOrdered,
+        LowerPriorityBlockerShopOrders
     }
 }

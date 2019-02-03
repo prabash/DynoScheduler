@@ -257,6 +257,8 @@ public class MySqlReadManager extends DataReadManager
                 ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
                 // set the list of operations
                 shopOrder.setOperations(getShopOrderOperationsByOrderNo(shopOrder.getOrderNo()));
+                // assign latest finish time for operations
+                shopOrder.assignEstimatedLatestFinishTimeForOperations();
                 unscheduledOrders.add(shopOrder);
             }
         } catch (SQLException ex)
@@ -311,5 +313,63 @@ public class MySqlReadManager extends DataReadManager
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
         return shopOrderOperations;
+    }
+
+    @Override
+    protected List<ShopOrderModel> getLowerPriorityBlockerShopOrders(DateTime fromDate, DateTime fromTime, String workCenterType, Double currentPriority)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderModel> lowerPriorityBlockerOrders = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.LowerPriorityBlockerShopOrders);
+        parameters.add(DateTimeUtil.convertDatetoSqlDate(fromDate));
+        parameters.add(DateTimeUtil.convertTimetoSqlTime(fromTime));
+        parameters.add(workCenterType);
+        parameters.add(currentPriority);
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderModel lowerPriorityBlockerOrder = new ShopOrderModel().getModelObject(results);
+                // set the list of operations
+                lowerPriorityBlockerOrder.setOperations(getShopOrderOperationsByOrderNo(lowerPriorityBlockerOrder.getOrderNo()));
+                // assign latest finish time for operations
+                lowerPriorityBlockerOrder.assignEstimatedLatestFinishTimeForOperations();
+                
+                lowerPriorityBlockerOrders.add( lowerPriorityBlockerOrder);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return lowerPriorityBlockerOrders;
+    }
+
+    @Override
+    protected WorkCenterModel getWorkCenterByPrimaryKey(String workCenterNo)
+    {
+        List<WorkCenterModel> workCenters = new ArrayList<>();
+        ArrayList<ArrayList<String>> filters = new ArrayList<>();
+        ArrayList<String> orderBy = null;
+        ResultSet results;
+        String storageName =  MySqlUtil.getStorageName(DataModelEnums.DataModelType.WorkCenter);
+        
+        filters.add(TableUtil.createTableFilter("work_center_no", "=", workCenterNo));
+        
+        try
+        {
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
+            while (results.next())
+            {
+                WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
+                workCenters.add(workCenter);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return workCenters.get(0);
     }
 }

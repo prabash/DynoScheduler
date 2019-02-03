@@ -51,6 +51,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
     private ShopOrderPriority priority;
     private int revenueValue;
     private List<ShopOrderOperationModel> operations;
+    private double importance;
 
     //</editor-fold>
     
@@ -251,6 +252,17 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
     {
         this.revenueValue = revenueValue;
     }
+
+    public double getImportance()
+    {
+        return importance;
+    }
+
+    public void setImportance(double importance)
+    {
+        this.importance = importance;
+    }
+    
     //</editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
@@ -311,6 +323,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
                 this.setShopOrderStatus(ShopOrderStatus.valueOf(resultSetRow.getString(++i)));
                 this.setPriority(ShopOrderPriority.valueOf(resultSetRow.getString(++i)));
                 this.setRevenueValue(resultSetRow.getInt(++i));
+                this.setImportance(resultSetRow.getDouble(++i));
 
             } catch (SQLException ex)
             {
@@ -447,7 +460,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
     /**
      * This method is used assign the latest finish times for operations.
      */
-    public void assignLatestFinishTimeForOperations()
+    public void assignEstimatedLatestFinishTimeForOperations()
     {
         List<ShopOrderOperationModel> currentOperations = getOperations();
         DateTime latestOrderStartDate = getLatestOrderStartDate();
@@ -544,10 +557,44 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
      * This is calculated with a weighted average method, with 30% Customer priority and 70% for revenue value.
      * @return totalImportance value
      */
-    public double getImportance()
+    public double calculateImportance()
     {
         double importance = Math.round((((getPriority().getValue() / 5.0) * 0.3) + ((getRevenueValue() / 5.0) * 0.7)) * 100.0) / 100.0;
         return importance;
+    }
+    
+    /**
+     * This method will un-schedule the current shop order operations that comes after the unscheduleFromDateTime
+     * the operations that comes in between the unscheduleFromDateTime will be splitted and updated and others will just be updated.
+     * @param unscheduleFromDateTime 
+     */
+    public void unscheduleLowerPriorityShopOrders(DateTime unscheduleFromDateTime)
+    {
+        // for each of the operations
+        for (ShopOrderOperationModel operation : this.getOperations())
+        {
+            // concatenate the operation start datetime and finish datetime
+            DateTime opStartDateTime = DateTimeUtil.concatenateDateTime(operation.getOpStartDate(), operation.getOpStartTime());
+            DateTime opFinishDateTime = DateTimeUtil.concatenateDateTime(operation.getOpFinishDate(), operation.getOpFinishTime());
+
+            // if the operation end time comes before or when the unscheduleFromDateTime such operations should not be unscheduled
+            // hence they are ignored.
+            if(opFinishDateTime.isEqual(unscheduleFromDateTime) || opFinishDateTime.isBefore(unscheduleFromDateTime))
+            {
+                continue;
+            }
+            // if the unscheduleFromDate falls in between the operation start datetime and finish datetime such operation should be split into 2
+            // by the unscheduleFromDateTime to forward
+            else if(opStartDateTime.isBefore(unscheduleFromDateTime) && opFinishDateTime.isAfter(unscheduleFromDateTime))
+            {
+                operation.splitInterruptedOperation(unscheduleFromDateTime, DataModelEnums.InerruptionType.Priority);
+            }
+            // if the operation start datetime comes after the unscheduleFromDateTime, such operations should just be unscheduled without splitting
+            else if (opStartDateTime.isEqual(unscheduleFromDateTime) || opStartDateTime.isAfter(unscheduleFromDateTime))
+            {
+                operation.unscheduleOperation();
+            }
+        }
     }
     
     // </editor-fold> 
@@ -557,10 +604,9 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
     @Override
     public int compare(ShopOrderModel o1, ShopOrderModel o2)
     {
-        int returnVal = o1.getImportance() > o2.getImportance() ? 1 : -1;
+        int returnVal = o1.calculateImportance() > o2.calculateImportance() ? 1 : -1;
         return returnVal;
     }
     
     // </editor-fold> 
-    
 }

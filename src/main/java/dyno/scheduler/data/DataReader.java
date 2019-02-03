@@ -42,7 +42,7 @@ public class DataReader
                         .filter(op -> op.getOrderNo().equals(shopOrder.getOrderNo()))
                         .collect(Collectors.toList());
                 shopOrder.setOperations(relatedOperations);
-                shopOrder.assignLatestFinishTimeForOperations();
+                shopOrder.assignEstimatedLatestFinishTimeForOperations();
             });
         }
         return shopOrderDetails;
@@ -118,5 +118,15 @@ public class DataReader
     public static List<WorkCenterModel> getUnscheduledOpWorkCenters()
     {
         return DataFactory.getDataReadManagerInstance().getUnscheduledOperationWorkCenters();
+    }
+    
+    public static List<ShopOrderModel> getLowerPriorityBlockerShopOrders(DateTime fromDate, DateTime fromTime, String workCenterType, double priority)
+    {
+        return DataFactory.getDataReadManagerInstance().getLowerPriorityBlockerShopOrders(fromDate, fromTime, workCenterType, priority);
+    }
+    
+    public static WorkCenterModel getWorkCenterByPrimaryKey(String workCenterNo)
+    {
+        return DataFactory.getDataReadManagerInstance().getWorkCenterByPrimaryKey(workCenterNo);
     }
 }

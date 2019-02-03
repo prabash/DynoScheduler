@@ -71,4 +71,9 @@ public abstract class DataReadManager
      * @return ordered operations list
      */
     protected abstract List<ShopOrderOperationModel> getShopOrderOperationsByOrderNo(String orderNo);
+    
+    protected abstract List<ShopOrderModel> getLowerPriorityBlockerShopOrders(DateTime fromDate, DateTime fromTime, String workCenterType, Double currentPriority);
+    
+    protected abstract WorkCenterModel getWorkCenterByPrimaryKey(String workCenterNo);
+    
 }

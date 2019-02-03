@@ -6,9 +6,11 @@
 package dyno.scheduler.agents;
 
 import dyno.scheduler.data.DataEnums;
+import dyno.scheduler.data.DataReader;
 import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.GeneralSettings;
 import dyno.scheduler.utils.LogUtil;
@@ -24,6 +26,7 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
@@ -42,6 +45,9 @@ public class ShopOrderAgent extends Agent
 
     transient DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
     transient DateTimeFormatter dateTimeFormat = DateTimeUtil.getDateTimeFormat();
+    
+    DateTime unscheduleFromDate;
+    DateTime unscheduleFromTime;
 
     @Override
     protected void setup()
@@ -91,6 +97,60 @@ public class ShopOrderAgent extends Agent
     {
         shopOrder.updateOperation(operationOb);
     }
+
+    public DateTime getUnscheduleFromDate()
+    {
+        return unscheduleFromDate;
+    }
+
+    public DateTime getUnscheduleFromTime()
+    {
+        return unscheduleFromTime;
+    }
+
+    public void setUnscheduleFromDate(DateTime unscheduleFromDate)
+    {
+        this.unscheduleFromDate = unscheduleFromDate;
+    }
+
+    public void setUnscheduleFromTime(DateTime unscheduleFromTime)
+    {
+        this.unscheduleFromTime = unscheduleFromTime;
+    }
+    
+    @Override
+    protected void takeDown()
+    {
+        HashSet<String> workCenterTypes = new HashSet<>();
+        
+        // When taking down the Shop Order Agent, check if there are any operations that have not been scheduled. If so perform dynamic unscheduling of low priority orders
+        // related to the work center types of the unscheduled operations
+        List<ShopOrderOperationModel> unscheduledOperations = shopOrder.getOperations().stream().filter(rec -> 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) || 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled) || 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
+        for (int i = 0; i < unscheduledOperations.size(); i++)
+        {
+            workCenterTypes.add(unscheduledOperations.get(i).getWorkCenterType());
+        }
+        // Concatenate unscheduled from date and t ime
+        DateTime unscheduleFromDateTime = DateTimeUtil.concatenateDateTime(getUnscheduleFromDate(), getUnscheduleFromTime());
+        
+        // for each of the work center types related to the unscheduled operations
+        for (String workCenterType : workCenterTypes)
+        {
+            // get the low priority shop orders to be unscheduled to make way for these high priority operations
+            List<ShopOrderModel> lowerPriorityShopOrders = DataReader.getLowerPriorityBlockerShopOrders(getUnscheduleFromDate(), getUnscheduleFromTime(), 
+                    workCenterType, shopOrder.getImportance());
+            // foreach of the orders
+            for (ShopOrderModel lowerPriorityShopOrder : lowerPriorityShopOrders)
+            {
+                lowerPriorityShopOrder.unscheduleLowerPriorityShopOrders(unscheduleFromDateTime);
+            }
+        }
+        
+        super.takeDown(); //To change body of generated methods, choose Tools | Templates.
+    }
 }
 
 /**
@@ -120,8 +180,10 @@ class BQueueNewOperations extends Behaviour
     public void action()
     {
         // for operations that are Created or Interrupted sorted by the operation Sequence
-        for (ShopOrderOperationModel operation : operations.stream().filter(rec -> rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) 
-                || rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
+        for (ShopOrderOperationModel operation : operations.stream().filter(rec -> 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) || 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled) || 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
         {
             // Update the list of seller agents
             DFAgentDescription template = new DFAgentDescription();
@@ -152,7 +214,7 @@ class BQueueNewOperations extends Behaviour
                 }
                 cfpMessage.setContent(StringUtil.generateMessageContent(
                         String.valueOf(shopOrder.getOrderNo()), // Order No
-                        String.valueOf(shopOrder.getImportance()), // Importance
+                        String.valueOf(shopOrder.calculateImportance()), // Importance
                         operation.getPrimaryKey(), // Primary Key
                         String.valueOf(operation.getOperationSequence()))); // Operation Sequence
                 myAgent.send(cfpMessage);
@@ -191,6 +253,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
     MessageTemplate msgTemplate; // The template to receive replies
     ACLMessage reply;
     ACLMessage replyMgr;
+    int acceptProposal = 0; // acceptProposal Value should be 1 in order to send the acceptance of a date time proposal to a work center agent. This will become true if the offered date falls on or before the estimated latestOpFinishDateTime
     
     // The list of known workcenter agents
     private AID[] workCenterAgents;
@@ -213,12 +276,21 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                 replyMgr = msg.createReply();
                 String opIdToSchedule = msg.getContent();
                 currentOperation = currentAgent.getOperationById(opIdToSchedule);
-                if (currentOperation != null)
+                // if the previous operation has an acceptedProposal, then only the current operation should start its usual process by taking the target op start date from the prev. op
+                // else just start the process and it will notify to the manager agent without scheduling the operation
+                if (currentOperation != null && acceptProposal != 2)
                 {
                     // get the target operation start date before scheduling
                     targetOperationStartDate = currentAgent.targetOpStartDate(currentOperation.getPrimaryKey());
                     getWorkCenterAgents();
                     
+                    step = 0;
+                    repliesCount = 0;
+                    bestOfferedDate = null;
+                    scheduleOperation();
+                }
+                else
+                {
                     step = 0;
                     repliesCount = 0;
                     bestOfferedDate = null;
@@ -267,22 +339,34 @@ class BStartNewOperationScheduler extends CyclicBehaviour
         {
             case 0:
             {
-                // Send the cfp (Call for Proposal) to all sellers
-                ACLMessage cfpMessage = new ACLMessage(ACLMessage.CFP);
-                for (int i = 0; i < workCenterAgents.length; ++i)
+                // if acceptProposal is 2, that means the previous operation has not met it estimated latest finish date, therefore all the subsequent operations should be in the unscheduled/creataed status
+                if (acceptProposal != 2)
                 {
-                    cfpMessage.addReceiver(workCenterAgents[i]);
-                }
-                cfpMessage.setContent(StringUtil.generateMessageContent(targetOperationStartDate.toString(DateTimeUtil.getDateTimeFormat()), String.valueOf(currentOperation.getWorkCenterRuntime())));
-                cfpMessage.setConversationId(CONVERSATION_ID);
-                cfpMessage.setReplyWith("cfp" + System.currentTimeMillis()); // Unique value (can be something with the Shop Order No + operation No. and time)
-                myAgent.send(cfpMessage);
+                    // Send the cfp (Call for Proposal) to all sellers
+                    ACLMessage cfpMessage = new ACLMessage(ACLMessage.CFP);
+                    for (int i = 0; i < workCenterAgents.length; ++i)
+                    {
+                        cfpMessage.addReceiver(workCenterAgents[i]);
+                    }
+                    cfpMessage.setContent(StringUtil.generateMessageContent(targetOperationStartDate.toString(DateTimeUtil.getDateTimeFormat()), String.valueOf(currentOperation.getWorkCenterRuntime())));
+                    cfpMessage.setConversationId(CONVERSATION_ID);
+                    cfpMessage.setReplyWith("cfp" + System.currentTimeMillis()); // Unique value (can be something with the Shop Order No + operation No. and time)
+                    myAgent.send(cfpMessage);
 
-                // Prepare the template to get proposals
-                msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
-                        MessageTemplate.MatchInReplyTo(cfpMessage.getReplyWith()));
-                step = 1;
-                break;
+                    // Prepare the template to get proposals
+                    msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
+                            MessageTemplate.MatchInReplyTo(cfpMessage.getReplyWith()));
+                    step = 1;
+                    break;
+                }
+                else
+                {
+                    System.out.println("++++++ OPERATION " + currentOperation.getOperationId() + " WAS NOT SCHEDULED: Could not meet Estimated Latest Operation Finish Date : " 
+                            + DateTimeUtil.concatenateDateTime(currentOperation.getLatestOpFinishDate(), currentOperation.getLatestOpFinishTime()) + " ! ++++++++");
+                    System.out.println("______________________________________________________________________________________________________________________________________");
+                    notifyManagerAgent();
+                    break;
+                }
             }
             case 1:
             {
@@ -295,18 +379,39 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                     {
                         // This is an offer, recieved with the date and the time
                         offeredDate = DateTimeUtil.getDateTimeFormat().parseDateTime(reply.getContent());
+                        // get the estimated latest operation end datetime 
+                        DateTime estimatedLatestOpFinishDateTime = DateTimeUtil.concatenateDateTime(currentOperation.getLatestOpFinishDate(), currentOperation.getLatestOpFinishTime());
+                        // get the estimated operation end date time based on the CURRENT BEST OFFER
+                        DateTime estimatedCurrentOfferFinishDateTime = WorkCenterOpAllocModel.incrementTime(offeredDate, currentOperation.getWorkCenterRuntime());
 
                         System.out.println("++++++ offeredDate : " + offeredDate + " by Work Center Agent : " + reply.getSender());
                         System.out.println("++++++ targetOperationDate : " + targetOperationStartDate);
                         System.out.println("++++++ bestOfferedDate : " + bestOfferedDate);
+                        System.out.println("++++++ estimatedLatestOpFinishDateTime : " + estimatedLatestOpFinishDateTime);
+                        System.out.println("++++++ estimatedCurrentOfferFinishDateTime : " + estimatedCurrentOfferFinishDateTime);
 
                         // if forward scheduling the offered date should be the earliest date/time that comes on or after the target date
                         if (bestWorkCenter == null || ((offeredDate.equals(targetOperationStartDate) || offeredDate.isAfter(targetOperationStartDate)) && offeredDate.isBefore(bestOfferedDate)))
                         {
-                            // This is the best offer at present
-                            bestOfferedDate = offeredDate;
-                            bestWorkCenter = reply.getSender();
-                            System.out.println("Current best offered time : " + bestOfferedDate + " by Work Center Agent : " + bestWorkCenter);
+                            // Check if the estimatedCurrentOfferFinishDateTime is on or before the estimated latest operation finish datetime for that operation and if so set it as the best offeredDate
+                            if (estimatedCurrentOfferFinishDateTime.isBefore(estimatedLatestOpFinishDateTime) ||  estimatedCurrentOfferFinishDateTime.isEqual(estimatedLatestOpFinishDateTime))
+                            {
+                                // This is the best offer at present
+                                bestOfferedDate = offeredDate;
+                                bestWorkCenter = reply.getSender();
+                                acceptProposal = 1;
+                                System.out.println("Current best offered time : " + bestOfferedDate + " by Work Center Agent : " + bestWorkCenter);
+                            }
+                            else
+                            {
+                                // if there are at least 1 proposal that can be accepted this should not be set to 2.
+                                if(acceptProposal != 1)
+                                {
+                                    currentAgent.setUnscheduleFromDate(targetOperationStartDate);
+                                    currentAgent.setUnscheduleFromTime(targetOperationStartDate);
+                                    acceptProposal = 2;
+                                }
+                            }
                         }
 
                         repliesCount++;
@@ -314,22 +419,33 @@ class BStartNewOperationScheduler extends CyclicBehaviour
 
                     if (repliesCount >= workCenterAgents.length)
                     {
-                        // We received all replies
-                        step = 2;
-                        System.out.println("++++++ RECEIVED ALL OFFERES! ++++++++");
-                        
-                        // Send the confirmation to the work center that sent the best date
-                        ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-                        order.addReceiver(bestWorkCenter);
-                        order.setContent(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime())));
-                        order.setConversationId(CONVERSATION_ID);
-                        order.setReplyWith("setOperation" + System.currentTimeMillis());
-                        myAgent.send(order);
-                        // Prepare the template to get the purchase order reply
-                        msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
-                                MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+                        if(acceptProposal == 1)
+                        {
+                            // We received all replies
+                            step = 2;
+                            System.out.println("++++++ RECEIVED ALL OFFERES! ++++++++");
 
-                        step = 3;
+                            // Send the confirmation to the work center that sent the best date
+                            ACLMessage order = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
+                            order.addReceiver(bestWorkCenter);
+                            order.setContent(StringUtil.generateMessageContent(String.valueOf(currentOperation.getOperationId()), String.valueOf(currentOperation.getWorkCenterRuntime())));
+                            order.setConversationId(CONVERSATION_ID);
+                            order.setReplyWith("setOperation" + System.currentTimeMillis());
+                            myAgent.send(order);
+                            // Prepare the template to get the purchase order reply
+                            msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
+                                    MessageTemplate.MatchInReplyTo(order.getReplyWith()));
+
+                            step = 3;
+                        }
+                        else
+                        {
+                            System.out.println("++++++ OPERATION " + currentOperation.getOperationId() + " WAS NOT SCHEDULED: Could not meet Estimated Latest Operation Finish Date : " 
+                                    + DateTimeUtil.concatenateDateTime(currentOperation.getLatestOpFinishDate(), currentOperation.getLatestOpFinishTime()) + " ! ++++++++");
+                            System.out.println("______________________________________________________________________________________________________________________________________");
+                            notifyManagerAgent();
+                        }
+                        
                         break;
                     }
                 } else
@@ -340,7 +456,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
             }
             case 2:
             {
-                
+                break;
             }
             case 3:
             {
