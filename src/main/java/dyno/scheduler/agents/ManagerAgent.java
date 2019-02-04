@@ -51,7 +51,7 @@ public class ManagerAgent extends Agent implements ISchedulerAgent
     static BNotifyNewOperationScheduleQueue notifyNewOperationScheduleQueue;
     static BCreateAgents createAgentsBehavior;
     
-    private static final long CREATE_AGENTS_INTERVAL = 5000L;
+    private static final long CREATE_AGENTS_INTERVAL = 30000L;
     private static final long OPERATION_QUEUE_PROCESS_INTERVAL = 5000L;
             
     @Override

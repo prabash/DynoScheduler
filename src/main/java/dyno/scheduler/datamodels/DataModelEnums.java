@@ -107,6 +107,7 @@ public class DataModelEnums
         UnschedledOperationWorkCenters,
         AllOperationsOrdered,
         ByOrderNoOperationsOrdered,
-        LowerPriorityBlockerShopOrders
+        LowerPriorityBlockerShopOrders,
+        ReplacePrecedingOperationIDs
     }
 }

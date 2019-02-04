@@ -164,7 +164,7 @@ public class MySqlReader
         }
     }
     
-    public ResultSet invokeStoreProcedure(String storedProcedureName, ArrayList<Object> parameters)
+    public ResultSet invokeGetStoreProcedure(String storedProcedureName, ArrayList<Object> parameters)
     {
         Connection connection;
         CallableStatement statement = null;

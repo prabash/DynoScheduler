@@ -336,6 +336,24 @@ public class ExcelWriteManager extends DataWriteManager
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public int addShopOrderOperation(ShopOrderOperationModel shopOrderOperation, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean replacePrecedingOperationId(int precedingOperationId, int replacedById, int exceptOpId, String orderNo)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean changeOperationStatus(int operationId, DataModelEnums.OperationStatus operationStatus)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     /**
      * returns the column index related to the specific timeBlock
      *

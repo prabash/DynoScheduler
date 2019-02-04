@@ -201,7 +201,7 @@ public class MySqlReadManager extends DataReadManager
         ResultSet results;
         try
         {
-            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
             while (results.next())
             {
                 OperationScheduleTimeBlocksDataModel scheduledTimeBlock = new OperationScheduleTimeBlocksDataModel().getModelObject(results);
@@ -229,7 +229,7 @@ public class MySqlReadManager extends DataReadManager
         ResultSet results;
         try
         {
-            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
             while (results.next())
             {
                 InterruptedOpDetailsDataModel interruptedOp = new InterruptedOpDetailsDataModel().getModelObject(results);
@@ -251,7 +251,7 @@ public class MySqlReadManager extends DataReadManager
         ResultSet results;
         try
         {
-            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
             while (results.next())
             {
                 ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
@@ -277,7 +277,7 @@ public class MySqlReadManager extends DataReadManager
         ResultSet results;
         try
         {
-            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
             while (results.next())
             {
                 WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
@@ -302,7 +302,7 @@ public class MySqlReadManager extends DataReadManager
         ResultSet results;
         try
         {
-            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
             while (results.next())
             {
                 ShopOrderOperationModel shopOrderOperation = new ShopOrderOperationModel().getModelObject(results);
@@ -329,7 +329,7 @@ public class MySqlReadManager extends DataReadManager
         ResultSet results;
         try
         {
-            results = new MySqlReader().invokeStoreProcedure(storedProcedure, parameters);
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
             while (results.next())
             {
                 ShopOrderModel lowerPriorityBlockerOrder = new ShopOrderModel().getModelObject(results);

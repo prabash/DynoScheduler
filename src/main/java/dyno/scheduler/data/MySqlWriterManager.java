@@ -17,6 +17,7 @@ import dyno.scheduler.utils.LogUtil;
 import dyno.scheduler.utils.MySqlUtil;
 import java.sql.Date;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +116,29 @@ public class MySqlWriterManager extends DataWriteManager
     {
         try
         {
-            String query = "INSERT INTO " + storageName + " " +
+            int precedingOpId = 0;
+            for (ShopOrderOperationModel shopOrderOperation : dataList.stream().sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
+            {
+                if(shopOrderOperation.getPrecedingOperationId() < 0)
+                {
+                    shopOrderOperation.setPrecedingOperationId(precedingOpId);
+                }
+                precedingOpId = addShopOrderOperation(shopOrderOperation, storageName);
+            }
+            return true;
+
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public int addShopOrderOperation(ShopOrderOperationModel shopOrderOperation, String storageName)
+    {
+        int precedingOpId;
+        String query = "INSERT INTO " + storageName + " " +
                     "(operation_no," + "order_no," + "operation_description," + "operation_sequence," + "preceding_operation_id," +
                     "wc_runtime_factor," + "wc_runtime," + "labor_runtime_factor," + "labor_runtime," + "op_start_date," +
                     "op_start_time," + "op_finish_date," + "op_finish_time," + "quantity," + "work_center_type," +
@@ -125,50 +148,32 @@ public class MySqlWriterManager extends DataWriteManager
                     + "?,?,?,?,?,"
                     + "?,?,?,?,?,"
                     + "?,?)";
+        
+        HashMap<Integer, Object> columnValues = new HashMap<>();
+        int i = 0;
+        columnValues.put(++i, shopOrderOperation.getOperationNo());
+        columnValues.put(++i, shopOrderOperation.getOrderNo());
+        columnValues.put(++i, shopOrderOperation.getOperationDescription());
+        columnValues.put(++i, shopOrderOperation.getOperationSequence());
+        columnValues.put(++i, shopOrderOperation.getPrecedingOperationId());
+        
+        columnValues.put(++i, shopOrderOperation.getWorkCenterRuntimeFactor());
+        columnValues.put(++i, shopOrderOperation.getWorkCenterRuntime());
+        columnValues.put(++i, shopOrderOperation.getLaborRuntimeFactor());
+        columnValues.put(++i, shopOrderOperation.getLaborRunTime());
+        
+        columnValues.put(++i, shopOrderOperation.getOpStartDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpStartDate()) : new Date(0));
+        columnValues.put(++i, shopOrderOperation.getOpStartTime() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpStartTime()) : new Time(0));
+        columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpFinishDate()) : new Date(0));
+        columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpFinishTime()) : new Time(0));
+        
+        columnValues.put(++i, shopOrderOperation.getQuantity());
+        columnValues.put(++i, shopOrderOperation.getWorkCenterType());
+        columnValues.put(++i, shopOrderOperation.getWorkCenterNo());
+        columnValues.put(++i, shopOrderOperation.getOperationStatus().toString());
 
-            int precedingOpId = 0;
-            for (ShopOrderOperationModel shopOrderOperation : dataList.stream().sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
-            {
-                HashMap<Integer, Object> columnValues = new HashMap<>();
-                int i = 0;
-                columnValues.put(++i, shopOrderOperation.getOperationNo());
-                columnValues.put(++i, shopOrderOperation.getOrderNo());
-                columnValues.put(++i, shopOrderOperation.getOperationDescription());
-                columnValues.put(++i, shopOrderOperation.getOperationSequence());
-
-                if(shopOrderOperation.getPrecedingOperationId() > 0)
-                {
-                    columnValues.put(++i, shopOrderOperation.getPrecedingOperationId());
-                }
-                else
-                {
-                    columnValues.put(++i, precedingOpId);
-                }
-                
-                columnValues.put(++i, shopOrderOperation.getWorkCenterRuntimeFactor());
-                columnValues.put(++i, shopOrderOperation.getWorkCenterRuntime());
-                columnValues.put(++i, shopOrderOperation.getLaborRuntimeFactor());
-                columnValues.put(++i, shopOrderOperation.getLaborRunTime());
-                columnValues.put(++i, shopOrderOperation.getOpStartDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpStartDate()) : new Date(0));
-                
-                columnValues.put(++i, shopOrderOperation.getOpStartTime() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpStartTime()) : new Time(0));
-                columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpFinishDate()) : new Date(0));
-                columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpFinishTime()) : new Time(0));
-                columnValues.put(++i, shopOrderOperation.getQuantity());
-                columnValues.put(++i, shopOrderOperation.getWorkCenterType());
-                
-                columnValues.put(++i, shopOrderOperation.getWorkCenterNo());
-                columnValues.put(++i, shopOrderOperation.getOperationStatus().toString());
-
-                precedingOpId = new MySqlWriter().WriteToTable(query, columnValues);
-            }
-            return true;
-
-        } catch (Exception ex)
-        {
-            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
-            return false;
-        }
+        precedingOpId = new MySqlWriter().WriteToTable(query, columnValues);
+        return precedingOpId;
     }
 
     @Override
@@ -337,6 +342,54 @@ public class MySqlWriterManager extends DataWriteManager
     public boolean interruptWorkCenter(String workCenterNo, DateTime startTime, DateTime endTime)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean replacePrecedingOperationId(int precedingOperationId, int replacedById, int exceptOpId, String orderNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ReplacePrecedingOperationIDs);
+        parameters.add(precedingOperationId);
+        parameters.add(replacedById);
+        parameters.add(exceptOpId);
+        parameters.add(orderNo);
+
+        int result;
+        try
+        {
+            result = new MySqlWriter().invokeUpdateStoredProcedure(storedProcedure, parameters);
+            
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean changeOperationStatus(int operationId, OperationStatus operationStatus)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.ShopOrderOperation);
+        try
+        {
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append("UPDATE ").append(tableName).append(" SET ");
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+
+            queryBuilder.append("operation_status = ? ");
+            columnValues.put(++i, operationStatus.toString());
+
+            queryBuilder.append("WHERE id = ? ");
+            columnValues.put(++i, operationId);
+
+            new MySqlWriter().WriteToTable(queryBuilder.toString(), columnValues);
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
     }
     
     public void UpdateTestColumn()

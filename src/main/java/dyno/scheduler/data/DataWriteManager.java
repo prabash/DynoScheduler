@@ -6,6 +6,7 @@
 package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.*;
+import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import java.util.List;
 import org.joda.time.DateTime;
 
@@ -60,4 +61,31 @@ public abstract class DataWriteManager
      * @return 
      */
     public abstract boolean interruptWorkCenter(String workCenterNo, DateTime startTime, DateTime endTime);
+    
+    /**
+     * This method is used to add a single operation to the table and return its generated ID.
+     * @param shopOrderOperation
+     * @param storageName
+     * @return 
+     */
+    public abstract int addShopOrderOperation(ShopOrderOperationModel shopOrderOperation, String storageName);
+    
+    /**
+     * This method is used to replace a preceding operation id by a given replacedById.
+     * This is usually done after an operation is splitted.
+     * @param precedingOperationId
+     * @param replacedById
+     * @param exceptOpId
+     * @param orderNo
+     * @return 
+     */
+    public abstract boolean replacePrecedingOperationId(int precedingOperationId, int replacedById, int exceptOpId, String orderNo);
+    
+    /**
+     * Update the operation status by the given status and the operation id
+     * @param operationId
+     * @param operationStatus
+     * @return 
+     */
+    public abstract boolean changeOperationStatus(int operationId, OperationStatus operationStatus);
 }

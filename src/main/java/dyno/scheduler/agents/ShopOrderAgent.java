@@ -121,35 +121,10 @@ public class ShopOrderAgent extends Agent
     @Override
     protected void takeDown()
     {
-        HashSet<String> workCenterTypes = new HashSet<>();
+        Thread unscheduleProcess = new Thread(new UnscheduleLowerPriorityShopOrders(shopOrder, getUnscheduleFromDate(), getUnscheduleFromTime()));
+        unscheduleProcess.start();
         
-        // When taking down the Shop Order Agent, check if there are any operations that have not been scheduled. If so perform dynamic unscheduling of low priority orders
-        // related to the work center types of the unscheduled operations
-        List<ShopOrderOperationModel> unscheduledOperations = shopOrder.getOperations().stream().filter(rec -> 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) || 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled) || 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
-        for (int i = 0; i < unscheduledOperations.size(); i++)
-        {
-            workCenterTypes.add(unscheduledOperations.get(i).getWorkCenterType());
-        }
-        // Concatenate unscheduled from date and t ime
-        DateTime unscheduleFromDateTime = DateTimeUtil.concatenateDateTime(getUnscheduleFromDate(), getUnscheduleFromTime());
-        
-        // for each of the work center types related to the unscheduled operations
-        for (String workCenterType : workCenterTypes)
-        {
-            // get the low priority shop orders to be unscheduled to make way for these high priority operations
-            List<ShopOrderModel> lowerPriorityShopOrders = DataReader.getLowerPriorityBlockerShopOrders(getUnscheduleFromDate(), getUnscheduleFromTime(), 
-                    workCenterType, shopOrder.getImportance());
-            // foreach of the orders
-            for (ShopOrderModel lowerPriorityShopOrder : lowerPriorityShopOrders)
-            {
-                lowerPriorityShopOrder.unscheduleLowerPriorityShopOrders(unscheduleFromDateTime);
-            }
-        }
-        
-        super.takeDown(); //To change body of generated methods, choose Tools | Templates.
+        super.takeDown();
     }
 }
 
@@ -532,3 +507,48 @@ class BStartNewOperationScheduler extends CyclicBehaviour
     }
 }
 
+class UnscheduleLowerPriorityShopOrders implements Runnable
+{
+    ShopOrderModel shopOrder;
+    DateTime unscheduleFromDate;
+    DateTime unscheduleFromTime;
+
+    public UnscheduleLowerPriorityShopOrders(ShopOrderModel shopOrder, DateTime unscheduleFromDate, DateTime unscheduleFromTime)
+    {
+        this.shopOrder = shopOrder;
+        this.unscheduleFromDate = unscheduleFromDate;
+        this.unscheduleFromTime = unscheduleFromTime;
+    }
+    
+    @Override
+    public void run()
+    {
+        HashSet<String> workCenterTypes = new HashSet<>();
+
+        // When taking down the Shop Order Agent, check if there are any operations that have not been scheduled. If so perform dynamic unscheduling of low priority orders
+        // related to the work center types of the unscheduled operations
+        List<ShopOrderOperationModel> unscheduledOperations = shopOrder.getOperations().stream().filter(rec -> 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) || 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled) || 
+                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
+        for (int i = 0; i < unscheduledOperations.size(); i++)
+        {
+            workCenterTypes.add(unscheduledOperations.get(i).getWorkCenterType());
+        }
+        // Concatenate unscheduled from date and t ime
+        DateTime unscheduleFromDateTime = DateTimeUtil.concatenateDateTime(unscheduleFromDate, unscheduleFromTime);
+
+        // for each of the work center types related to the unscheduled operations
+        for (String workCenterType : workCenterTypes)
+        {
+            // get the low priority shop orders to be unscheduled to make way for these high priority operations
+            List<ShopOrderModel> lowerPriorityShopOrders = DataReader.getLowerPriorityBlockerShopOrders(unscheduleFromDate, unscheduleFromTime, 
+                    workCenterType, shopOrder.getImportance());
+            // foreach of the orders
+            for (ShopOrderModel lowerPriorityShopOrder : lowerPriorityShopOrders)
+            {
+                lowerPriorityShopOrder.unscheduleLowerPriorityShopOrders(unscheduleFromDateTime);
+            }
+        }
+    }   
+}

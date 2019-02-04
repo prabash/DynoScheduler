@@ -55,6 +55,8 @@ public class MySqlUtil
                 return "get_shop_order_operations_ordered";
             case LowerPriorityBlockerShopOrders:
                 return "get_lower_priority_blocker_shop_orders";    
+            case ReplacePrecedingOperationIDs:
+                return "replace_preceding_op_ids";
             default:
                 return "";
         }

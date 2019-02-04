@@ -6,6 +6,7 @@
 package dyno.scheduler.data;
 
 import dyno.scheduler.utils.LogUtil;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -13,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,6 +102,86 @@ public class MySqlWriter
             }
 
             return key;
+        }
+    }
+    
+    public int invokeUpdateStoredProcedure(String storedProcedureName, ArrayList<Object> parameters)
+    {
+        Connection connection;
+        CallableStatement statement = null;
+        int result = -1;
+        
+        try
+        {
+            connection = MySqlConnection.getConnection();
+            
+            // Start building the query
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append("CALL ").append(storedProcedureName);
+            
+            // Set parameter holders to the query if there are parameters available
+            queryBuilder.append("(");
+            int noOfParams = parameters.size();
+            if (noOfParams > 0)
+            {
+                for (int i = 1; i <= noOfParams; i++)
+                {
+                    queryBuilder.append("?");
+                    if(i != noOfParams)
+                        queryBuilder.append(",");
+                }
+            }
+            queryBuilder.append(")");
+            
+            // Prepare the statement
+            statement = connection.prepareCall(queryBuilder.toString());
+            
+            // Set parameters to the statement
+            for (int i = 1; i <= noOfParams; i++)
+            {
+                Object parameter = parameters.get(i-1);
+                if(parameter instanceof Integer)
+                {
+                    statement.setInt(i, (int)parameter);
+                }
+                else if(parameter instanceof Double)
+                {
+                    statement.setDouble(i, (double)parameter);
+                }
+                else if(parameter instanceof String)
+                {
+                    statement.setString(i, (String)parameter);
+                }
+                else if(parameter instanceof Date)
+                {
+                    statement.setDate(i, (Date)parameter);
+                }
+                else if(parameter instanceof Time)
+                {
+                    statement.setTime(i, (Time)parameter);
+                }
+            }
+            
+            result = statement.executeUpdate();
+
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        } finally
+        {
+            try
+            {            
+                if (statement != null)
+                {
+                    statement.close();
+                }
+
+            } catch (SQLException ex)
+            {
+                LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            }
+
+            return result;
         }
     }
 }

@@ -324,19 +324,25 @@ public class WorkCenterModel extends DataModel
             if (daysAdded > 0)
             {
                 // add the currentDay timeblock details to the updateList first, and then invoke this method recursively
-                workCenterOpAllocUpdate.add(allocObj);
+                //workCenterOpAllocUpdate.add(allocObj);
                 // from the inner time block details, replace the existing timeblock name, but have to add the daysAdded value to find how many days have been added in total
                 HashMap<String, Object> innerTimeBlockDetails = getWorkCenterOpAllocObjectForUpdate(currentDate.plusDays(daysAdded), timeBlockName, operationId, workCenterRuntime);
-
-                timeBlockDetails.clear();
-                // add the timeblock name and the time added
-                timeBlockDetails.put(GeneralSettings.getStrTimeBlockName(), innerTimeBlockDetails.get(GeneralSettings.getStrTimeBlockName()));
-                timeBlockDetails.put(GeneralSettings.getStrDaysAdded(), daysAdded + Integer.parseInt(innerTimeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
+                if (innerTimeBlockDetails.size() > 0)
+                {
+                    timeBlockDetails.clear();
+                    // add the timeblock name and the time added
+                    timeBlockDetails.put(GeneralSettings.getStrTimeBlockName(), innerTimeBlockDetails.get(GeneralSettings.getStrTimeBlockName()));
+                    timeBlockDetails.put(GeneralSettings.getStrDaysAdded(), daysAdded + Integer.parseInt(innerTimeBlockDetails.get(GeneralSettings.getStrDaysAdded()).toString()));
+                }
                 break;
             }
         }
-        // add the operation to the update list when all the timeblocks are on the same day
-        workCenterOpAllocUpdate.add(allocObj);
+        
+        if (allocObj.getTimeBlockAllocation() != null && allocObj.getTimeBlockAllocation().size() > 0)
+        {
+            // add the operation to the update list when all the timeblocks are on the same day
+            workCenterOpAllocUpdate.add(allocObj);
+        }
 
         return timeBlockDetails;
     }
