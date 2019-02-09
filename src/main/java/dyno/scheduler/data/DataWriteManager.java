@@ -88,4 +88,13 @@ public abstract class DataWriteManager
      * @return 
      */
     public abstract boolean changeOperationStatus(int operationId, OperationStatus operationStatus);
+    
+    /**
+     * When un-scheduling an operation, the operation's scheduling related data should also be removed.
+     * This method handles that task
+     * @param operationId
+     * @param operationStatus
+     * @return 
+     */
+    public abstract boolean removeOperationScheduleData(int operationId, OperationStatus operationStatus);
 }

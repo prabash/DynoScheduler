@@ -257,14 +257,14 @@ public class WorkCenterModel extends DataModel
     public void unscheduleWorkCenterOnInterruption(DateTime interruptionStartDateTime, int workCenterRuntime)
     {
         // when interrupted, the work center cannot be scheduled for that time period, which is indicated by -1
-        unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Interruption.getValue());
+        WorkCenterModel.this.unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Interruption.getValue());
     }
     
-    public void unscheduleWorkCenterOnPriority(DateTime interruptionStartDateTime, int workCenterRuntime)
+    public void unscheduleWorkCenter(DateTime interruptionStartDateTime, int workCenterRuntime)
     {
         // when unscheduling lower priority operations, that time should be utilized by higher priority operations,
         // which is indicated by 0
-        unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Priority.getValue());
+        WorkCenterModel.this.unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Normal.getValue());
     }
     
     private void unscheduleWorkCenter(DateTime interruptionStartDateTime, int workCenterRuntime, int unscheduleType)

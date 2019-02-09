@@ -15,6 +15,8 @@ import jade.wrapper.ContainerController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -32,37 +34,55 @@ public class Main
      */
     public static void main(String[] args)
     {
-        // start the rest services
-        startRESTService();
-        
-        // get the platform
-        platformRuntime = AgentsManager.getRuntimeInstance();
-        
-        // create the main container
-        ContainerController mainContainer = AgentsManager.createMainContainer(platformRuntime);
-        
-        // create other containers (currently only one)
-        // TODO: should check in to the possibility of supporting multiple containers
-        List<String> containerNames = new ArrayList<>();
-        containerNames.add("Container0");
-        Map<String, ContainerController> createdContainers = AgentsManager.createContainers(platformRuntime, containerNames);
-        
-        // create monitoring agtents and added them to the main container
-        AgentsManager.createMonitoringAgents(mainContainer);
-        
-        // create other agents and add them to the other container
-        agentList = new ArrayList<>();
-        ContainerController otherContainer = createdContainers.get(containerNames.get(0));
-        
-        // create manager agent
-        Object [] initData = new Object [] {
-            otherContainer
-        };
-        agentList.add(AgentsManager.createAgent(otherContainer, "ManagerAgent", ManagerAgent.class.getName(), initData));
-        
-        // start the manager agent
-        AgentsManager.startAgents(agentList); 
-        
+        try
+        {
+            // start the rest services
+            startRESTService();
+            
+            // get the platform
+            platformRuntime = AgentsManager.getRuntimeInstance();
+            
+            System.out.println("Press a key to unschedule");
+            System.in.read();
+            
+            List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
+            for (ShopOrderModel shopOrder : shopOrders)
+            {
+                if (shopOrder.getOrderNo().equals("3"))                
+                {
+                    shopOrder.cancel();
+                }
+            }
+            
+            // create the main container
+            ContainerController mainContainer = AgentsManager.createMainContainer(platformRuntime);
+            
+            // create other containers (currently only one)
+            // TODO: should check in to the possibility of supporting multiple containers
+            List<String> containerNames = new ArrayList<>();
+            containerNames.add("Container0");
+            Map<String, ContainerController> createdContainers = AgentsManager.createContainers(platformRuntime, containerNames);
+            
+            // create monitoring agtents and added them to the main container
+            AgentsManager.createMonitoringAgents(mainContainer);
+            
+            // create other agents and add them to the other container
+            agentList = new ArrayList<>();
+            ContainerController otherContainer = createdContainers.get(containerNames.get(0));
+            
+            // create manager agent
+            Object [] initData = new Object [] {
+                otherContainer
+            };
+            agentList.add(AgentsManager.createAgent(otherContainer, "ManagerAgent", ManagerAgent.class.getName(), initData));
+            
+            // start the manager agent
+            AgentsManager.startAgents(agentList);
+            
+        } catch (Exception ex)
+        {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
     }
     

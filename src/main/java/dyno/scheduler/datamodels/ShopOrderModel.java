@@ -568,7 +568,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
      * the operations that comes in between the unscheduleFromDateTime will be splitted and updated and others will just be updated.
      * @param unscheduleFromDateTime 
      */
-    public void unscheduleLowerPriorityShopOrders(DateTime unscheduleFromDateTime)
+    public void unscheduleOperationsFrom(DateTime unscheduleFromDateTime)
     {
         // for each of the operations
         for (ShopOrderOperationModel operation : this.getOperations())
@@ -587,13 +587,35 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
             // by the unscheduleFromDateTime to forward
             else if(opStartDateTime.isBefore(unscheduleFromDateTime) && opFinishDateTime.isAfter(unscheduleFromDateTime))
             {
-                operation.splitAndUnscheduleInterruptedOperation(unscheduleFromDateTime, DataModelEnums.InerruptionType.Priority);
+                operation.splitAndUnscheduleInterruptedOperation(unscheduleFromDateTime, DataModelEnums.InerruptionType.Normal);
             }
             // if the operation start datetime comes after the unscheduleFromDateTime, such operations should just be unscheduled without splitting
             else if (opStartDateTime.isEqual(unscheduleFromDateTime) || opStartDateTime.isAfter(unscheduleFromDateTime))
             {
-                operation.unscheduleOperation();
+                operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
             }
+        }
+    }
+    
+    /**
+     * Unschedule the entire shop order
+     */
+    public void unschedule()
+    {
+        for (ShopOrderOperationModel operation : this.getOperations())
+        {
+            operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
+        }
+    }
+    
+    /**
+     * Cancel shop Order
+     */
+    public void cancel()
+    {
+        for (ShopOrderOperationModel operation : this.getOperations())
+        {
+            operation.unscheduleOperation(DataModelEnums.OperationStatus.Cancelled);
         }
     }
     

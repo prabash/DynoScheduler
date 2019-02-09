@@ -38,6 +38,7 @@ import org.joda.time.format.DateTimeFormatter;
  */
 public class ShopOrderAgent extends Agent
 {
+
     private static final long serialVersionUID = 8846265486536139525L;
 
     // shop order handled by the agent
@@ -45,9 +46,9 @@ public class ShopOrderAgent extends Agent
 
     transient DateTimeFormatter dateFormat = DateTimeUtil.getDateFormat();
     transient DateTimeFormatter dateTimeFormat = DateTimeUtil.getDateTimeFormat();
-    
-    DateTime unscheduleFromDate;
-    DateTime unscheduleFromTime;
+
+    DateTime unscheduleFromDate = null;
+    DateTime unscheduleFromTime = null;
 
     @Override
     protected void setup()
@@ -69,7 +70,7 @@ public class ShopOrderAgent extends Agent
 
         System.out.println("the Shop Order Agent " + this.getLocalName() + " is started");
     }
-    
+
     public ShopOrderOperationModel getOperationById(String operationId)
     {
         ShopOrderOperationModel returnOp = null;
@@ -82,17 +83,17 @@ public class ShopOrderAgent extends Agent
                 returnOp = operation;
                 break;
             }
-                
+
         }
         return returnOp;
         //return shopOrder.getOperations().stream().filter(rec -> rec.getPrimaryKey().equals(operationId)).collect(Collectors.toList()).get(0);
     }
-    
+
     public DateTime targetOpStartDate(String operationId)
     {
         return shopOrder.getOperationTargetStartDate(operationId);
     }
-    
+
     public void updateShopOrderOperation(ShopOrderOperationModel operationOb)
     {
         shopOrder.updateOperation(operationOb);
@@ -117,26 +118,31 @@ public class ShopOrderAgent extends Agent
     {
         this.unscheduleFromTime = unscheduleFromTime;
     }
-    
+
     @Override
     protected void takeDown()
     {
-        Thread unscheduleProcess = new Thread(new UnscheduleLowerPriorityShopOrders(shopOrder, getUnscheduleFromDate(), getUnscheduleFromTime()));
-        unscheduleProcess.start();
-        
+        if (getUnscheduleFromDate() != null && getUnscheduleFromTime() != null)
+        {
+            Thread unscheduleProcess = new Thread(new UnscheduleLowerPriorityShopOrders(shopOrder, getUnscheduleFromDate(), getUnscheduleFromTime()));
+            unscheduleProcess.start();
+        }
+
         super.takeDown();
     }
 }
 
 /**
  * This behavior will queue only the newly created operations
+ *
  * @author Prabash
  */
 class BQueueNewOperations extends Behaviour
 {
+
     private static final long serialVersionUID = 5767062419481143156L;
     private boolean operationsQueued = false;
-    
+
     // The list of known workcenter agents
     private AID[] managerAgents;
 
@@ -155,10 +161,9 @@ class BQueueNewOperations extends Behaviour
     public void action()
     {
         // for operations that are Created or Interrupted sorted by the operation Sequence
-        for (ShopOrderOperationModel operation : operations.stream().filter(rec -> 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) || 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled) || 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
+        for (ShopOrderOperationModel operation : operations.stream().filter(rec
+                -> rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled)
+                || rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList()))
         {
             // Update the list of seller agents
             DFAgentDescription template = new DFAgentDescription();
@@ -209,18 +214,18 @@ class BQueueNewOperations extends Behaviour
     }
 }
 
-  
 class BStartNewOperationScheduler extends CyclicBehaviour
 {
+
     private final ShopOrderAgent currentAgent;
     private static final long serialVersionUID = 3149611413717448878L;
-    
+
     static final String CONVERSATION_ID = "work-center-request";
     transient ShopOrderOperationModel currentOperation;
-    
+
     // The target date that the operation should be started (FS) or Ended (BS)
     private DateTime targetOperationStartDate = null;
-        
+
     int step = 0; // is used in the switch statement inside the action method.
     AID bestWorkCenter; // work center that provides the best target date
     DateTime bestOfferedDate; // The best possible start date if forward scheduling / end date if backward scheduling
@@ -229,21 +234,21 @@ class BStartNewOperationScheduler extends CyclicBehaviour
     ACLMessage reply;
     ACLMessage replyMgr;
     int acceptProposal = 0; // acceptProposal Value should be 1 in order to send the acceptance of a date time proposal to a work center agent. This will become true if the offered date falls on or before the estimated latestOpFinishDateTime
-    
+
     // The list of known workcenter agents
     private AID[] workCenterAgents;
-    
+
     public BStartNewOperationScheduler(ShopOrderAgent currentAgent)
     {
         this.currentAgent = currentAgent;
     }
-    
+
     @Override
     public void action()
     {
         MessageTemplate mt = MessageTemplate.MatchConversationId("OPERATION_PROCESSING_QUEUE");
         ACLMessage msg = myAgent.receive(mt);
-        
+
         if (msg != null)
         {
             if (msg.getPerformative() == ACLMessage.PROPAGATE)
@@ -258,28 +263,26 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                     // get the target operation start date before scheduling
                     targetOperationStartDate = currentAgent.targetOpStartDate(currentOperation.getPrimaryKey());
                     getWorkCenterAgents();
-                    
+
                     step = 0;
                     repliesCount = 0;
                     bestOfferedDate = null;
                     scheduleOperation();
-                }
-                else
+                } else
                 {
                     step = 0;
                     repliesCount = 0;
                     bestOfferedDate = null;
                     scheduleOperation();
                 }
-            }
-            else
+            } else
             {
                 reply = msg;
                 scheduleOperation();
             }
         }
     }
-    
+
     public void getWorkCenterAgents()
     {
         // Update the list of seller agents
@@ -307,7 +310,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
     }
-    
+
     public void scheduleOperation()
     {
         switch (step)
@@ -333,10 +336,9 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                             MessageTemplate.MatchInReplyTo(cfpMessage.getReplyWith()));
                     step = 1;
                     break;
-                }
-                else
+                } else
                 {
-                    System.out.println("++++++ OPERATION " + currentOperation.getOperationId() + " WAS NOT SCHEDULED: Could not meet Estimated Latest Operation Finish Date : " 
+                    System.out.println("++++++ OPERATION " + currentOperation.getOperationId() + " WAS NOT SCHEDULED: Could not meet Estimated Latest Operation Finish Date : "
                             + DateTimeUtil.concatenateDateTime(currentOperation.getLatestOpFinishDate(), currentOperation.getLatestOpFinishTime()) + " ! ++++++++");
                     System.out.println("______________________________________________________________________________________________________________________________________");
                     notifyManagerAgent();
@@ -369,18 +371,17 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                         if (bestWorkCenter == null || ((offeredDate.equals(targetOperationStartDate) || offeredDate.isAfter(targetOperationStartDate)) && offeredDate.isBefore(bestOfferedDate)))
                         {
                             // Check if the estimatedCurrentOfferFinishDateTime is on or before the estimated latest operation finish datetime for that operation and if so set it as the best offeredDate
-                            if (estimatedCurrentOfferFinishDateTime.isBefore(estimatedLatestOpFinishDateTime) ||  estimatedCurrentOfferFinishDateTime.isEqual(estimatedLatestOpFinishDateTime))
+                            if (estimatedCurrentOfferFinishDateTime.isBefore(estimatedLatestOpFinishDateTime) || estimatedCurrentOfferFinishDateTime.isEqual(estimatedLatestOpFinishDateTime))
                             {
                                 // This is the best offer at present
                                 bestOfferedDate = offeredDate;
                                 bestWorkCenter = reply.getSender();
                                 acceptProposal = 1;
                                 System.out.println("Current best offered time : " + bestOfferedDate + " by Work Center Agent : " + bestWorkCenter);
-                            }
-                            else
+                            } else
                             {
                                 // if there are at least 1 proposal that can be accepted this should not be set to 2.
-                                if(acceptProposal != 1)
+                                if (acceptProposal != 1)
                                 {
                                     currentAgent.setUnscheduleFromDate(targetOperationStartDate);
                                     currentAgent.setUnscheduleFromTime(targetOperationStartDate);
@@ -394,7 +395,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
 
                     if (repliesCount >= workCenterAgents.length)
                     {
-                        if(acceptProposal == 1)
+                        if (acceptProposal == 1)
                         {
                             // We received all replies
                             step = 2;
@@ -412,15 +413,14 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                                     MessageTemplate.MatchInReplyTo(order.getReplyWith()));
 
                             step = 3;
-                        }
-                        else
+                        } else
                         {
-                            System.out.println("++++++ OPERATION " + currentOperation.getOperationId() + " WAS NOT SCHEDULED: Could not meet Estimated Latest Operation Finish Date : " 
+                            System.out.println("++++++ OPERATION " + currentOperation.getOperationId() + " WAS NOT SCHEDULED: Could not meet Estimated Latest Operation Finish Date : "
                                     + DateTimeUtil.concatenateDateTime(currentOperation.getLatestOpFinishDate(), currentOperation.getLatestOpFinishTime()) + " ! ++++++++");
                             System.out.println("______________________________________________________________________________________________________________________________________");
                             notifyManagerAgent();
                         }
-                        
+
                         break;
                     }
                 } else
@@ -442,7 +442,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                     {
 
                         // the next possible op start date and the work center no. is sent by the work center agent in the reply
-                        String [] msgContent = StringUtil.readMessageContent(reply.getContent());
+                        String[] msgContent = StringUtil.readMessageContent(reply.getContent());
                         targetOperationStartDate = DateTime.parse(msgContent[0], DateTimeUtil.getDateTimeFormat());
                         String workCenterNo = msgContent[1];
 
@@ -459,10 +459,10 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                     {
                         System.out.println("Operation " + currentOperation.getOperationId() + " could not be scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
                     }
-                    
+
                     notifyManagerAgent();
                     step = 4;
-                    
+
                 } else
                 {
                     block();
@@ -473,29 +473,29 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                 break;
         }
     }
-    
+
     private void updateOperationDetails(DateTime opStartDate, DateTime opFinishDate, String workCenterNo, DataModelEnums.OperationStatus opStatus)
     {
         currentOperation.setOpStartDate(opStartDate);
         currentOperation.setOpStartTime(opStartDate);
-        
+
         // when the capacity type is finite, the operation cannot end at 13:00:00, it should always end at 12:00:00.
         // therefore if 13:00:00 is set as the end time, reduce 1 hour and set 12:00:00 as the operation finish time
-        if(GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
+        if (GeneralSettings.getCapacityType() == DataEnums.CapacityType.FiniteCapacity)
         {
-            if(opFinishDate.toString(DateTimeUtil.getTimeFormat()).equals("13:00:00"))
+            if (opFinishDate.toString(DateTimeUtil.getTimeFormat()).equals("13:00:00"))
             {
                 opFinishDate = opFinishDate.minusHours(1);
             }
         }
         currentOperation.setOpFinishDate(opFinishDate);
         currentOperation.setOpFinishTime(opFinishDate);
-        
+
         currentOperation.setWorkCenterNo(workCenterNo);
         currentOperation.setOperationStatus(opStatus);
         currentOperation.updateOperationDetails();
     }
-    
+
     private void notifyManagerAgent()
     {
         if (replyMgr != null)
@@ -509,6 +509,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
 
 class UnscheduleLowerPriorityShopOrders implements Runnable
 {
+
     ShopOrderModel shopOrder;
     DateTime unscheduleFromDate;
     DateTime unscheduleFromTime;
@@ -519,7 +520,7 @@ class UnscheduleLowerPriorityShopOrders implements Runnable
         this.unscheduleFromDate = unscheduleFromDate;
         this.unscheduleFromTime = unscheduleFromTime;
     }
-    
+
     @Override
     public void run()
     {
@@ -527,10 +528,9 @@ class UnscheduleLowerPriorityShopOrders implements Runnable
 
         // When taking down the Shop Order Agent, check if there are any operations that have not been scheduled. If so perform dynamic unscheduling of low priority orders
         // related to the work center types of the unscheduled operations
-        List<ShopOrderOperationModel> unscheduledOperations = shopOrder.getOperations().stream().filter(rec -> 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Created) || 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled) || 
-                rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
+        List<ShopOrderOperationModel> unscheduledOperations = shopOrder.getOperations().stream().filter(rec
+                -> rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Unscheduled)
+                || rec.getOperationStatus().equals(DataModelEnums.OperationStatus.Interrupted)).sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
         for (int i = 0; i < unscheduledOperations.size(); i++)
         {
             workCenterTypes.add(unscheduledOperations.get(i).getWorkCenterType());
@@ -542,13 +542,13 @@ class UnscheduleLowerPriorityShopOrders implements Runnable
         for (String workCenterType : workCenterTypes)
         {
             // get the low priority shop orders to be unscheduled to make way for these high priority operations
-            List<ShopOrderModel> lowerPriorityShopOrders = DataReader.getLowerPriorityBlockerShopOrders(unscheduleFromDate, unscheduleFromTime, 
+            List<ShopOrderModel> lowerPriorityShopOrders = DataReader.getLowerPriorityBlockerShopOrders(unscheduleFromDate, unscheduleFromTime,
                     workCenterType, shopOrder.getImportance());
             // foreach of the orders
             for (ShopOrderModel lowerPriorityShopOrder : lowerPriorityShopOrders)
             {
-                lowerPriorityShopOrder.unscheduleLowerPriorityShopOrders(unscheduleFromDateTime);
+                lowerPriorityShopOrder.unscheduleOperationsFrom(unscheduleFromDateTime);
             }
         }
-    }   
+    }
 }

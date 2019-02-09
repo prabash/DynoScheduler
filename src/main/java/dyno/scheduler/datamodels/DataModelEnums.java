@@ -37,7 +37,7 @@ public class DataModelEnums
     public enum InerruptionType
     {
         Interruption(-1),
-        Priority(0);
+        Normal(0);
         
         private final int value;
 
@@ -70,7 +70,8 @@ public class DataModelEnums
         Started,
         InProgress,
         Delivered,
-        Closed
+        Closed,
+        Cancelled
     }
     
     public enum OperationStatus
@@ -82,7 +83,8 @@ public class DataModelEnums
         Reserved,
         Issued,
         InProgress,
-        Completed
+        Completed,
+        Cancelled
     }
     
     public enum DataModelType

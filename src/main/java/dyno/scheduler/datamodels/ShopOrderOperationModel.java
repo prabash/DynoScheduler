@@ -463,9 +463,9 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
         }
         
         double incOperationSequence = 0.00;
-        ShopOrderOperationModel operationBeforeInterruption = null;
-        ShopOrderOperationModel operationWithinInterruption = null;
-        ShopOrderOperationModel operationAfterInterruption = null;
+        ShopOrderOperationModel operationBeforeInterruption;
+        ShopOrderOperationModel operationWithinInterruption;
+        ShopOrderOperationModel operationAfterInterruption;
 
         ArrayList<ShopOrderOperationModel> operationToUpdate = new ArrayList<>();
         ArrayList<ShopOrderOperationModel> operationsAdded = new ArrayList<>();
@@ -516,8 +516,8 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationWithinInterruption.setQuantity(-1);
             operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
 
-            operationWithinInterruption.setOpStartDate(interruptionStartDateTime);
-            operationWithinInterruption.setOpStartTime(interruptionStartDateTime);
+            operationWithinInterruption.setOpStartDate(null);
+            operationWithinInterruption.setOpStartTime(null);
             operationWithinInterruption.setOpFinishDate(null);
             operationWithinInterruption.setOpFinishTime(null);
             
@@ -555,8 +555,8 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationAfterInterruption.setPrecedingOperationId(precedingOperationId);
             
             // this operation should start when the interruption ends and finishes at the previous operation finish time
-            operationAfterInterruption.setOpStartDate(interruptionEndDateTime);
-            operationAfterInterruption.setOpStartTime(interruptionEndDateTime);
+            operationAfterInterruption.setOpStartDate(null);
+            operationAfterInterruption.setOpStartTime(null);
 
             // the operations that comes after will always be splitted and added
             operationsAdded.add(operationAfterInterruption);
@@ -589,7 +589,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
                 }
                 else
                 {
-                    workCenter.unscheduleWorkCenterOnPriority(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
+                    workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
                         addedOperation.getWorkCenterRuntime());
                 }
             }
@@ -597,7 +597,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             // unschedule of the work center
             else
             {
-                workCenter.unscheduleWorkCenterOnPriority(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
+                workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
                         addedOperation.getWorkCenterRuntime());
             }
         }
@@ -614,13 +614,14 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
      * This method will update the current operation status as unscheduled and update the work center schedule accordingly
      * @return 
      */
-    public boolean unscheduleOperation()
+    public boolean unscheduleOperation(OperationStatus operationStatus)
     {
-        DataWriter.updateOperationStatus(this.getOperationId(), OperationStatus.Unscheduled);
+        // Set the operation status to unschedule
+        DataWriter.removeScheduledOperationData(this.getOperationId(), operationStatus);
         
-        // update the work center allocations as priority unschedule so that the available time can be utilized later
+        // update the work center allocations as normal unschedule so that the available time can be utilized later
         WorkCenterModel workCenter = DataReader.getWorkCenterByPrimaryKey(getWorkCenterNo());
-        workCenter.unscheduleWorkCenterOnPriority(DateTimeUtil.concatenateDateTime(this.getOpStartDate(), this.getOpStartTime()), 
+        workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(this.getOpStartDate(), this.getOpStartTime()), 
                         this.getWorkCenterRuntime());
         
         return true;
