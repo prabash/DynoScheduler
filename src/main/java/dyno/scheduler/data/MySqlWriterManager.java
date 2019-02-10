@@ -604,6 +604,57 @@ public class MySqlWriterManager extends DataWriteManager
         }
     }
 
+    @Override
+    public boolean changeShopOrderScheduleData(String orderNo, ShopOrderScheduleStatus scheduleStatus, DateTime startDate, DateTime finishDate)
+    {
+        Date sqlStartDate;
+        Date sqlFinishDate;
+        
+        if (scheduleStatus.equals(ShopOrderScheduleStatus.Unscheduled))
+        {
+            sqlStartDate = new Date(0);
+            sqlFinishDate = new Date(0);
+        }
+        else if (scheduleStatus.equals(ShopOrderScheduleStatus.PartiallyScheduled))
+        {
+            sqlStartDate = DateTimeUtil.convertDatetoSqlDate(startDate);
+            sqlFinishDate =  new Date(0);
+        }
+        else
+        {
+            sqlStartDate = DateTimeUtil.convertDatetoSqlDate(startDate);
+            sqlFinishDate = DateTimeUtil.convertDatetoSqlDate(finishDate);
+        }
+            
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.ShopOrder);
+        try
+        {
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append("UPDATE ").append(tableName).append(" SET ");
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+
+            queryBuilder.append("start_date = ?, ");
+            columnValues.put(++i, sqlStartDate);
+
+            queryBuilder.append("finish_date = ?, ");
+            columnValues.put(++i, sqlFinishDate);
+            
+            queryBuilder.append("scheduling_status = ? ");
+            columnValues.put(++i, scheduleStatus.toString());
+
+            queryBuilder.append("WHERE order_no = ? ");
+            columnValues.put(++i, orderNo);
+
+            new MySqlWriter().WriteToTable(queryBuilder.toString(), columnValues);
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
     public void UpdateTestColumn()
     {
         try

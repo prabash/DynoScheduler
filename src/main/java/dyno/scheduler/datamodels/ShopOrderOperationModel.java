@@ -516,8 +516,8 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationWithinInterruption.setQuantity(-1);
             operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
 
-            operationWithinInterruption.setOpStartDate(null);
-            operationWithinInterruption.setOpStartTime(null);
+            operationWithinInterruption.setOpStartDate(interruptionStartDateTime);
+            operationWithinInterruption.setOpStartTime(interruptionStartDateTime);
             operationWithinInterruption.setOpFinishDate(null);
             operationWithinInterruption.setOpFinishTime(null);
             
@@ -555,8 +555,8 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationAfterInterruption.setPrecedingOperationId(precedingOperationId);
             
             // this operation should start when the interruption ends and finishes at the previous operation finish time
-            operationAfterInterruption.setOpStartDate(null);
-            operationAfterInterruption.setOpStartTime(null);
+            operationAfterInterruption.setOpStartDate(interruptionEndDateTime);
+            operationAfterInterruption.setOpStartTime(interruptionEndDateTime);
 
             // the operations that comes after will always be splitted and added
             operationsAdded.add(operationAfterInterruption);

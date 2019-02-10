@@ -7,6 +7,7 @@ package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.*;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
+import dyno.scheduler.datamodels.DataModelEnums.ShopOrderScheduleStatus;
 import java.util.List;
 import org.joda.time.DateTime;
 
@@ -97,4 +98,14 @@ public abstract class DataWriteManager
      * @return 
      */
     public abstract boolean removeOperationScheduleData(int operationId, OperationStatus operationStatus);
+    
+    /**
+     * Change shop order scheduled status with relevant data
+     * @param orderNo
+     * @param scheduleStatus
+     * @param startDate
+     * @param finishDate
+     * @return 
+     */
+    public abstract boolean changeShopOrderScheduleData(String orderNo, ShopOrderScheduleStatus scheduleStatus, DateTime startDate, DateTime finishDate);
 }

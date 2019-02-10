@@ -122,10 +122,15 @@ public class ShopOrderAgent extends Agent
     @Override
     protected void takeDown()
     {
+        // if there's any operation that was unable to be scheduled, Unschedule lower priority shop orders and continue the scheduling process
         if (getUnscheduleFromDate() != null && getUnscheduleFromTime() != null)
         {
             Thread unscheduleProcess = new Thread(new UnscheduleLowerPriorityShopOrders(shopOrder, getUnscheduleFromDate(), getUnscheduleFromTime()));
             unscheduleProcess.start();
+        }
+        else
+        {
+            shopOrder.setScheduleData();
         }
 
         super.takeDown();

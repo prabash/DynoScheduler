@@ -42,17 +42,17 @@ public class Main
             // get the platform
             platformRuntime = AgentsManager.getRuntimeInstance();
             
-            System.out.println("Press a key to unschedule");
-            System.in.read();
-            
-            List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
-            for (ShopOrderModel shopOrder : shopOrders)
-            {
-                if (shopOrder.getOrderNo().equals("3"))                
-                {
-                    shopOrder.cancel();
-                }
-            }
+//            System.out.println("Press a key to unschedule");
+//            System.in.read();
+//            
+//            List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
+//            for (ShopOrderModel shopOrder : shopOrders)
+//            {
+//                if (shopOrder.getOrderNo().equals("3"))                
+//                {
+//                    shopOrder.cancel();
+//                }
+//            }
             
             // create the main container
             ContainerController mainContainer = AgentsManager.createMainContainer(platformRuntime);

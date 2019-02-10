@@ -360,6 +360,12 @@ public class ExcelWriteManager extends DataWriteManager
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public boolean changeShopOrderScheduleData(String orderNo, DataModelEnums.ShopOrderScheduleStatus scheduleStatus, DateTime startDate, DateTime finishDate)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     /**
      * returns the column index related to the specific timeBlock
      *

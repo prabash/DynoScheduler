@@ -6,6 +6,7 @@
 package dyno.scheduler.datamodels;
 
 import dyno.scheduler.data.DataEnums;
+import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderPriority;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderScheduleStatus;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderSchedulingDirection;
@@ -595,10 +596,19 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
                 operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
             }
         }
+        // Finally set the scheduling status of the shop order to be partially scheduled or unscheduled depending on if there's an already assigned startDate
+        if(getStartDate() != null)
+        {
+            DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.PartiallyScheduled, getStartDate(), null);
+        }
+        else
+        {
+            DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.Unscheduled, null, null);
+        }
     }
     
     /**
-     * Unschedule the entire shop order
+     * Un-schedule the entire shop order
      */
     public void unschedule()
     {
@@ -606,6 +616,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         {
             operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
         }
+        DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.Unscheduled, null, null);
     }
     
     /**
@@ -617,6 +628,23 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         {
             operation.unscheduleOperation(DataModelEnums.OperationStatus.Cancelled);
         }
+        DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.Unscheduled, null, null);
+    }
+    
+    /**
+     * Set Shop Order to the Scheduled status with start and finish dates
+     */
+    public void setScheduleData()
+    {
+        // get operations sorted by the operation sequence
+        List<ShopOrderOperationModel> operations = this.getOperations().stream().sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
+        // get the first operation
+        ShopOrderOperationModel firstOp = operations.get(0);
+        // get the last operation
+        ShopOrderOperationModel lastOp = operations.get(operations.size() - 1);
+        
+        // update the shop order with schedule data
+        DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.Scheduled, firstOp.getOpStartDate(), lastOp.getOpFinishDate());
     }
     
     // </editor-fold> 

@@ -14,6 +14,7 @@ import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.MySqlUtil;
 import java.util.ArrayList;
 import java.util.List;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -39,6 +40,11 @@ public class DataWriter
     public static boolean updateShopOrderData(List<ShopOrderModel> shopOrders)
     {
         return DataFactory.getDataWriteManagerInstance().updateData(shopOrders, DataModelEnums.DataModelType.ShopOrder);
+    }
+    
+    public static boolean changeShopOrderScheduleData(String orderNo, DataModelEnums.ShopOrderScheduleStatus scheduleStatus, DateTime startDate, DateTime finishDate)
+    {
+        return DataFactory.getDataWriteManagerInstance().changeShopOrderScheduleData(orderNo, scheduleStatus, startDate, finishDate);
     }
     
     //</editor-fold>
@@ -119,7 +125,5 @@ public class DataWriter
     }
     
     //</editor-fold>
-    
-    
     
 }
