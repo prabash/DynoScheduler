@@ -6,6 +6,7 @@ import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
+import dyno.scheduler.datamodels.WorkCenterUtil;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.restservice.RESTServiceHandler;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -41,19 +42,15 @@ public class Main
             
             // get the platform
             platformRuntime = AgentsManager.getRuntimeInstance();
-            
-//            System.out.println("Press a key to unschedule");
-//            System.in.read();
 //            
-//            List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
-//            for (ShopOrderModel shopOrder : shopOrders)
-//            {
-//                if (shopOrder.getOrderNo().equals("3"))                
-//                {
-//                    shopOrder.cancel();
-//                }
-//            }
+            System.out.println("Press a key to Interrupt");
+            System.in.read();
             
+            WorkCenterUtil.interruptWorkCenter(DateTimeUtil.concatenateDateTime("2018-08-07", "13:00:00"), DateTimeUtil.concatenateDateTime("2018-08-07", "17:00:00"), "WC2");
+            
+            System.out.println("Press a key to continue creating agents");
+            System.in.read();
+          
             // create the main container
             ContainerController mainContainer = AgentsManager.createMainContainer(platformRuntime);
             

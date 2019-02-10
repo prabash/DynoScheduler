@@ -387,10 +387,10 @@ public class MySqlWriterManager extends DataWriteManager
                 columnValues.put(++i, shopOrderOperation.getWorkCenterRuntime());
                 columnValues.put(++i, shopOrderOperation.getLaborRuntimeFactor());
                 columnValues.put(++i, shopOrderOperation.getLaborRunTime());
-                columnValues.put(++i, DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpStartDate()));
-                columnValues.put(++i, DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpStartTime()));
-                columnValues.put(++i, DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpFinishDate()));
-                columnValues.put(++i, DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpFinishTime()));
+                columnValues.put(++i, shopOrderOperation.getOpStartDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpStartDate()) : new Date(0));
+                columnValues.put(++i, shopOrderOperation.getOpStartTime() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpStartTime()) : new Time(0));
+                columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrderOperation.getOpFinishDate()) : new Date(0));
+                columnValues.put(++i, shopOrderOperation.getOpFinishDate() != null ? DateTimeUtil.convertTimetoSqlTime(shopOrderOperation.getOpFinishTime()) : new Time(0));
                 columnValues.put(++i, shopOrderOperation.getQuantity());
                 columnValues.put(++i, shopOrderOperation.getWorkCenterType());
                 columnValues.put(++i, shopOrderOperation.getWorkCenterNo());

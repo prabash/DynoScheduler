@@ -67,6 +67,13 @@ public class DataWriter
         return DataFactory.getDataWriteManagerInstance().updateData(shopOrderOperations, DataModelEnums.DataModelType.ShopOrderOperation);
     }
     
+    public static boolean updateShopOrderOperation(ShopOrderOperationModel shopOrderOperation)
+    {
+        List<ShopOrderOperationModel> shopOrderOperations = new ArrayList<>();
+        shopOrderOperations.add(shopOrderOperation);
+        return updateShopOrderOperationData(shopOrderOperations);
+    }
+    
     public static boolean replacePrecedingOperationId(int precedingOperationId, int replaceById, int exceptOpId, String orderNo)
     {
         return DataFactory.getDataWriteManagerInstance().replacePrecedingOperationId(precedingOperationId, replaceById, exceptOpId, orderNo);

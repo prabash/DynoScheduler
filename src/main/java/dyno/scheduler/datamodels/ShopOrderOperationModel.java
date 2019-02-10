@@ -409,6 +409,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
     /***
      * This method will split an operation by getting only the interruption start date time, and split the remainder of the operation to a separate operation
      * @param interruptionStartDateTime
+     * @param interruptionType
      * @return 
      */
     public boolean splitAndUnscheduleInterruptedOperation(DateTime interruptionStartDateTime, InerruptionType interruptionType)
@@ -420,13 +421,14 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
      * This method will split an operation within the given start and end time and create new operations accordingly
      * @param interruptionStartDateTime
      * @param interruptionEndDateTime
+     * @param interruptionType
      * @return 
      */
     public boolean splitAndUnscheduleInterruptedOperation(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, InerruptionType interruptionType)
     {
         List<OperationScheduleTimeBlocksDataModel> operationScheduledTimeBlocks = DataReader.getOperationScheduledTimeBlockDetails(this.getOperationId());
         
-        int precedingOperationId = 0;
+        int changedPrecedingOpId = 0;
         // This variable holds the ID of the newly added operation that should be excluded when replacing the 
         // original operation ID that is set as preceding operation ID of operations
         int operationIdToExclude = -1;
@@ -435,11 +437,35 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
         int withinInterruptionRuntime = 0;
         int afterInterruptionRuntime = 0;
         
+        double incOperationSequence = 0.00;
+        ShopOrderOperationModel operationBeforeInterruption;
+        ShopOrderOperationModel operationWithinInterruption;
+        ShopOrderOperationModel operationAfterInterruption;
+
+        ArrayList<ShopOrderOperationModel> operationsWithWCInterruptions = new ArrayList<>();
+        
+        // if the interruption start and end time are equal to operation start and end time, then just updating the status of the operation would suffice
+        // without splitting the operation
         if (interruptionStartDateTime.isEqual(DateTimeUtil.concatenateDateTime(getOpStartDate(), getOpStartTime())) && 
                 interruptionEndDateTime.isEqual(DateTimeUtil.concatenateDateTime(getOpFinishDate(), getOpFinishTime())))
         {
             System.out.println("Interruption start and end date times are equal to the operation start and end times, therefore no splitting required");
-            return false;
+            
+            operationWithinInterruption = clone();
+            operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
+            operationWithinInterruption.setOpFinishDate(null);
+            operationWithinInterruption.setOpFinishTime(null);
+            operationWithinInterruption.setWorkCenterNo("");
+            
+            operationsWithWCInterruptions.add(operationWithinInterruption);
+            
+            // update the operation details on db
+            DataWriter.updateShopOrderOperation(operationWithinInterruption);   
+            
+            // update work center to be with the relevant interruption type
+            unscheduleWorkCentersForInterruptedOperations(operationsWithWCInterruptions, interruptionType);
+            
+            return true;
         }
         
         for (OperationScheduleTimeBlocksDataModel operationScheduledTimeBlock : operationScheduledTimeBlocks)
@@ -461,14 +487,6 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
                 afterInterruptionRuntime++;
             }
         }
-        
-        double incOperationSequence = 0.00;
-        ShopOrderOperationModel operationBeforeInterruption;
-        ShopOrderOperationModel operationWithinInterruption;
-        ShopOrderOperationModel operationAfterInterruption;
-
-        ArrayList<ShopOrderOperationModel> operationToUpdate = new ArrayList<>();
-        ArrayList<ShopOrderOperationModel> operationsAdded = new ArrayList<>();
 
         if(beforeInterruptionRuntime > 0)
         {
@@ -481,12 +499,10 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationBeforeInterruption.setOpFinishTime(interruptionStartDateTime);
             
             // Preceding operation Id for the next added operation should be the current operation Id
-            precedingOperationId = this.getOperationId();
-            
-            operationToUpdate.add(operationBeforeInterruption);
+            changedPrecedingOpId = this.getOperationId();
             
             // update the operation details on db
-            DataWriter.updateShopOrderOperationData(operationToUpdate);
+            DataWriter.updateShopOrderOperation(operationBeforeInterruption);
         }
         else if (beforeInterruptionRuntime == 0 && withinInterruptionRuntime > 0)
         {
@@ -495,13 +511,17 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             operationWithinInterruption.setWorkCenterRuntime(withinInterruptionRuntime);
             operationWithinInterruption.setOperationStatus(OperationStatus.Interrupted);
             
-            // Preceding operation Id for the next added operation should be the current operation Id
-            precedingOperationId = this.getOperationId();
+            operationWithinInterruption.setOpFinishDate(null);
+            operationWithinInterruption.setOpFinishTime(null);
+            operationWithinInterruption.setWorkCenterNo("");
             
-            operationToUpdate.add(operationWithinInterruption);
+            // Preceding operation Id for the next added operation should be the current operation Id
+            changedPrecedingOpId = this.getOperationId();
+            
+            operationsWithWCInterruptions.add(operationWithinInterruption);
             
             // update the operation details on db
-            DataWriter.updateShopOrderOperationData(operationToUpdate);            
+            DataWriter.updateShopOrderOperation(operationWithinInterruption);            
         }
         
         if (beforeInterruptionRuntime > 0 && withinInterruptionRuntime > 0)
@@ -518,24 +538,26 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
 
             operationWithinInterruption.setOpStartDate(interruptionStartDateTime);
             operationWithinInterruption.setOpStartTime(interruptionStartDateTime);
+            
             operationWithinInterruption.setOpFinishDate(null);
             operationWithinInterruption.setOpFinishTime(null);
+            operationWithinInterruption.setWorkCenterNo("");
             
             // set the precedingOperationId (should be the previously updated operation id)
-            operationWithinInterruption.setPrecedingOperationId(precedingOperationId);
+            operationWithinInterruption.setPrecedingOperationId(changedPrecedingOpId);
 
-            operationsAdded.add(operationWithinInterruption);
+            operationsWithWCInterruptions.add(operationWithinInterruption);
             
             // After the operation is added to the db get the newly generated id and add it as the preceding operation Id in case if there is a 3rd splitted 
             // operation that is added that comes after the interruption time, or 
             // to be used for replacing the original operation ID that has been set as the preceding operation ID of other operations
-            precedingOperationId = DataWriter.addShopOrderOperation(operationWithinInterruption);
+            changedPrecedingOpId = DataWriter.addShopOrderOperation(operationWithinInterruption);
             
             // if no opreation to exclude has been set, this operation should be set as the operation to exclude when replacing preceding op IDs,
             // because this will have the original op ID as the preceding operation id
             if (operationIdToExclude == -1)
             {
-                operationIdToExclude = precedingOperationId;
+                operationIdToExclude = changedPrecedingOpId;
             }
         }
         
@@ -552,61 +574,70 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
             // Operation after the interruption should be in the Unscheduled status
             operationAfterInterruption.setOperationStatus(OperationStatus.Unscheduled);
             // set the preceding operation id
-            operationAfterInterruption.setPrecedingOperationId(precedingOperationId);
+            operationAfterInterruption.setPrecedingOperationId(changedPrecedingOpId);
             
             // this operation should start when the interruption ends and finishes at the previous operation finish time
             operationAfterInterruption.setOpStartDate(interruptionEndDateTime);
             operationAfterInterruption.setOpStartTime(interruptionEndDateTime);
+            
+            operationAfterInterruption.setOpFinishDate(null);
+            operationAfterInterruption.setOpFinishTime(null);
+            operationAfterInterruption.setWorkCenterNo("");
 
             // the operations that comes after will always be splitted and added
-            operationsAdded.add(operationAfterInterruption);
+            operationsWithWCInterruptions.add(operationAfterInterruption);
             
             // After the last splitted operation is added to the db get the newly generated id and set it as the preceding operationId to be used for replacing 
             // the original operation ID that has been set as the preceding operation ID of other operations
-            precedingOperationId = DataWriter.addShopOrderOperation(operationAfterInterruption);
+            changedPrecedingOpId = DataWriter.addShopOrderOperation(operationAfterInterruption);
             
             // if no opreation to exclude has been set, this operation should be set as the operation to exclude when replacing preceding op IDs,
             // because this will have the original op ID as the preceding operation id
             if (operationIdToExclude == -1)
             {
-                operationIdToExclude = precedingOperationId;
+                operationIdToExclude = changedPrecedingOpId;
             }
         }
         
-        // After creating new operations by splitting the existing operations, for each of the created operations, the work center should be interrupted
-        for (ShopOrderOperationModel addedOperation : operationsAdded)
+        // After creating/updating operations by splitting the existing operations, for operations that doesnt come BEFORE the interrupted time, the work center should be interrupted
+        unscheduleWorkCentersForInterruptedOperations(operationsWithWCInterruptions, interruptionType);
+        
+        // Replace the preceding operation ID of other operations that is set to the original operation id, by the 
+        // final added operation
+        DataWriter.replacePrecedingOperationId(this.getOperationId(), changedPrecedingOpId, operationIdToExclude, this.getOrderNo());
+                
+        return true;
+    }
+    
+    private void unscheduleWorkCentersForInterruptedOperations(List<ShopOrderOperationModel> operationsWithWCInterruptions, InerruptionType interruptionType)
+    {
+        for (ShopOrderOperationModel opsWithInterruptions : operationsWithWCInterruptions)
         {
             WorkCenterModel workCenter = DataReader.getWorkCenterByPrimaryKey(getWorkCenterNo());
             
             // if the current addedOperation is the operation that falls between the interrupted time, check if the given interruptionType is normal interruption, or 
             // priority unschedule, and call the respective method to unschedule work center accordingly
-            if(addedOperation.getOperationStatus().equals(OperationStatus.Interrupted))
+            if(opsWithInterruptions.getOperationStatus().equals(OperationStatus.Interrupted))
             {
                 if(interruptionType.equals(InerruptionType.Interruption))
                 {
-                    workCenter.unscheduleWorkCenterOnInterruption(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
-                        addedOperation.getWorkCenterRuntime());
+                    workCenter.unscheduleWorkCenterOnInterruption(DateTimeUtil.concatenateDateTime(opsWithInterruptions.getOpStartDate(), opsWithInterruptions.getOpStartTime()), 
+                        opsWithInterruptions.getWorkCenterRuntime());
                 }
                 else
                 {
-                    workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
-                        addedOperation.getWorkCenterRuntime());
+                    workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(opsWithInterruptions.getOpStartDate(), opsWithInterruptions.getOpStartTime()), 
+                        opsWithInterruptions.getWorkCenterRuntime());
                 }
             }
             // if the operation comes after the interrupted time, the work center should anyway be able to utilize that time, hence it will be unscheduled as a priority
             // unschedule of the work center
             else
             {
-                workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(addedOperation.getOpStartDate(), addedOperation.getOpStartTime()), 
-                        addedOperation.getWorkCenterRuntime());
+                workCenter.unscheduleWorkCenter(DateTimeUtil.concatenateDateTime(opsWithInterruptions.getOpStartDate(), opsWithInterruptions.getOpStartTime()), 
+                        opsWithInterruptions.getWorkCenterRuntime());
             }
         }
-        
-        // Replace the preceding operation ID of other operations that is set to the original operation id, by the 
-        // final added 
-        DataWriter.replacePrecedingOperationId(this.getOperationId(), precedingOperationId, operationIdToExclude, this.getOrderNo());
-                
-        return true;
     }
     
     

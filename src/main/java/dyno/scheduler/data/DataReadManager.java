@@ -76,4 +76,11 @@ public abstract class DataReadManager
     
     protected abstract WorkCenterModel getWorkCenterByPrimaryKey(String workCenterNo);
     
+    /**
+     * get shop order details by providing the order no
+     * @param orderNo
+     * @return 
+     */
+    protected abstract ShopOrderModel getShopOrderByPrimaryKey(String orderNo);
+    
 }

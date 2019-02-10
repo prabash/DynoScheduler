@@ -129,4 +129,9 @@ public class DataReader
     {
         return DataFactory.getDataReadManagerInstance().getWorkCenterByPrimaryKey(workCenterNo);
     }
+    
+    public static ShopOrderModel getShopOrderByPrimaryKey(String orderNo)
+    {
+        return DataFactory.getDataReadManagerInstance().getShopOrderByPrimaryKey(orderNo);
+    }
 }

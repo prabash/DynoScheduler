@@ -133,7 +133,7 @@ public class DateTimeUtil
     
     public static DateTime convertSqlTimestampToDateTime(Timestamp timestamp)
     {
-        String timestampVal =  new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(timestamp);
+        String timestampVal =  new SimpleDateFormat(DATE_TIME_FORMAT_JSON).format(timestamp);
         DateTime dateTime = DateTime.parse(timestampVal, getDateTimeFormat());
         return dateTime;
     }

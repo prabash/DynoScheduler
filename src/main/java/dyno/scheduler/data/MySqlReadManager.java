@@ -372,4 +372,32 @@ public class MySqlReadManager extends DataReadManager
         }
         return workCenters.get(0);
     }
+
+    @Override
+    protected ShopOrderModel getShopOrderByPrimaryKey(String orderNo)
+    {
+        List<ShopOrderModel> shopOrders = new ArrayList<>();
+        ArrayList<ArrayList<String>> filters = new ArrayList<>();
+        ArrayList<String> orderBy = null;
+        ResultSet results;
+        String storageName =  MySqlUtil.getStorageName(DataModelEnums.DataModelType.ShopOrder);
+        
+        filters.add(TableUtil.createTableFilter("order_no", "=", orderNo));
+        
+        try
+        {
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
+            while (results.next())
+            {
+                ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
+                // set the list of operations
+                shopOrder.setOperations(getShopOrderOperationsByOrderNo(shopOrder.getOrderNo()));
+                shopOrders.add(shopOrder);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return shopOrders.get(0);
+    }
 }

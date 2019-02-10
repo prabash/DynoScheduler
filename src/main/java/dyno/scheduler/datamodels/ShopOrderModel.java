@@ -607,6 +607,48 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         }
     }
     
+    public void unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime)
+    {
+        // for each of the operations
+        for (ShopOrderOperationModel operation : this.getOperations())
+        {
+            // concatenate the operation start datetime and finish datetime
+            DateTime opStartDateTime = DateTimeUtil.concatenateDateTime(operation.getOpStartDate(), operation.getOpStartTime());
+            DateTime opFinishDateTime = DateTimeUtil.concatenateDateTime(operation.getOpFinishDate(), operation.getOpFinishTime());
+
+            // if the operation end time comes before or when the interruptionStartDateTime such operations should not be unscheduled
+            // hence they are ignored.
+            if(opFinishDateTime.isEqual(interruptionStartDateTime) || opFinishDateTime.isBefore(interruptionStartDateTime))
+            {
+                continue;
+            }
+            // if the operation start datetime comes after the unscheduleFromDateTime, such operations should just be unscheduled without splitting
+            else if (opStartDateTime.isEqual(interruptionEndDateTime) || opStartDateTime.isAfter(interruptionEndDateTime))
+            {
+                operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
+            }
+            // if the unscheduleFromDate falls in between the operation start datetime and finish datetime such operation should be split into 2
+            // by the unscheduleFromDateTime to forward
+            else if((opStartDateTime.isBefore(interruptionStartDateTime) && opFinishDateTime.isAfter(interruptionEndDateTime)) || 
+                    (opStartDateTime.isBefore(interruptionStartDateTime) && (opFinishDateTime.isBefore(interruptionEndDateTime) || opFinishDateTime.isEqual(interruptionEndDateTime))) ||
+                    (opStartDateTime.isEqual(interruptionStartDateTime) && opFinishDateTime.isEqual(interruptionEndDateTime)) ||
+                    (opStartDateTime.isEqual(interruptionStartDateTime) && opFinishDateTime.isAfter(interruptionEndDateTime)) ||
+                    ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isAfter(interruptionEndDateTime)))
+            {
+                operation.splitAndUnscheduleInterruptedOperation(interruptionStartDateTime, interruptionEndDateTime, DataModelEnums.InerruptionType.Interruption);
+            }
+        }
+        // Finally set the scheduling status of the shop order to be partially scheduled or unscheduled depending on if there's an already assigned startDate
+        if(getStartDate() != null)
+        {
+            DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.PartiallyScheduled, getStartDate(), null);
+        }
+        else
+        {
+            DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.Unscheduled, null, null);
+        }
+    }
+    
     /**
      * Un-schedule the entire shop order
      */
@@ -637,7 +679,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
     public void setScheduleData()
     {
         // get operations sorted by the operation sequence
-        List<ShopOrderOperationModel> operations = this.getOperations().stream().sorted(new ShopOrderOperationModel()).collect(Collectors.toList());
+        List<ShopOrderOperationModel> operations = this.getOperations();
         // get the first operation
         ShopOrderOperationModel firstOp = operations.get(0);
         // get the last operation

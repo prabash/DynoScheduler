@@ -21,7 +21,8 @@ public class InterruptedOpDetailsDataModel extends DataModel
     
     private String WorkCenterNo;
     private int operationId;
-    private DateTime operationStartDateTime;
+    private String orderNo;
+    private DateTime interruptionOnOpStartDateTime;
     private int interruptedRunTime;
     
     // </editor-fold>
@@ -37,14 +38,14 @@ public class InterruptedOpDetailsDataModel extends DataModel
         this.operationId = operationId;
     }
 
-    public DateTime getOperationStartDateTime()
+    public DateTime getInterruptionOnOpStartDateTime()
     {
-        return operationStartDateTime;
+        return interruptionOnOpStartDateTime;
     }
 
-    public void setOperationStartDateTime(DateTime operationStartDateTime)
+    public void setInterruptionOnOpStartDateTime(DateTime interruptionOnOpStartDateTime)
     {
-        this.operationStartDateTime = operationStartDateTime;
+        this.interruptionOnOpStartDateTime = interruptionOnOpStartDateTime;
     }
 
     public String getWorkCenterNo()
@@ -66,6 +67,17 @@ public class InterruptedOpDetailsDataModel extends DataModel
     {
         this.interruptedRunTime = interruptedRunTime;
     }
+
+    public String getOrderNo()
+    {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo)
+    {
+        this.orderNo = orderNo;
+    }
+    
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
@@ -79,7 +91,8 @@ public class InterruptedOpDetailsDataModel extends DataModel
             try
             {
                 this.setWorkCenterNo(resultSetRow.getString(++i));
-                this.setOperationStartDateTime(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlTimestampToDateTime(resultSetRow.getTimestamp(i)));
+                this.setInterruptionOnOpStartDateTime(resultSetRow.getDate(++i) == null ? null : DateTimeUtil.convertSqlTimestampToDateTime(resultSetRow.getTimestamp(i)));
+                this.setOrderNo(resultSetRow.getString(++i));
                 this.setOperationId(resultSetRow.getInt(++i));
                 this.setInterruptedRunTime(resultSetRow.getInt(++i));
                 
@@ -94,7 +107,7 @@ public class InterruptedOpDetailsDataModel extends DataModel
     @Override
     public String getPrimaryKey()
     {
-        return getOperationStartDateTime().toString(DateTimeUtil.getDateTimeFormat());
+        return getInterruptionOnOpStartDateTime().toString(DateTimeUtil.getDateTimeFormat());
     }
 
     @Override
