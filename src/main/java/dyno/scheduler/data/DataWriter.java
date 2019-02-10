@@ -131,6 +131,11 @@ public class DataWriter
         return DataFactory.getDataWriteManagerInstance().updateData(workCenterOpAllocations, DataModelEnums.DataModelType.WorkCenterAllocationFinite);
     }
     
+    public static boolean makeAvailableTempUnavailableAllocs(String workCenterNo)
+    {
+        return DataFactory.getDataWriteManagerInstance().makeAvailableTempUnavailableTimeblocks(workCenterNo);
+    }
+    
     //</editor-fold>
     
 }

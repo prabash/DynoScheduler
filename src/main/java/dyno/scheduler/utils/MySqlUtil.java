@@ -57,6 +57,8 @@ public class MySqlUtil
                 return "get_lower_priority_blocker_shop_orders";    
             case ReplacePrecedingOperationIDs:
                 return "replace_preceding_op_ids";
+            case MakeAvailableTempUnavailableLocationsFinite:
+                return "make_available_temp_unavailable_locations_finite_tab";
             default:
                 return "";
         }

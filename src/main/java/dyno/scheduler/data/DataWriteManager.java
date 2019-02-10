@@ -108,4 +108,11 @@ public abstract class DataWriteManager
      * @return 
      */
     public abstract boolean changeShopOrderScheduleData(String orderNo, ShopOrderScheduleStatus scheduleStatus, DateTime startDate, DateTime finishDate);
+    
+    /**
+     * Make the work center alloc type to 0 from temporary unavailable status (-2)
+     * @param workCenterNo
+     * @return 
+     */
+    public abstract boolean makeAvailableTempUnavailableTimeblocks(String workCenterNo);
 }

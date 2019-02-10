@@ -51,6 +51,8 @@ public class WorkCenterAgent extends Agent
     {
         try
         {
+            // If there are any temporary unavailable allocations, they should be made available again
+            // workCenter.makeAvailableTempUnavailableAllocs();
             DFService.deregister(this);
             super.takeDown(); //To change body of generated methods, choose Tools | Templates.
         } catch (FIPAException ex)

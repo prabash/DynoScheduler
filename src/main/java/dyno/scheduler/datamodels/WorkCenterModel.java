@@ -260,6 +260,13 @@ public class WorkCenterModel extends DataModel
         WorkCenterModel.this.unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.Interruption.getValue());
     }
     
+    public void unscheduleWorkCenterOnPartUnavailability(DateTime interruptionStartDateTime, int workCenterRuntime)
+    {
+        // when part is not available to continue work, the operation should be unscheduled and moved to a seperate time period.
+        // this should be temporary and only affect that operation. This is indicated by -2.
+        WorkCenterModel.this.unscheduleWorkCenter(interruptionStartDateTime, workCenterRuntime, InerruptionType.PartUnavailable.getValue());
+    }
+    
     public void unscheduleWorkCenter(DateTime interruptionStartDateTime, int workCenterRuntime)
     {
         // when unscheduling lower priority operations, that time should be utilized by higher priority operations,
@@ -395,6 +402,11 @@ public class WorkCenterModel extends DataModel
         }
 
         return timeBlocksAvailable;
+    }
+    
+    public void makeAvailableTempUnavailableAllocs()
+    {
+        DataWriter.makeAvailableTempUnavailableAllocs(getWorkCenterNo());
     }
 
     // </editor-fold> 

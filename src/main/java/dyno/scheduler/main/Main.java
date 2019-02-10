@@ -46,7 +46,7 @@ public class Main
             System.out.println("Press a key to Interrupt");
             System.in.read();
             
-            WorkCenterUtil.interruptWorkCenter(DateTimeUtil.concatenateDateTime("2018-08-07", "13:00:00"), DateTimeUtil.concatenateDateTime("2018-08-07", "17:00:00"), "WC2");
+            WorkCenterUtil.interruptWorkCenterOnPartUnavailability(DateTimeUtil.concatenateDateTime("2018-08-07", "13:00:00"), DateTimeUtil.concatenateDateTime("2018-08-07", "17:00:00"), "WC2");
             
             System.out.println("Press a key to continue creating agents");
             System.in.read();

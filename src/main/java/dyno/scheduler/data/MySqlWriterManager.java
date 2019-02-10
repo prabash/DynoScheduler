@@ -655,6 +655,25 @@ public class MySqlWriterManager extends DataWriteManager
         }
     }
 
+    @Override
+    public boolean makeAvailableTempUnavailableTimeblocks(String workCenterNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.MakeAvailableTempUnavailableLocationsFinite);
+        parameters.add(workCenterNo);
+        int result;
+        try
+        {
+            result = new MySqlWriter().invokeUpdateStoredProcedure(storedProcedure, parameters);
+
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return true;
+    }
+
+    
     public void UpdateTestColumn()
     {
         try

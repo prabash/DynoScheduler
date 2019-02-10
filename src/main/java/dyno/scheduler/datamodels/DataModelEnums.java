@@ -36,6 +36,7 @@ public class DataModelEnums
     
     public enum InerruptionType
     {
+        PartUnavailable(-2),
         Interruption(-1),
         Normal(0);
         
@@ -111,6 +112,7 @@ public class DataModelEnums
         AllOperationsOrdered,
         ByOrderNoOperationsOrdered,
         LowerPriorityBlockerShopOrders,
-        ReplacePrecedingOperationIDs
+        ReplacePrecedingOperationIDs,
+        MakeAvailableTempUnavailableLocationsFinite
     }
 }

@@ -607,7 +607,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         }
     }
     
-    public void unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime)
+    public void unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, DataModelEnums.InerruptionType interruptionType)
     {
         // for each of the operations
         for (ShopOrderOperationModel operation : this.getOperations())
@@ -635,7 +635,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
                     (opStartDateTime.isEqual(interruptionStartDateTime) && opFinishDateTime.isAfter(interruptionEndDateTime)) ||
                     ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isAfter(interruptionEndDateTime)))
             {
-                operation.splitAndUnscheduleInterruptedOperation(interruptionStartDateTime, interruptionEndDateTime, DataModelEnums.InerruptionType.Interruption);
+                operation.splitAndUnscheduleInterruptedOperation(interruptionStartDateTime, interruptionEndDateTime, interruptionType);
             }
         }
         // Finally set the scheduling status of the shop order to be partially scheduled or unscheduled depending on if there's an already assigned startDate
