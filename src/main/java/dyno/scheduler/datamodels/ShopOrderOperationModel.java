@@ -51,6 +51,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
     private DateTime latestOpFinishTime;
     private int quantity;
     private OperationStatus operationStatus;
+    private String partNo;
 
     // </editor-fold>
     
@@ -280,6 +281,16 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
         this.operationStatus = operationStatus;
     }
 
+    public String getPartNo()
+    {
+        return partNo;
+    }
+
+    public void setPartNo(String partNo)
+    {
+        this.partNo = partNo;
+    }
+
     //</editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
@@ -347,6 +358,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
                 this.setWorkCenterType(resultSetRow.getString(++i));
                 this.setWorkCenterNo(resultSetRow.getString(++i));
                 this.setOperationStatus(OperationStatus.valueOf(resultSetRow.getString(++i)));
+                this.setPartNo(resultSetRow.getString(++i));
             } catch (SQLException ex)
             {
                 LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
@@ -402,6 +414,7 @@ public class ShopOrderOperationModel extends DataModel implements Comparator<Sho
         shopOrderOperationModel.setLatestOpFinishTime(this.getLatestOpFinishTime());
         shopOrderOperationModel.setQuantity(this.getQuantity());
         shopOrderOperationModel.setOperationStatus(this.getOperationStatus());
+        shopOrderOperationModel.setPartNo(this.getPartNo());
         
         return shopOrderOperationModel;
     }

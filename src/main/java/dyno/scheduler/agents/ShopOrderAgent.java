@@ -233,10 +233,11 @@ class BStartNewOperationScheduler extends CyclicBehaviour
 
     int step = 0; // is used in the switch statement inside the action method.
     AID bestWorkCenter; // work center that provides the best target date
+    DateTime currentOfferedDate; // Date offered by the work center agent
     DateTime bestOfferedDate; // The best possible start date if forward scheduling / end date if backward scheduling
-    int repliesCount = 0; // The counter of replies from work center agents
+    int workCenterRepliesCount = 0; // The counter of replies from work center agents
     MessageTemplate msgTemplate; // The template to receive replies
-    ACLMessage reply;
+    ACLMessage workCenterReply;
     ACLMessage replyMgr;
     int acceptProposal = 0; // acceptProposal Value should be 1 in order to send the acceptance of a date time proposal to a work center agent. This will become true if the offered date falls on or before the estimated latestOpFinishDateTime
 
@@ -270,19 +271,19 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                     getWorkCenterAgents();
 
                     step = 0;
-                    repliesCount = 0;
+                    workCenterRepliesCount = 0;
                     bestOfferedDate = null;
                     scheduleOperation();
                 } else
                 {
                     step = 0;
-                    repliesCount = 0;
+                    workCenterRepliesCount = 0;
                     bestOfferedDate = null;
                     scheduleOperation();
                 }
             } else
             {
-                reply = msg;
+                workCenterReply = msg;
                 scheduleOperation();
             }
         }
@@ -352,35 +353,34 @@ class BStartNewOperationScheduler extends CyclicBehaviour
             }
             case 1:
             {
-                // Date offered by the work center agent
-                DateTime offeredDate;
-                if (reply != null)
+                
+                if (workCenterReply != null)
                 {
                     // Reply received
-                    if (reply.getPerformative() == ACLMessage.PROPOSE)
+                    if (workCenterReply.getPerformative() == ACLMessage.PROPOSE)
                     {
                         // This is an offer, recieved with the date and the time
-                        offeredDate = DateTimeUtil.getDateTimeFormat().parseDateTime(reply.getContent());
+                        currentOfferedDate = DateTimeUtil.getDateTimeFormat().parseDateTime(workCenterReply.getContent());
                         // get the estimated latest operation end datetime 
                         DateTime estimatedLatestOpFinishDateTime = DateTimeUtil.concatenateDateTime(currentOperation.getLatestOpFinishDate(), currentOperation.getLatestOpFinishTime());
                         // get the estimated operation end date time based on the CURRENT BEST OFFER
-                        DateTime estimatedCurrentOfferFinishDateTime = WorkCenterOpAllocModel.incrementTime(offeredDate, currentOperation.getWorkCenterRuntime());
+                        DateTime estimatedCurrentOfferFinishDateTime = WorkCenterOpAllocModel.incrementTime(currentOfferedDate, currentOperation.getWorkCenterRuntime());
 
-                        System.out.println("++++++ offeredDate : " + offeredDate + " by Work Center Agent : " + reply.getSender());
+                        System.out.println("++++++ currentOfferedDate : " + currentOfferedDate + " by Work Center Agent : " + workCenterReply.getSender());
                         System.out.println("++++++ targetOperationDate : " + targetOperationStartDate);
                         System.out.println("++++++ bestOfferedDate : " + bestOfferedDate);
                         System.out.println("++++++ estimatedLatestOpFinishDateTime : " + estimatedLatestOpFinishDateTime);
                         System.out.println("++++++ estimatedCurrentOfferFinishDateTime : " + estimatedCurrentOfferFinishDateTime);
 
                         // if forward scheduling the offered date should be the earliest date/time that comes on or after the target date
-                        if (bestWorkCenter == null || ((offeredDate.equals(targetOperationStartDate) || offeredDate.isAfter(targetOperationStartDate)) && offeredDate.isBefore(bestOfferedDate)))
+                        if (bestWorkCenter == null || ((currentOfferedDate.equals(targetOperationStartDate) || currentOfferedDate.isAfter(targetOperationStartDate)) && currentOfferedDate.isBefore(bestOfferedDate)))
                         {
-                            // Check if the estimatedCurrentOfferFinishDateTime is on or before the estimated latest operation finish datetime for that operation and if so set it as the best offeredDate
+                            // Check if the estimatedCurrentOfferFinishDateTime is on or before the estimated latest operation finish datetime for that operation and if so set it as the best currentOfferedDate
                             if (estimatedCurrentOfferFinishDateTime.isBefore(estimatedLatestOpFinishDateTime) || estimatedCurrentOfferFinishDateTime.isEqual(estimatedLatestOpFinishDateTime))
                             {
                                 // This is the best offer at present
-                                bestOfferedDate = offeredDate;
-                                bestWorkCenter = reply.getSender();
+                                bestOfferedDate = currentOfferedDate;
+                                bestWorkCenter = workCenterReply.getSender();
                                 acceptProposal = 1;
                                 System.out.println("Current best offered time : " + bestOfferedDate + " by Work Center Agent : " + bestWorkCenter);
                             } else
@@ -395,10 +395,10 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                             }
                         }
 
-                        repliesCount++;
+                        workCenterRepliesCount++;
                     }
 
-                    if (repliesCount >= workCenterAgents.length)
+                    if (workCenterRepliesCount >= workCenterAgents.length)
                     {
                         if (acceptProposal == 1)
                         {
@@ -413,7 +413,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                             order.setConversationId(CONVERSATION_ID);
                             order.setReplyWith("setOperation" + System.currentTimeMillis());
                             myAgent.send(order);
-                            // Prepare the template to get the purchase order reply
+                            // Prepare the template to get the purchase order workCenterReply
                             msgTemplate = MessageTemplate.and(MessageTemplate.MatchConversationId(CONVERSATION_ID),
                                     MessageTemplate.MatchInReplyTo(order.getReplyWith()));
 
@@ -440,14 +440,14 @@ class BStartNewOperationScheduler extends CyclicBehaviour
             }
             case 3:
             {
-                if (reply != null)
+                if (workCenterReply != null)
                 {
-                    // confirmation reply received
-                    if (reply.getPerformative() == ACLMessage.INFORM)
+                    // confirmation workCenterReply received
+                    if (workCenterReply.getPerformative() == ACLMessage.INFORM)
                     {
 
-                        // the next possible op start date and the work center no. is sent by the work center agent in the reply
-                        String[] msgContent = StringUtil.readMessageContent(reply.getContent());
+                        // the next possible op start date and the work center no. is sent by the work center agent in the workCenterReply
+                        String[] msgContent = StringUtil.readMessageContent(workCenterReply.getContent());
                         targetOperationStartDate = DateTime.parse(msgContent[0], DateTimeUtil.getDateTimeFormat());
                         String workCenterNo = msgContent[1];
 
@@ -457,12 +457,12 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                         currentAgent.updateShopOrderOperation(currentOperation);
 
                         // Date set successfully. We can terminate
-                        System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
+                        System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + workCenterReply.getSender().getName());
                         System.out.println("______________________________________________________________________________________________________________________________________");
 
                     } else
                     {
-                        System.out.println("Operation " + currentOperation.getOperationId() + " could not be scheduled on " + bestOfferedDate + " at work center : " + reply.getSender().getName());
+                        System.out.println("Operation " + currentOperation.getOperationId() + " could not be scheduled on " + bestOfferedDate + " at work center : " + workCenterReply.getSender().getName());
                     }
 
                     notifyManagerAgent();

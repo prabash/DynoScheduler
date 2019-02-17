@@ -67,7 +67,7 @@ public class WorkCenterAgent extends Agent
     @Override
     protected void setup()
     {
-        // Register the book-selling service in the yellow pages
+        // Register the work center agent
         DFAgentDescription dfAgentDesc = new DFAgentDescription();
         dfAgentDesc.setName(getAID());
 
