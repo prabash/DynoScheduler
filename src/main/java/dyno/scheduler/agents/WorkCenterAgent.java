@@ -141,10 +141,11 @@ public class WorkCenterAgent extends Agent
                 String [] messageContent = StringUtil.readMessageContent(msg.getContent());
                 requestedOpDate = dateTimeFormat.parseDateTime(messageContent[0]);
                 int workCenterRuntime = Double.valueOf(messageContent[1]).intValue();
+                String partNo = (messageContent[2]);
                 ACLMessage reply = msg.createReply();
                 
                 // you should get the date related to the work center that is the earliest date after the target date
-                bestOfferedDate = workCenter.getBestDateTimeOffer(requestedOpDate, workCenterRuntime);
+                bestOfferedDate = workCenter.getBestDateTimeOffer(requestedOpDate, workCenterRuntime, partNo);
 
                 // reply with the earliest available date/timeblock that comes after the target date
                 reply.setPerformative(ACLMessage.PROPOSE);

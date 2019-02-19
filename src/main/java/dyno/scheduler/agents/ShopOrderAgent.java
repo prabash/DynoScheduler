@@ -332,7 +332,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                     {
                         cfpMessage.addReceiver(workCenterAgents[i]);
                     }
-                    cfpMessage.setContent(StringUtil.generateMessageContent(targetOperationStartDate.toString(DateTimeUtil.getDateTimeFormat()), String.valueOf(currentOperation.getWorkCenterRuntime())));
+                    cfpMessage.setContent(StringUtil.generateMessageContent(targetOperationStartDate.toString(DateTimeUtil.getDateTimeFormat()), String.valueOf(currentOperation.getWorkCenterRuntime()), currentOperation.getPartNo()));
                     cfpMessage.setConversationId(CONVERSATION_ID);
                     cfpMessage.setReplyWith("cfp" + System.currentTimeMillis()); // Unique value (can be something with the Shop Order No + operation No. and time)
                     myAgent.send(cfpMessage);

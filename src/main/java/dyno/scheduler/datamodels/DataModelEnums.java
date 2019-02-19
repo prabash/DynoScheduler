@@ -94,7 +94,9 @@ public class DataModelEnums
         ShopOrder,
         ShopOrderOperation,
         WorkCenter,
-        WorkCenterAllocationFinite
+        WorkCenterAllocationFinite,
+        PartTab,
+        PartUnavailabilityTab
     }
     
     public enum TimeBlockParamType
@@ -113,6 +115,7 @@ public class DataModelEnums
         ByOrderNoOperationsOrdered,
         LowerPriorityBlockerShopOrders,
         ReplacePrecedingOperationIDs,
-        MakeAvailableTempUnavailableLocationsFinite
+        MakeAvailableTempUnavailableLocationsFinite,
+        PartUnavailabilityDetails
     }
 }

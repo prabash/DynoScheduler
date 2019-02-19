@@ -5,10 +5,14 @@
  */
 package dyno.scheduler.datamodels;
 
+import dyno.scheduler.utils.DateTimeUtil;
 import dyno.scheduler.utils.LogUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.poi.ss.usermodel.Row;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -22,21 +26,24 @@ public class PartModel extends DataModel
     private String partNo; 
     private String partDescription;
     private String vendor;
+    private List<PartUnavailabilityModel> partUnavailabilityDetails;
     
     // </editor-fold>
     
     // <editor-fold defaultstate="collapsed" desc="constructors"> 
-    
-    public PartModel(int id, String partNo, String partDescription, String vendor)
+
+    public PartModel(int id, String partNo, String partDescription, String vendor, List<PartUnavailabilityModel> partUnavailabilityDetails)
     {
         this.id = id;
         this.partNo = partNo;
         this.partDescription = partDescription;
         this.vendor = vendor;
+        this.partUnavailabilityDetails = partUnavailabilityDetails;
     }
     
     public PartModel()
     {
+        partUnavailabilityDetails = new ArrayList<>();
     }
     
     // </editor-fold>
@@ -82,6 +89,16 @@ public class PartModel extends DataModel
     {
         this.vendor = vendor;
     }
+
+    public List<PartUnavailabilityModel> getPartUnavailabilityDetails()
+    {
+        return partUnavailabilityDetails;
+    }
+
+    public void setPartUnavailabilityDetails(List<PartUnavailabilityModel> partUnavailabilityDetails)
+    {
+        this.partUnavailabilityDetails = partUnavailabilityDetails;
+    }
     
     //</editor-fold>
 
@@ -123,6 +140,33 @@ public class PartModel extends DataModel
     public String getClassName()
     {
         return PartModel.class.getName();
+    }
+    
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="custom methods">
+    
+    public boolean checkPartAvailability(DateTime checkFromDateTime, int workCenterRuntime)
+    {
+        boolean partAvailable = true;
+        
+        DateTime checkToDateTime = WorkCenterOpAllocModel.incrementTime(checkFromDateTime, workCenterRuntime);
+        
+        for (PartUnavailabilityModel partUnavailabilityDetail : this.getPartUnavailabilityDetails())
+        {
+            DateTime unavailableFrom = DateTimeUtil.concatenateDateTime(partUnavailabilityDetail.getUnavailableFromDate(), partUnavailabilityDetail.getUnavailableFromTime());
+            DateTime unavailableTo = DateTimeUtil.concatenateDateTime(partUnavailabilityDetail.getUnavailableToDate(), partUnavailabilityDetail.getUnavailableToTime());
+            
+            // check if the from date time and the todateTime overlaps with any of the unavailable times, and if so exit the loop and return false
+            if (((unavailableFrom.isBefore(checkFromDateTime) || unavailableFrom.isEqual(checkFromDateTime)) && (unavailableTo.isAfter(checkFromDateTime) && (unavailableTo.isBefore(checkToDateTime) || unavailableTo.isEqual(checkToDateTime)))) || 
+                 (unavailableFrom.isBefore(checkFromDateTime) && unavailableTo.isAfter(checkToDateTime)) || 
+                 (((unavailableFrom.isEqual(checkFromDateTime) || unavailableFrom.isAfter(checkFromDateTime)) && (unavailableFrom.isBefore(checkToDateTime) || unavailableFrom.isEqual(checkToDateTime))) && (unavailableTo.isEqual(checkToDateTime) || unavailableTo.isAfter(checkToDateTime))))
+            {
+                partAvailable = false;
+                break;
+            }
+        }
+        return partAvailable;
     }
     
     //</editor-fold>

@@ -27,6 +27,10 @@ public class MySqlUtil
                 return getDbName() + "work_center_tab";
             case WorkCenterAllocationFinite:
                 return getDbName() + "work_center_op_alloc_finite_tab";
+            case PartTab:
+                return getDbName() + "part_tab";
+            case PartUnavailabilityTab:
+                return getDbName() + "part_unavailability_tab";
             default:
                 return "";
         }
@@ -59,6 +63,8 @@ public class MySqlUtil
                 return "replace_preceding_op_ids";
             case MakeAvailableTempUnavailableLocationsFinite:
                 return "make_available_temp_unavailable_locations_finite_tab";
+            case PartUnavailabilityDetails:
+                return "get_part_unavailability_details";
             default:
                 return "";
         }

@@ -9,6 +9,8 @@ import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.InterruptedOpDetailsDataModel;
 import dyno.scheduler.datamodels.OperationScheduleTimeBlocksDataModel;
+import dyno.scheduler.datamodels.PartModel;
+import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
@@ -399,5 +401,82 @@ public class MySqlReadManager extends DataReadManager
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
         return shopOrders.get(0);
+    }
+
+    @Override
+    protected List<PartModel> getPartDetails()
+    {
+        List<PartModel> partDetails = new ArrayList<>();
+        ArrayList<ArrayList<String>> filters = new ArrayList<>();
+        ArrayList<String> orderBy = null;
+        ResultSet results;
+        String storageName =  MySqlUtil.getStorageName(DataModelEnums.DataModelType.PartTab);
+        
+        try
+        {
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
+            while (results.next())
+            {
+                PartModel partDetail = new PartModel().getModelObject(results);
+                partDetail.setPartUnavailabilityDetails(getPartUnavailabilityDetailsByPartNo(partDetail.getPartNo()));
+                partDetails.add(partDetail);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return partDetails;
+    }
+
+    @Override
+    protected PartModel getPartDetailsByPartNo(String partNo)
+    {
+        List<PartModel> partDetails = new ArrayList<>();
+        ArrayList<ArrayList<String>> filters = new ArrayList<>();
+        ArrayList<String> orderBy = null;
+        ResultSet results;
+        String storageName =  MySqlUtil.getStorageName(DataModelEnums.DataModelType.PartTab);
+        
+        filters.add(TableUtil.createTableFilter("part_no", "=", partNo));
+        
+        try
+        {
+            results = new MySqlReader().ReadTable(storageName, filters, orderBy);
+            while (results.next())
+            {
+                PartModel partDetail = new PartModel().getModelObject(results);
+                partDetail.setPartUnavailabilityDetails(getPartUnavailabilityDetailsByPartNo(partDetail.getPartNo()));
+                partDetails.add(partDetail);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return partDetails.get(0);
+    }
+    
+    @Override
+    protected List<PartUnavailabilityModel> getPartUnavailabilityDetailsByPartNo(String partNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<PartUnavailabilityModel> partUnavailabilityDetails = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.PartUnavailabilityDetails);
+
+        parameters.add(partNo);
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                PartUnavailabilityModel partUnavailabilityDetail = new PartUnavailabilityModel().getModelObject(results);
+                partUnavailabilityDetails.add(partUnavailabilityDetail);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return partUnavailabilityDetails;
     }
 }

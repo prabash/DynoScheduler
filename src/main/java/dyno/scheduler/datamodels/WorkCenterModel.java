@@ -166,9 +166,10 @@ public class WorkCenterModel extends DataModel
      * @param workCenterRuntime
      * @return
      */
-    public DateTime getBestDateTimeOffer(DateTime requiredDateTime, int workCenterRuntime)
+    public DateTime getBestDateTimeOffer(DateTime requiredDateTime, int workCenterRuntime, String partNo)
     {
         DateTime bestDateTimeOffer = null;
+        PartModel partDetails = DataReader.getPartDetailsByPartNo(partNo);
 
         // get the date and the time portion of the required datetime
         currentDate = requiredDateTime.toLocalDate();
@@ -197,7 +198,8 @@ public class WorkCenterModel extends DataModel
             if (timeBlockAllocation.get(currentTimeBlockName) == 0)
             {
                 // check if there's enough consecutive time available in the work center to allocate the workCenterRuntime
-                if (checkConsecutiveTimeBlockAvailability(currentDate, currentTimeBlockName, workCenterRuntime))
+                if (checkConsecutiveTimeBlockAvailability(currentDate, currentTimeBlockName, workCenterRuntime) && 
+                        partDetails.checkPartAvailability(DateTimeUtil.concatenateDateTime(currentDate, WorkCenterOpAllocModel.getTimeBlockValue(currentTimeBlockName)), workCenterRuntime))
                 {
                     bestDateTimeOffer = DateTimeUtil.concatenateDateTime(currentDate, WorkCenterOpAllocModel.getTimeBlockValue(currentTimeBlockName));
                 } else

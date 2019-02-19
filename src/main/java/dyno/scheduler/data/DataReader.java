@@ -134,4 +134,19 @@ public class DataReader
     {
         return DataFactory.getDataReadManagerInstance().getShopOrderByPrimaryKey(orderNo);
     }
+    
+    public static List<PartModel> getPartDetails()
+    {
+        return DataFactory.getDataReadManagerInstance().getPartDetails();
+    }
+    
+    public static PartModel getPartDetailsByPartNo(String partNo)
+    {
+        return DataFactory.getDataReadManagerInstance().getPartDetailsByPartNo(partNo);
+    }
+    
+    public static List<PartUnavailabilityModel> getPartUnavailabilityDetailsByPartNo(String partNo)
+    {
+        return DataFactory.getDataReadManagerInstance().getPartUnavailabilityDetailsByPartNo(partNo);
+    }
 }

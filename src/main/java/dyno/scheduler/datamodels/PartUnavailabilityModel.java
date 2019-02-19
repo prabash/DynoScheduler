@@ -156,13 +156,4 @@ public class PartUnavailabilityModel extends DataModel
     }
     
     //</editor-fold>
-    
-    //<editor-fold defaultstate="collapsed" desc="custom methods">
-    
-    public boolean checkPartAvailability()
-    {
-        return true;
-    }
-    
-    //</editor-fold>
 }

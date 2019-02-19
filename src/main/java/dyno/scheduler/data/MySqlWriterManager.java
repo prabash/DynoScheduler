@@ -116,7 +116,7 @@ public class MySqlWriterManager extends DataWriteManager
                     + "(order_no, " + "description, " + "created_date, " + "part_no, "
                     + "structure_revision, " + "routing_revision, " + "required_date, " + "start_date, "
                     + "finish_date, " + "scheduling_direction, " + "customer_no, " + "scheduling_status, "
-                    + "shop_order_status, " + "priority, " + "revenue_value, " + "importance)"
+                    + "shop_order_status, " + "priority, " + "revenue_value, " + "importance) "
                     + "VALUES "
                     + "(?, ?, ?, ?,"
                     + "?, ?, ?, ?, "
@@ -188,12 +188,12 @@ public class MySqlWriterManager extends DataWriteManager
                 + "(operation_no," + "order_no," + "operation_description," + "operation_sequence," + "preceding_operation_id,"
                 + "wc_runtime_factor," + "wc_runtime," + "labor_runtime_factor," + "labor_runtime," + "op_start_date,"
                 + "op_start_time," + "op_finish_date," + "op_finish_time," + "quantity," + "work_center_type,"
-                + "work_center_no," + "operation_status)"
+                + "work_center_no," + "operation_status," + "part_no) "
                 + "VALUES"
                 + "(?,?,?,?,?,"
                 + "?,?,?,?,?,"
                 + "?,?,?,?,?,"
-                + "?,?)";
+                + "?,?,?)";
 
         HashMap<Integer, Object> columnValues = new HashMap<>();
         int i = 0;
@@ -217,6 +217,7 @@ public class MySqlWriterManager extends DataWriteManager
         columnValues.put(++i, shopOrderOperation.getWorkCenterType());
         columnValues.put(++i, shopOrderOperation.getWorkCenterNo());
         columnValues.put(++i, shopOrderOperation.getOperationStatus().toString());
+        columnValues.put(++i, shopOrderOperation.getPartNo().toString());
 
         precedingOpId = new MySqlWriter().WriteToTable(query, columnValues);
         return precedingOpId;
@@ -371,7 +372,8 @@ public class MySqlWriterManager extends DataWriteManager
                     + "quantity = ?, "
                     + "work_center_type = ?, "
                     + "work_center_no = ?, "
-                    + "operation_status = ? "
+                    + "operation_status = ?, "
+                    + "part_no = ? "
                     + "WHERE id = ?";
 
             for (ShopOrderOperationModel shopOrderOperation : dataList)
@@ -395,6 +397,7 @@ public class MySqlWriterManager extends DataWriteManager
                 columnValues.put(++i, shopOrderOperation.getWorkCenterType());
                 columnValues.put(++i, shopOrderOperation.getWorkCenterNo());
                 columnValues.put(++i, shopOrderOperation.getOperationStatus().toString());
+                columnValues.put(++i, shopOrderOperation.getPartNo().toString());
                 columnValues.put(++i, shopOrderOperation.getOperationId());
 
                 new MySqlWriter().WriteToTable(query, columnValues);
