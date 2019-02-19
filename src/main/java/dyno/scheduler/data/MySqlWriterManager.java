@@ -240,7 +240,7 @@ public class MySqlWriterManager extends DataWriteManager
                 columnValues.put(++i, workCenter.getWorkCenterNo());
                 columnValues.put(++i, workCenter.getWorkCenterType());
                 columnValues.put(++i, workCenter.getWorkCenterDescription());
-                columnValues.put(++i, workCenter.getWorkCenterCapacity().toString());
+                columnValues.put(++i, workCenter.getWorkCenterCapacity());
 
                 new MySqlWriter().WriteToTable(query, columnValues);
             }
