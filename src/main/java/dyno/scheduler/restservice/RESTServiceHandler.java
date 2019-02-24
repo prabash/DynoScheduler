@@ -47,7 +47,7 @@ public class RESTServiceHandler implements Runnable
         ServletHolder jerseyServlet = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/api/*");
         jerseyServlet.setInitOrder(0);
         jerseyServlet.setInitParameter("jersey.config.server.provider.classnames", String.join(",", ShopOrderService.class.getCanonicalName(), 
-                SampleService.class.getCanonicalName(), WorkCenterService.class.getCanonicalName()));
+                SampleService.class.getCanonicalName(), WorkCenterService.class.getCanonicalName(), PartService.class.getCanonicalName()));
 
 //        ServletHolder secondServlet = servletContextHandler.addServlet(org.glassfish.jersey.servlet.ServletContainer.class, "/api2/*");
 //        secondServlet.setInitOrder(1);

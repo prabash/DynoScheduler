@@ -149,4 +149,9 @@ public class DataReader
     {
         return DataFactory.getDataReadManagerInstance().getPartUnavailabilityDetailsByPartNo(partNo);
     }
+    
+    public static List<WorkCenterInterruptionsModel> getWorkCenterInterruptionsByWorkCenter(String workCenter)
+    {
+        return DataFactory.getDataReadManagerInstance().getWorkCenterInterruptionsDetails(workCenter);
+    }
 }

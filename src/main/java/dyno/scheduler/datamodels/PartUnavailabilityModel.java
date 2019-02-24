@@ -112,7 +112,6 @@ public class PartUnavailabilityModel extends DataModel
     
     //</editor-fold>
     
-    
     // <editor-fold defaultstate="collapsed" desc="overriden methods"> 
     
     @Override

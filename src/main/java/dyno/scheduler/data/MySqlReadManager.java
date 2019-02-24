@@ -13,6 +13,7 @@ import dyno.scheduler.datamodels.PartModel;
 import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -129,6 +130,7 @@ public class MySqlReadManager extends DataReadManager
             while (results.next())
             {
                 WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
+                workCenter.setWorkCenterInterruptions(getWorkCenterInterruptionsDetails(workCenter.getWorkCenterNo()));
                 workCenters.add(workCenter);
             }
         } catch (SQLException ex)
@@ -366,6 +368,7 @@ public class MySqlReadManager extends DataReadManager
             while (results.next())
             {
                 WorkCenterModel workCenter = new WorkCenterModel().getModelObject(results);
+                workCenter.setWorkCenterInterruptions(getWorkCenterInterruptionsDetails(workCenter.getWorkCenterNo()));
                 workCenters.add(workCenter);
             }
         } catch (SQLException ex)
@@ -478,5 +481,30 @@ public class MySqlReadManager extends DataReadManager
             LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
         }
         return partUnavailabilityDetails;
+    }
+
+    @Override
+    protected List<WorkCenterInterruptionsModel> getWorkCenterInterruptionsDetails(String workCenterNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<WorkCenterInterruptionsModel> workCenterInterruptionDetails = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.WorkCenterInterruptions);
+
+        parameters.add(workCenterNo);
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                WorkCenterInterruptionsModel workCenterInterruptions = new WorkCenterInterruptionsModel().getModelObject(results);
+                workCenterInterruptionDetails.add(workCenterInterruptions);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return workCenterInterruptionDetails;
     }
 }

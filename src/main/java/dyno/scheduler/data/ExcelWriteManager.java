@@ -7,8 +7,11 @@ package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.DataModel;
 import dyno.scheduler.datamodels.DataModelEnums;
+import dyno.scheduler.datamodels.PartModel;
+import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -368,6 +371,42 @@ public class ExcelWriteManager extends DataWriteManager
 
     @Override
     public boolean makeAvailableTempUnavailableTimeblocks(String workCenterNo)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean addPartDetails(PartModel partDetails, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updatePartDetails(PartModel partDetails, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean addPartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updatePartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean addWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean updateWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

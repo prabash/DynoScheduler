@@ -87,4 +87,6 @@ public abstract class DataReadManager
     protected abstract PartModel getPartDetailsByPartNo(String partNo);
     
     protected abstract List<PartUnavailabilityModel> getPartUnavailabilityDetailsByPartNo(String partNo);
+    
+    protected abstract List<WorkCenterInterruptionsModel> getWorkCenterInterruptionsDetails(String workCenterNo);
 }

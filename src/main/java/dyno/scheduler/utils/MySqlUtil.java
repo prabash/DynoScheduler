@@ -31,6 +31,8 @@ public class MySqlUtil
                 return getDbName() + "part_tab";
             case PartUnavailabilityTab:
                 return getDbName() + "part_unavailability_tab";
+            case WorkCenterInterruptionsTab:
+                return getDbName() + "work_center_interruptions_tab";
             default:
                 return "";
         }
@@ -65,6 +67,8 @@ public class MySqlUtil
                 return "make_available_temp_unavailable_locations_finite_tab";
             case PartUnavailabilityDetails:
                 return "get_part_unavailability_details";
+            case WorkCenterInterruptions:
+                return "get_work_center_interruptions";
             default:
                 return "";
         }

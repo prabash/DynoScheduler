@@ -115,4 +115,52 @@ public abstract class DataWriteManager
      * @return 
      */
     public abstract boolean makeAvailableTempUnavailableTimeblocks(String workCenterNo);
+    
+    /**
+     * Insert part details to the table
+     * @param partDetails
+     * @param storageName
+     * @return 
+     */
+    public abstract boolean addPartDetails(PartModel partDetails, String storageName);
+    
+    /**
+     * Update part details to the table
+     * @param partDetails
+     * @param storageName
+     * @return 
+     */
+    public abstract boolean updatePartDetails(PartModel partDetails, String storageName);
+    
+    /**
+     * Insert part unavailability details
+     * @param partUnavailabilityDetail
+     * @param storageName
+     * @return 
+     */
+    public abstract boolean addPartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail, String storageName);
+    
+    /**
+     * Update part unavailability details
+     * @param partUnavailabilityDetail
+     * @param storageName
+     * @return 
+     */
+    public abstract boolean updatePartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail, String storageName);
+    
+    /**
+     * Add work center interruption details
+     * @param workCenterInterruptionDetail
+     * @param storageName
+     * @return 
+     */
+    public abstract boolean addWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName);
+    
+    /**
+     * Update work center interruption details
+     * @param workCenterInterruptionDetail
+     * @param storageName
+     * @return 
+     */
+    public abstract boolean updateWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName);
 }

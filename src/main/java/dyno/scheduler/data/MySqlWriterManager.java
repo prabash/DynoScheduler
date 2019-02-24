@@ -10,8 +10,11 @@ import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderScheduleStatus;
 import dyno.scheduler.datamodels.DataModelEnums.ShopOrderStatus;
+import dyno.scheduler.datamodels.PartModel;
+import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -676,6 +679,183 @@ public class MySqlWriterManager extends DataWriteManager
         return true;
     }
 
+    @Override
+    public boolean addPartDetails(PartModel partDetails, String storageName)
+    {
+        String query = "INSERT INTO " + storageName + " "
+                + "(part_no, " + "part_description, " + "vendor) "
+                + "VALUES "
+                + "(?, ?, ? )";
+        try
+        {
+
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+            columnValues.put(++i, partDetails.getPartNo());
+            columnValues.put(++i, partDetails.getPartDescription());
+            columnValues.put(++i, partDetails.getVendor());
+
+            new MySqlWriter().WriteToTable(query, columnValues);
+            
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updatePartDetails(PartModel partDetails, String storageName)
+    {
+        String query = "UPDATE " + storageName + " "
+                    + "SET "
+                    + "part_no = ?, " 
+                    + "part_description = ?, " 
+                    + "vendor = ? "
+                    + "WHERE id = ?";
+        try
+        {
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+            columnValues.put(++i, partDetails.getPartNo());
+            columnValues.put(++i, partDetails.getPartDescription());
+            columnValues.put(++i, partDetails.getVendor());
+
+            columnValues.put(++i, partDetails.getId());
+
+            new MySqlWriter().WriteToTable(query, columnValues);
+            
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean addPartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail, String storageName)
+    {
+        String query = "INSERT INTO " + storageName + " "
+                + "(part_no, " + "unavailable_from_date, " + "unavailable_from_time, " + "unavailable_to_date, " + "unavailable_to_time) "
+                + "VALUES "
+                + "(?, ?, ?, ?, ? )";
+        try
+        {
+
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+            columnValues.put(++i, partUnavailabilityDetail.getPartNo());
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableFromDate()!= null ? DateTimeUtil.convertDatetoSqlDate(partUnavailabilityDetail.getUnavailableFromDate()) : new Date(0));
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableFromTime()!= null ? DateTimeUtil.convertTimetoSqlTime(partUnavailabilityDetail.getUnavailableFromTime()) : new Time(0));
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableToDate()!= null ? DateTimeUtil.convertDatetoSqlDate(partUnavailabilityDetail.getUnavailableToDate()) : new Date(0));
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableToTime()!= null ? DateTimeUtil.convertTimetoSqlTime(partUnavailabilityDetail.getUnavailableToTime()) : new Time(0));
+
+            new MySqlWriter().WriteToTable(query, columnValues);
+            
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updatePartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail, String storageName)
+    {
+        String query = "UPDATE " + storageName + " "
+                    + "SET "
+                    + "part_no = ?, " 
+                    + "unavailable_from_date = ?, " 
+                    + "unavailable_from_time = ?, " 
+                    + "unavailable_to_date = ?, " 
+                    + "unavailable_to_time = ? "
+                    + "WHERE id = ?";
+        try
+        {
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+            columnValues.put(++i, partUnavailabilityDetail.getPartNo());
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableFromDate()!= null ? DateTimeUtil.convertDatetoSqlDate(partUnavailabilityDetail.getUnavailableFromDate()) : new Date(0));
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableFromTime()!= null ? DateTimeUtil.convertTimetoSqlTime(partUnavailabilityDetail.getUnavailableFromTime()) : new Time(0));
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableToDate()!= null ? DateTimeUtil.convertDatetoSqlDate(partUnavailabilityDetail.getUnavailableToDate()) : new Date(0));
+            columnValues.put(++i, partUnavailabilityDetail.getUnavailableToTime()!= null ? DateTimeUtil.convertTimetoSqlTime(partUnavailabilityDetail.getUnavailableToTime()) : new Time(0));
+
+            columnValues.put(++i, partUnavailabilityDetail.getId());
+
+            new MySqlWriter().WriteToTable(query, columnValues);
+            
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean addWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName)
+    {
+        
+        String query = "INSERT INTO " + storageName + " "
+                + "(work_center_no, " + "interruption_from_date, " + "interruption_from_time, " + "interruption_to_date, " + "interruption_to_time) "
+                + "VALUES "
+                + "(?, ?, ?, ?, ? )";
+        try
+        {
+
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+            columnValues.put(++i, workCenterInterruptionDetail.getWorkCenterNo());
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionFromDate()!= null ? DateTimeUtil.convertDatetoSqlDate(workCenterInterruptionDetail.getInterruptionFromDate()) : new Date(0));
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionFromTime()!= null ? DateTimeUtil.convertTimetoSqlTime(workCenterInterruptionDetail.getInterruptionFromTime()) : new Time(0));
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionToDate()!= null ? DateTimeUtil.convertDatetoSqlDate(workCenterInterruptionDetail.getInterruptionToDate()) : new Date(0));
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionToTime()!= null ? DateTimeUtil.convertTimetoSqlTime(workCenterInterruptionDetail.getInterruptionToTime()) : new Time(0));
+
+            new MySqlWriter().WriteToTable(query, columnValues);
+            
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName)
+    {
+        String query = "UPDATE " + storageName + " "
+                    + "SET "
+                    + "work_center_no = ?, " 
+                    + "interruption_from_date = ?, " 
+                    + "interruption_from_time = ?, " 
+                    + "interruption_to_date = ?, " 
+                    + "interruption_to_time = ? "
+                    + "WHERE id = ?";
+        try
+        {
+            HashMap<Integer, Object> columnValues = new HashMap<>();
+            int i = 0;
+            columnValues.put(++i, workCenterInterruptionDetail.getWorkCenterNo());
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionFromDate()!= null ? DateTimeUtil.convertDatetoSqlDate(workCenterInterruptionDetail.getInterruptionFromDate()) : new Date(0));
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionFromTime()!= null ? DateTimeUtil.convertTimetoSqlTime(workCenterInterruptionDetail.getInterruptionFromTime()) : new Time(0));
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionToDate()!= null ? DateTimeUtil.convertDatetoSqlDate(workCenterInterruptionDetail.getInterruptionToDate()) : new Date(0));
+            columnValues.put(++i, workCenterInterruptionDetail.getInterruptionToTime()!= null ? DateTimeUtil.convertTimetoSqlTime(workCenterInterruptionDetail.getInterruptionToTime()) : new Time(0));
+
+            columnValues.put(++i, workCenterInterruptionDetail.getId());
+
+            new MySqlWriter().WriteToTable(query, columnValues);
+            
+            return true;
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+            return false;
+        }
+    }
     
     public void UpdateTestColumn()
     {

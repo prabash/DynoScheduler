@@ -246,4 +246,10 @@ public class ExcelReadManager extends DataReadManager
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
+
+    @Override
+    protected List<WorkCenterInterruptionsModel> getWorkCenterInterruptionsDetails(String workCenterNo)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

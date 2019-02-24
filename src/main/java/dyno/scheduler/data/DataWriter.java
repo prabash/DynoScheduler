@@ -7,8 +7,11 @@ package dyno.scheduler.data;
 
 import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.DataModelEnums.OperationStatus;
+import dyno.scheduler.datamodels.PartModel;
+import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.datamodels.WorkCenterOpAllocModel;
 import dyno.scheduler.utils.MySqlUtil;
@@ -138,4 +141,79 @@ public class DataWriter
     
     //</editor-fold>
     
+    //<editor-fold defaultstate="collapsed" desc="Work Center Interruption Methods">
+    
+    public static boolean addWCInterruptionDetails(WorkCenterInterruptionsModel wcInterruptionDetail)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.WorkCenterInterruptionsTab);
+        return DataFactory.getDataWriteManagerInstance().addWorkCenterInterruptionDetails(wcInterruptionDetail, tableName);
+    }
+    
+    public static boolean addWCInterruptionDetails(List<WorkCenterInterruptionsModel> wcInterruptionDetails)
+    {
+        for (WorkCenterInterruptionsModel wcInterruptionDetail : wcInterruptionDetails)
+        {
+            addWCInterruptionDetails(wcInterruptionDetail);
+        }
+        return true;
+    }
+    
+    public static boolean updateWCInterruptionDetails(WorkCenterInterruptionsModel wcInterruptionDetail)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.WorkCenterInterruptionsTab);
+        return DataFactory.getDataWriteManagerInstance().updateWorkCenterInterruptionDetails(wcInterruptionDetail, tableName);
+    }
+    
+    
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="Part Details Methods">
+
+    public static boolean addPartDetails(PartModel partDetail)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.PartTab);
+        return DataFactory.getDataWriteManagerInstance().addPartDetails(partDetail, tableName);
+    }
+    
+    public static boolean addPartDetails(List<PartModel> partDetails)
+    {
+        for (PartModel partDetail : partDetails)
+        {
+            addPartDetails(partDetail);
+        }
+        return true;
+    }
+    
+    public static boolean updatePartDetails(PartModel partDetail)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.PartTab);
+        return DataFactory.getDataWriteManagerInstance().updatePartDetails(partDetail, tableName);
+    }
+    
+    //</editor-fold>
+    
+    //<editor-fold defaultstate="collapsed" desc="Part Unavailability Methods">
+    
+    public static boolean addPartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.PartUnavailabilityTab);
+        return DataFactory.getDataWriteManagerInstance().addPartUnavailabilityDetails(partUnavailabilityDetail, tableName);
+    }
+    
+    public static boolean addPartUnavailabilityDetails(List<PartUnavailabilityModel> partUnavailabilityDetails)
+    {
+        for (PartUnavailabilityModel partUnavailabilityDetail : partUnavailabilityDetails)
+        {
+            addPartUnavailabilityDetails(partUnavailabilityDetail);
+        }
+        return true;
+    }
+    
+    public static boolean updatePartUnavailabilityDetails(PartUnavailabilityModel partUnavailabilityDetail)
+    {
+        String tableName = MySqlUtil.getStorageName(DataModelEnums.DataModelType.PartUnavailabilityTab);
+        return DataFactory.getDataWriteManagerInstance().updatePartUnavailabilityDetails(partUnavailabilityDetail, tableName);
+    }
+    
+    //</editor-fold>
 }

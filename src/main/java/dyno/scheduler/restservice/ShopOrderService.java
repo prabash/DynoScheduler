@@ -114,7 +114,6 @@ public class ShopOrderService implements IDynoGetService
 @XmlRootElement
 class ShopOrderModelJson
 {
-
     public String orderNo;
     public String description;
     public String createdDate;

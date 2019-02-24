@@ -36,6 +36,12 @@ public class WorkCenterModel extends DataModel
     private String workCenterType;
     private String workCenterDescription;
     private String workCenterCapacity;
+    private List<WorkCenterInterruptionsModel> workCenterInterruptions;
+    
+    private List<WorkCenterOpAllocModel> currentWorkCenterOpAllocs;
+    private String currentTimeBlockName;
+    private LocalDate currentDate;
+
 
     public WorkCenterModel()
     {
@@ -92,7 +98,18 @@ public class WorkCenterModel extends DataModel
         this.workCenterCapacity = workCenterCapacity;
     }
 
+    public List<WorkCenterInterruptionsModel> getWorkCenterInterruptions()
+    {
+        return workCenterInterruptions;
+    }
+
+    public void setWorkCenterInterruptions(List<WorkCenterInterruptionsModel> workCenterInterruptions)
+    {
+        this.workCenterInterruptions = workCenterInterruptions;
+    }
+
     // </editor-fold>
+    
     // <editor-fold desc="overriden methods"> 
     /**
      * get WorkCenterModel object by passing Excel or MySql table row
@@ -151,10 +168,6 @@ public class WorkCenterModel extends DataModel
     {
         return this.AGENT_PREFIX;
     }
-
-    private List<WorkCenterOpAllocModel> currentWorkCenterOpAllocs;
-    private String currentTimeBlockName;
-    private LocalDate currentDate;
 
     /**
      * *
