@@ -152,4 +152,9 @@ public class DateTimeUtil
     {
         return DateTime.parse(datetime, getDateTimeFormat());
     }
+    
+    public static DateTime convertJsonDateTimeToDateTime(String datetime)
+    {
+        return DateTime.parse(datetime, getDateTimeFormatJson());
+    }
 }

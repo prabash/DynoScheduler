@@ -6,14 +6,14 @@
 package dyno.scheduler.restservice;
 
 import dyno.scheduler.data.DataReader;
+import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
-import dyno.scheduler.main.Main;
+import dyno.scheduler.datamodels.WorkCenterUtil;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.GenericEntity;
@@ -28,28 +28,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Path("/work-center")
 public class WorkCenterService implements IDynoGetService
 {
-
-    @POST
-    @Path("/interrupt")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response interruptWorkCenter(InterruptWorkCenterParams params)
-    {
-        System.out.println(params.workCenter);
-        System.out.println(params.interruptionStartDate);
-        System.out.println(params.interruptionEndDate);
-        
-        Main.InterruptWorkCenterTest();
-        
-        return Response.status(200).entity(params.workCenter + " " + params.interruptionStartDate + " " + params.interruptionEndDate + " ").build();
-    }
     
-    @GET
-    @Path("/interruptwc")
-    public Response interruptWorkCenter()
-    {
-        return Response.status(200).entity("Successfully Interrupted").build();
-    }
-
     @Override
     public Response get()
     {
@@ -94,24 +73,59 @@ public class WorkCenterService implements IDynoGetService
             super(entity);
         }
     }
-}
-
-@XmlRootElement
-class InterruptWorkCenterParams
-{
-    public String workCenter;
-    public String interruptionStartDate;
-    public String interruptionEndDate;
     
-    public InterruptWorkCenterParams()
+    @POST
+    @Path("/addwc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addWorkCenter(WorkCenterModelJson workCenterJson)
     {
+        WorkCenterModel workCenter = new WorkCenterModel();
+        workCenter.setWorkCenterNo(workCenterJson.workCenterNo);
+        workCenter.setWorkCenterType(workCenterJson.workCenterType);
+        workCenter.setWorkCenterDescription(workCenterJson.workCenterDescription);
+        workCenter.setWorkCenterCapacity(workCenterJson.workCenterCapacity);
+        
+        DataWriter.addWorkCenter(workCenter);
+        
+        return Response.status(200).entity("Successfully Added").build();
     }
-
-    public InterruptWorkCenterParams(String workCenter, String interruptionStartDate, String interruptionEndDate)
+    
+    @POST
+    @Path("/updatewc")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateWorkCenter(WorkCenterModelJson workCenterJson)
     {
-        this.workCenter = workCenter;
-        this.interruptionStartDate = interruptionStartDate;
-        this.interruptionEndDate = interruptionEndDate;
+        WorkCenterModel workCenter = new WorkCenterModel();
+        workCenter.setId(workCenterJson.id);
+        workCenter.setWorkCenterNo(workCenterJson.workCenterNo);
+        workCenter.setWorkCenterType(workCenterJson.workCenterType);
+        workCenter.setWorkCenterDescription(workCenterJson.workCenterDescription);
+        workCenter.setWorkCenterCapacity(workCenterJson.workCenterCapacity);
+        
+        DataWriter.updateWorkCenter(workCenter);
+        
+        return Response.status(200).entity("Successfully Updated").build();
+    }
+    
+    @POST
+    @Path("/interrupt")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response interruptWorkCenter(WorkCenterInterruptionsModelJson wcInterruptionJson)
+    {
+        WorkCenterInterruptionsModel workCenterInterruption = new WorkCenterInterruptionsModel();
+        workCenterInterruption.setWorkCenterNo(wcInterruptionJson.workCenterNo);
+        workCenterInterruption.setInterruptionFromDate(DateTimeUtil.convertStringDateToDateTime(wcInterruptionJson.interruptionFromDate));
+        workCenterInterruption.setInterruptionFromTime(DateTimeUtil.convertStringTimeToDateTime(wcInterruptionJson.interruptionFromTime));
+        workCenterInterruption.setInterruptionToDate(DateTimeUtil.convertStringDateToDateTime(wcInterruptionJson.interruptionToDate));
+        workCenterInterruption.setInterruptionToTime(DateTimeUtil.convertStringTimeToDateTime(wcInterruptionJson.interruptionToTime));
+        
+        DataWriter.addWCInterruptionDetails(workCenterInterruption);
+        WorkCenterUtil.interruptWorkCenter(
+                DateTimeUtil.concatenateDateTime(wcInterruptionJson.interruptionFromDate, wcInterruptionJson.interruptionFromTime),
+                DateTimeUtil.concatenateDateTime(wcInterruptionJson.interruptionToDate, wcInterruptionJson.interruptionToTime),
+                wcInterruptionJson.workCenterNo);
+        
+        return Response.status(200).entity("Successfully Interrupted").build();
     }
 }
 

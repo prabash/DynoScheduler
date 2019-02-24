@@ -40,6 +40,13 @@ public class DataWriter
         return DataFactory.getDataWriteManagerInstance().addData(shopOrders, DataModelEnums.DataModelType.ShopOrder);
     }
     
+    public static boolean updateShopOrder(ShopOrderModel shopOrder)
+    {
+        List<ShopOrderModel> shopOrders = new ArrayList<>();
+        shopOrders.add(shopOrder);
+        return updateShopOrderData(shopOrders);
+    }
+    
     public static boolean updateShopOrderData(List<ShopOrderModel> shopOrders)
     {
         return DataFactory.getDataWriteManagerInstance().updateData(shopOrders, DataModelEnums.DataModelType.ShopOrder);
@@ -106,6 +113,13 @@ public class DataWriter
     public static boolean addWorkCenterData(List<WorkCenterModel> workCenters)
     {
         return DataFactory.getDataWriteManagerInstance().addData(workCenters, DataModelEnums.DataModelType.WorkCenter);
+    }
+    
+    public static boolean updateWorkCenter(WorkCenterModel workCenter)
+    {
+        List<WorkCenterModel> workCenters = new ArrayList<>();
+        workCenters.add(workCenter);
+        return updateWorkCenterData(workCenters);
     }
     
     public static boolean updateWorkCenterData(List<WorkCenterModel> workCenters)

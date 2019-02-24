@@ -6,13 +6,17 @@
 package dyno.scheduler.restservice;
 
 import dyno.scheduler.data.DataReader;
+import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.PartModel;
 import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -23,7 +27,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Path("/part-details")
 public class PartService implements IDynoGetService
 {
-
     @Override
     public Response get()
     {
@@ -68,6 +71,54 @@ public class PartService implements IDynoGetService
         }
     }
     
+    @POST
+    @Path("/addpart")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addPart(PartModelJson partDetailsJson)
+    {
+        PartModel partDetail = new PartModel();
+        partDetail.setPartNo(partDetailsJson.partNo);
+        partDetail.setPartDescription(partDetailsJson.partDescription);
+        partDetail.setVendor(partDetailsJson.vendor);
+        
+        DataWriter.addPartDetails(partDetail);
+        
+        return Response.status(200).entity("Successfully Added").build();
+    }
+    
+    
+    @POST
+    @Path("/updatepart")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updatePart(PartModelJson partDetailsJson)
+    {
+        PartModel partDetail = new PartModel();
+        partDetail.setId(partDetailsJson.id);
+        partDetail.setPartNo(partDetailsJson.partNo);
+        partDetail.setPartDescription(partDetailsJson.partDescription);
+        partDetail.setVendor(partDetailsJson.vendor);
+        
+        DataWriter.updatePartDetails(partDetail);
+        
+        return Response.status(200).entity("Successfully Updated").build();
+    }
+    
+    @POST
+    @Path("/addPartUnavailability")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addPartUnavailability(PartUnavailabilityModelJson partUnavailabilityJson)
+    {
+        PartUnavailabilityModel partUnavailability = new PartUnavailabilityModel();
+        partUnavailability.setPartNo(partUnavailabilityJson.partNo);
+        partUnavailability.setUnavailableFromDate(DateTimeUtil.convertStringDateToDateTime(partUnavailabilityJson.unavailableFromDate));
+        partUnavailability.setUnavailableFromTime(DateTimeUtil.convertStringTimeToDateTime(partUnavailabilityJson.unavailableFromTime));
+        partUnavailability.setUnavailableToDate(DateTimeUtil.convertStringDateToDateTime(partUnavailabilityJson.unavailableToDate));
+        partUnavailability.setUnavailableToTime(DateTimeUtil.convertStringTimeToDateTime(partUnavailabilityJson.unavailableToTime));
+        
+        DataWriter.addPartUnavailabilityDetails(partUnavailability);
+        
+        return Response.status(200).entity("Successfully Updated").build();
+    }
 }
 
 @XmlRootElement

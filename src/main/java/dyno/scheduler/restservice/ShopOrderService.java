@@ -6,14 +6,18 @@
 package dyno.scheduler.restservice;
 
 import dyno.scheduler.data.DataReader;
+import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.joda.time.DateTime;
@@ -93,21 +97,128 @@ public class ShopOrderService implements IDynoGetService
 
             list.add(shopOrderJsonObj);
         }
-//
-//        list.add(new ShopOrderModelJson("SO1", "Test1", DateTime.now().toString(DateTimeUtil.getDateTimeFormatJson()), "P1", "SR1", "RR1", DateTime.now(), DateTime.now(), DateTime.now(), DataModelEnums.ShopOrderSchedulingDirection.Backward, "C1", DataModelEnums.ShopOrderStatus.Created, DataModelEnums.ShopOrderPriority.Trivial, operations));
-//        list.add(new ShopOrderModelJson("SO2", "Test2", DateTime.now().toString(DateTimeUtil.getDateTimeFormatJson()), "P2", "SR2", "RR2", DateTime.now(), DateTime.now(), DateTime.now(), DataModelEnums.ShopOrderSchedulingDirection.Backward, "C2", DataModelEnums.ShopOrderStatus.Created, DataModelEnums.ShopOrderPriority.Trivial, operations));
-
+        
         entity = new GenericEntityImpl(list);
         return Response.ok(entity).build();
     }
 
     private static class GenericEntityImpl extends GenericEntity<List<ShopOrderModelJson>>
     {
-
         public GenericEntityImpl(List<ShopOrderModelJson> entity)
         {
             super(entity);
         }
+    }
+    
+    @POST
+    @Path("/addshoporder")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addShopOrder(ShopOrderModelJson shopOrderJson)
+    {
+        ShopOrderModel shopOrder = new ShopOrderModel();
+        shopOrder.setOrderNo(shopOrderJson.orderNo);
+        shopOrder.setDescription(shopOrderJson.description);
+        shopOrder.setCreatedDate(DateTime.now());
+        shopOrder.setPartNo(shopOrderJson.partNo);
+        shopOrder.setStructureRevision(shopOrderJson.structureRevision);
+        shopOrder.setRoutingRevision(shopOrderJson.routingRevision);
+        shopOrder.setRequiredDate(DateTimeUtil.convertStringDateToDateTime(shopOrderJson.requiredDate));
+        shopOrder.setStartDate(new DateTime());
+        shopOrder.setFinishDate(new DateTime());
+        shopOrder.setSchedulingDirection(DataModelEnums.ShopOrderSchedulingDirection.valueOf(shopOrderJson.schedulingDirection));
+        shopOrder.setCustomerNo(shopOrderJson.customerNo);
+        shopOrder.setSchedulingStatus(DataModelEnums.ShopOrderScheduleStatus.Unscheduled);
+        shopOrder.setShopOrderStatus(DataModelEnums.ShopOrderStatus.Created);
+        shopOrder.setPriority(DataModelEnums.ShopOrderPriority.valueOf(shopOrderJson.priority));
+        shopOrder.setRevenueValue(shopOrderJson.revenueValue);
+        
+        DataWriter.addShopOrder(shopOrder);
+        
+        return Response.status(200).entity("Successfully Added").build();
+    }
+    
+    @POST
+    @Path("/updateshoporder")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateShopOrder(ShopOrderModelJson shopOrderJson)
+    {
+        ShopOrderModel shopOrder = new ShopOrderModel();
+        shopOrder.setOrderNo(shopOrderJson.orderNo);
+        shopOrder.setDescription(shopOrderJson.description);
+        shopOrder.setPartNo(shopOrderJson.partNo);
+        shopOrder.setStructureRevision(shopOrderJson.structureRevision);
+        shopOrder.setRoutingRevision(shopOrderJson.routingRevision);
+        shopOrder.setRequiredDate(DateTimeUtil.convertStringDateToDateTime(shopOrderJson.requiredDate));
+        shopOrder.setStartDate(DateTimeUtil.convertStringDateToDateTime(shopOrderJson.startDate));
+        shopOrder.setFinishDate(DateTimeUtil.convertStringDateToDateTime(shopOrderJson.finishDate));
+        shopOrder.setSchedulingDirection(DataModelEnums.ShopOrderSchedulingDirection.valueOf(shopOrderJson.schedulingDirection));
+        shopOrder.setCustomerNo(shopOrderJson.customerNo);
+        shopOrder.setSchedulingStatus(DataModelEnums.ShopOrderScheduleStatus.valueOf(shopOrderJson.schedulingStatus));
+        shopOrder.setShopOrderStatus(DataModelEnums.ShopOrderStatus.valueOf(shopOrderJson.shopOrderStatus));
+        shopOrder.setPriority(DataModelEnums.ShopOrderPriority.valueOf(shopOrderJson.priority));
+        shopOrder.setRevenueValue(shopOrderJson.revenueValue);
+        
+        DataWriter.updateShopOrder(shopOrder);
+        
+        return Response.status(200).entity("Successfully Updated").build();
+    }
+    
+    @POST
+    @Path("/addoperation")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addShopOrderOperation(ShopOrderOperationModelJson shopOrderOperationJson)
+    {
+        ShopOrderOperationModel shopOrderOperation = new ShopOrderOperationModel();
+        shopOrderOperation.setOrderNo(shopOrderOperationJson.orderNo);
+        shopOrderOperation.setOperationNo(shopOrderOperationJson.operationNo);
+        shopOrderOperation.setWorkCenterNo(shopOrderOperationJson.workCenterNo);
+        shopOrderOperation.setWorkCenterType(shopOrderOperationJson.workCenterType);
+        shopOrderOperation.setOperationDescription(shopOrderOperationJson.operationDescription);
+        shopOrderOperation.setOperationSequence(shopOrderOperationJson.operationSequence);
+        shopOrderOperation.setPrecedingOperationId(shopOrderOperationJson.precedingOperationId);
+        shopOrderOperation.setWorkCenterRuntimeFactor(shopOrderOperationJson.workCenterRuntimeFactor);
+        shopOrderOperation.setWorkCenterRuntime(shopOrderOperationJson.workCenterRuntime);
+        shopOrderOperation.setLaborRuntimeFactor(shopOrderOperationJson.laborRuntimeFactor);
+        shopOrderOperation.setLaborRunTime(shopOrderOperationJson.laborRunTime);
+        shopOrderOperation.setOpStartDate(null);
+        shopOrderOperation.setOpStartTime(null);
+        shopOrderOperation.setOpFinishDate(null);
+        shopOrderOperation.setOpFinishTime(null);
+        shopOrderOperation.setQuantity(shopOrderOperationJson.quantity);
+        shopOrderOperation.setOperationStatus(DataModelEnums.OperationStatus.Created);
+        
+        DataWriter.addShopOrderOperation(shopOrderOperation);
+        
+        return Response.status(200).entity("Successfully Added").build();
+    }
+    
+    @POST
+    @Path("/updateoperation")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updatehopOrderOperation(ShopOrderOperationModelJson shopOrderOperationJson)
+    {
+        ShopOrderOperationModel shopOrderOperation = new ShopOrderOperationModel();
+        shopOrderOperation.setOrderNo(shopOrderOperationJson.orderNo);
+        shopOrderOperation.setOperationNo(shopOrderOperationJson.operationNo);
+        shopOrderOperation.setWorkCenterNo(shopOrderOperationJson.workCenterNo);
+        shopOrderOperation.setWorkCenterType(shopOrderOperationJson.workCenterType);
+        shopOrderOperation.setOperationDescription(shopOrderOperationJson.operationDescription);
+        shopOrderOperation.setOperationSequence(shopOrderOperationJson.operationSequence);
+        shopOrderOperation.setPrecedingOperationId(shopOrderOperationJson.precedingOperationId);
+        shopOrderOperation.setWorkCenterRuntimeFactor(shopOrderOperationJson.workCenterRuntimeFactor);
+        shopOrderOperation.setWorkCenterRuntime(shopOrderOperationJson.workCenterRuntime);
+        shopOrderOperation.setLaborRuntimeFactor(shopOrderOperationJson.laborRuntimeFactor);
+        shopOrderOperation.setLaborRunTime(shopOrderOperationJson.laborRunTime);
+        shopOrderOperation.setOpStartDate(DateTimeUtil.convertJsonDateTimeToDateTime(shopOrderOperationJson.opStartDateTime));
+        shopOrderOperation.setOpStartTime(DateTimeUtil.convertJsonDateTimeToDateTime(shopOrderOperationJson.opStartDateTime));
+        shopOrderOperation.setOpFinishDate(DateTimeUtil.convertJsonDateTimeToDateTime(shopOrderOperationJson.opFinishDateTime));
+        shopOrderOperation.setOpFinishTime(DateTimeUtil.convertJsonDateTimeToDateTime(shopOrderOperationJson.opFinishDateTime));
+        shopOrderOperation.setQuantity(shopOrderOperationJson.quantity);
+        shopOrderOperation.setOperationStatus(DataModelEnums.OperationStatus.valueOf(shopOrderOperationJson.operationStatus));
+        
+        DataWriter.updateShopOrderOperation(shopOrderOperation);
+        
+        return Response.status(200).entity("Successfully Updated").build();
     }
 }
 
