@@ -43,10 +43,8 @@ public class PartService implements IDynoGetService
                 PartUnavailabilityModelJson unavailabilityJsonObj = new PartUnavailabilityModelJson(
                         partUnavailability.getId(), 
                         partUnavailability.getPartNo(), 
-                        partUnavailability.getUnavailableFromDate()!= null ? partUnavailability.getUnavailableFromDate().toString(DateTimeUtil.getDateFormat()) : "", 
-                        partUnavailability.getUnavailableFromTime() != null? partUnavailability.getUnavailableFromTime().toString(DateTimeUtil.getTimeFormat()) : "", 
-                        partUnavailability.getUnavailableToDate()!= null ? partUnavailability.getUnavailableToDate().toString(DateTimeUtil.getDateFormat()) : "",
-                        partUnavailability.getUnavailableToTime()!= null? partUnavailability.getUnavailableToTime().toString(DateTimeUtil.getTimeFormat()) : "");
+                        DateTimeUtil.concatenateDateTime(partUnavailability.getUnavailableFromDate(), partUnavailability.getUnavailableFromTime()).toString(DateTimeUtil.getDateTimeFormat()),
+                        DateTimeUtil.concatenateDateTime(partUnavailability.getUnavailableToDate(), partUnavailability.getUnavailableToTime()).toString(DateTimeUtil.getDateTimeFormat()));
                 unavailabilityDetails.add(unavailabilityJsonObj);
             }
             PartModelJson partModelJsonObj = new PartModelJson(
@@ -110,10 +108,8 @@ public class PartService implements IDynoGetService
     {
         PartUnavailabilityModel partUnavailability = new PartUnavailabilityModel();
         partUnavailability.setPartNo(partUnavailabilityJson.partNo);
-        partUnavailability.setUnavailableFromDate(DateTimeUtil.convertStringDateToDateTime(partUnavailabilityJson.unavailableFromDate));
-        partUnavailability.setUnavailableFromTime(DateTimeUtil.convertStringTimeToDateTime(partUnavailabilityJson.unavailableFromTime));
-        partUnavailability.setUnavailableToDate(DateTimeUtil.convertStringDateToDateTime(partUnavailabilityJson.unavailableToDate));
-        partUnavailability.setUnavailableToTime(DateTimeUtil.convertStringTimeToDateTime(partUnavailabilityJson.unavailableToTime));
+        partUnavailability.setUnavailableFromDate(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableFromDateTime));
+        partUnavailability.setUnavailableToDate(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime));
         
         DataWriter.addPartUnavailabilityDetails(partUnavailability);
         
@@ -149,22 +145,19 @@ class PartUnavailabilityModelJson
 {
     public int id;
     public String partNo; 
-    public String unavailableFromDate;
-    public String unavailableFromTime;
-    public String unavailableToDate;
+    public String unavailableFromDateTime;
+    public String unavailableToDateTime;
     public String unavailableToTime;
 
     public PartUnavailabilityModelJson()
     {
     }
 
-    public PartUnavailabilityModelJson(int id, String partNo, String unavailableFromDate, String unavailableFromTime, String unavailableToDate, String unavailableToTime)
+    public PartUnavailabilityModelJson(int id, String partNo, String unavailableFromDateTime, String unavailableToDateTime)
     {
         this.id = id;
         this.partNo = partNo;
-        this.unavailableFromDate = unavailableFromDate;
-        this.unavailableFromTime = unavailableFromTime;
-        this.unavailableToDate = unavailableToDate;
-        this.unavailableToTime = unavailableToTime;
+        this.unavailableFromDateTime = unavailableFromDateTime;
+        this.unavailableToDateTime = unavailableToDateTime;
     }
 }

@@ -9,7 +9,6 @@ import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
-import dyno.scheduler.datamodels.WorkCenterUtil;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +44,8 @@ public class WorkCenterService implements IDynoGetService
                 WorkCenterInterruptionsModelJson interruptionJsonObj = new WorkCenterInterruptionsModelJson(
                         workCenterInterruption.getId(), 
                         workCenterInterruption.getWorkCenterNo(), 
-                        workCenterInterruption.getInterruptionFromDate() != null ? workCenterInterruption.getInterruptionFromDate().toString(DateTimeUtil.getDateFormat()) : "", 
-                        workCenterInterruption.getInterruptionFromTime() != null? workCenterInterruption.getInterruptionFromTime().toString(DateTimeUtil.getTimeFormat()) : "", 
-                        workCenterInterruption.getInterruptionToDate()!= null ? workCenterInterruption.getInterruptionToDate().toString(DateTimeUtil.getDateFormat()) : "",
-                        workCenterInterruption.getInterruptionToTime()!= null? workCenterInterruption.getInterruptionToDate().toString(DateTimeUtil.getTimeFormat()) : "");
+                        DateTimeUtil.concatenateDateTime(workCenterInterruption.getInterruptionFromDate(), workCenterInterruption.getInterruptionFromTime()).toString(DateTimeUtil.getDateTimeFormat()),
+                        DateTimeUtil.concatenateDateTime(workCenterInterruption.getInterruptionToDate(), workCenterInterruption.getInterruptionToTime()).toString(DateTimeUtil.getDateTimeFormat()));
                 interruptionDetails.add(interruptionJsonObj);
             }
             WorkCenterModelJson workCenterJsonObj = new WorkCenterModelJson(
@@ -114,16 +111,16 @@ public class WorkCenterService implements IDynoGetService
     {
         WorkCenterInterruptionsModel workCenterInterruption = new WorkCenterInterruptionsModel();
         workCenterInterruption.setWorkCenterNo(wcInterruptionJson.workCenterNo);
-        workCenterInterruption.setInterruptionFromDate(DateTimeUtil.convertStringDateToDateTime(wcInterruptionJson.interruptionFromDate));
-        workCenterInterruption.setInterruptionFromTime(DateTimeUtil.convertStringTimeToDateTime(wcInterruptionJson.interruptionFromTime));
-        workCenterInterruption.setInterruptionToDate(DateTimeUtil.convertStringDateToDateTime(wcInterruptionJson.interruptionToDate));
-        workCenterInterruption.setInterruptionToTime(DateTimeUtil.convertStringTimeToDateTime(wcInterruptionJson.interruptionToTime));
+        workCenterInterruption.setInterruptionFromDate(DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime));
+        workCenterInterruption.setInterruptionFromTime(DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime));
+        workCenterInterruption.setInterruptionToDate(DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionToDateTime));
+        workCenterInterruption.setInterruptionToTime(DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionToDateTime));
         
         DataWriter.addWCInterruptionDetails(workCenterInterruption);
-        WorkCenterUtil.interruptWorkCenter(
-                DateTimeUtil.concatenateDateTime(wcInterruptionJson.interruptionFromDate, wcInterruptionJson.interruptionFromTime),
-                DateTimeUtil.concatenateDateTime(wcInterruptionJson.interruptionToDate, wcInterruptionJson.interruptionToTime),
-                wcInterruptionJson.workCenterNo);
+//        WorkCenterUtil.interruptWorkCenter(
+//                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
+//                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
+//                wcInterruptionJson.workCenterNo);
         
         return Response.status(200).entity("Successfully Interrupted").build();
     }
@@ -160,22 +157,18 @@ class WorkCenterInterruptionsModelJson
 {
     public int id;
     public String workCenterNo; 
-    public String interruptionFromDate;
-    public String interruptionFromTime;
-    public String interruptionToDate;
-    public String interruptionToTime;
+    public String interruptionFromDateTime;
+    public String interruptionToDateTime;
 
     public WorkCenterInterruptionsModelJson()
     {
     }
 
-    public WorkCenterInterruptionsModelJson(int id, String workCenterNo, String interruptionFromDate, String interruptionFromTime, String interruptionToDate, String interruptionToTime)
+    public WorkCenterInterruptionsModelJson(int id, String workCenterNo, String interruptionFromDateTime, String interruptionToDateTime)
     {
         this.id = id;
         this.workCenterNo = workCenterNo;
-        this.interruptionFromDate = interruptionFromDate;
-        this.interruptionFromTime = interruptionFromTime;
-        this.interruptionToDate = interruptionToDate;
-        this.interruptionToTime = interruptionToTime;
+        this.interruptionFromDateTime = interruptionFromDateTime;
+        this.interruptionToDateTime = interruptionToDateTime;
     }
 }
