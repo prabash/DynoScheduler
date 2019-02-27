@@ -72,7 +72,7 @@ public class WorkCenterService implements IDynoGetService
     }
     
     @POST
-    @Path("/addwc")
+    @Path("/add-wc")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addWorkCenter(WorkCenterModelJson workCenterJson)
     {
@@ -88,7 +88,7 @@ public class WorkCenterService implements IDynoGetService
     }
     
     @POST
-    @Path("/updatewc")
+    @Path("/update-wc")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateWorkCenter(WorkCenterModelJson workCenterJson)
     {

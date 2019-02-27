@@ -111,7 +111,7 @@ public class ShopOrderService implements IDynoGetService
     }
     
     @POST
-    @Path("/addshoporder")
+    @Path("/add-shop-order")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addShopOrder(ShopOrderModelJson shopOrderJson)
     {
@@ -138,7 +138,7 @@ public class ShopOrderService implements IDynoGetService
     }
     
     @POST
-    @Path("/updateshoporder")
+    @Path("/update-shop-order")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateShopOrder(ShopOrderModelJson shopOrderJson)
     {
@@ -164,7 +164,7 @@ public class ShopOrderService implements IDynoGetService
     }
     
     @POST
-    @Path("/addoperation")
+    @Path("/add-operation")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addShopOrderOperation(ShopOrderOperationModelJson shopOrderOperationJson)
     {
@@ -193,7 +193,7 @@ public class ShopOrderService implements IDynoGetService
     }
     
     @POST
-    @Path("/updateoperation")
+    @Path("/update-operation")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatehopOrderOperation(ShopOrderOperationModelJson shopOrderOperationJson)
     {

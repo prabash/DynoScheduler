@@ -70,7 +70,7 @@ public class PartService implements IDynoGetService
     }
     
     @POST
-    @Path("/addpart")
+    @Path("/add-part")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPart(PartModelJson partDetailsJson)
     {
@@ -86,7 +86,7 @@ public class PartService implements IDynoGetService
     
     
     @POST
-    @Path("/updatepart")
+    @Path("/update-part")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updatePart(PartModelJson partDetailsJson)
     {
@@ -102,7 +102,7 @@ public class PartService implements IDynoGetService
     }
     
     @POST
-    @Path("/addPartUnavailability")
+    @Path("/add-part-unavailability")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response addPartUnavailability(PartUnavailabilityModelJson partUnavailabilityJson)
     {
