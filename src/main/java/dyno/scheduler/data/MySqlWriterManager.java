@@ -132,21 +132,21 @@ public class MySqlWriterManager extends DataWriteManager
                 int i = 0;
                 columnValues.put(++i, shopOrder.getOrderNo());
                 columnValues.put(++i, shopOrder.getDescription());
-                columnValues.put(++i, DateTime.now());
+                columnValues.put(++i, DateTimeUtil.convertDatetoSqlDate(DateTime.now()));
                 columnValues.put(++i, shopOrder.getPartNo());
 
                 columnValues.put(++i, shopOrder.getStructureRevision());
                 columnValues.put(++i, shopOrder.getRoutingRevision());
-                columnValues.put(++i, shopOrder.getRequiredDate());
+                columnValues.put(++i, shopOrder.getRequiredDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrder.getRequiredDate()) : new Date(0));
                 columnValues.put(++i, shopOrder.getStartDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrder.getStartDate()) : new Date(0));
 
                 columnValues.put(++i, shopOrder.getFinishDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrder.getFinishDate()) : new Date(0));
-                columnValues.put(++i, shopOrder.getSchedulingDirection());
+                columnValues.put(++i, shopOrder.getSchedulingDirection().toString());
                 columnValues.put(++i, shopOrder.getCustomerNo());
-                columnValues.put(++i, ShopOrderScheduleStatus.Unscheduled);
+                columnValues.put(++i, ShopOrderScheduleStatus.Unscheduled.toString());
 
-                columnValues.put(++i, ShopOrderStatus.Created);
-                columnValues.put(++i, shopOrder.getPriority());
+                columnValues.put(++i, ShopOrderStatus.Created.toString());
+                columnValues.put(++i, shopOrder.getPriority().toString());
                 columnValues.put(++i, shopOrder.getRevenueValue());
                 columnValues.put(++i, shopOrder.calculateImportance());
 
@@ -329,14 +329,14 @@ public class MySqlWriterManager extends DataWriteManager
                 columnValues.put(++i, shopOrder.getPartNo());
                 columnValues.put(++i, shopOrder.getStructureRevision());
                 columnValues.put(++i, shopOrder.getRoutingRevision());
-                columnValues.put(++i, shopOrder.getRequiredDate());
+                columnValues.put(++i, shopOrder.getRequiredDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrder.getRequiredDate()) : new Date(0));
                 columnValues.put(++i, shopOrder.getStartDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrder.getStartDate()) : new Date(0));
                 columnValues.put(++i, shopOrder.getFinishDate() != null ? DateTimeUtil.convertDatetoSqlDate(shopOrder.getFinishDate()) : new Date(0));
-                columnValues.put(++i, shopOrder.getSchedulingDirection());
+                columnValues.put(++i, shopOrder.getSchedulingDirection().toString());
                 columnValues.put(++i, shopOrder.getCustomerNo());
                 columnValues.put(++i, shopOrder.getSchedulingStatus().toString());
                 columnValues.put(++i, shopOrder.getShopOrderStatus().toString());
-                columnValues.put(++i, shopOrder.getPriority());
+                columnValues.put(++i, shopOrder.getPriority().toString());
                 columnValues.put(++i, shopOrder.getRevenueValue());
                 columnValues.put(++i, shopOrder.calculateImportance());
 

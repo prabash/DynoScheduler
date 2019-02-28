@@ -78,6 +78,7 @@ public class ShopOrderService implements IDynoGetService
             }
 
             ShopOrderModelJson shopOrderJsonObj = new ShopOrderModelJson(
+                    shopOrder.getId(),
                     shopOrder.getOrderNo(),
                     shopOrder.getDescription(),
                     shopOrder.getCreatedDate() != null ? shopOrder.getCreatedDate().toString(DateTimeUtil.getDateTimeFormatJson()) : "",
@@ -131,7 +132,7 @@ public class ShopOrderService implements IDynoGetService
         shopOrder.setShopOrderStatus(DataModelEnums.ShopOrderStatus.Created);
         shopOrder.setPriority(DataModelEnums.ShopOrderPriority.valueOf(shopOrderJson.priority));
         shopOrder.setRevenueValue(shopOrderJson.revenueValue);
-        
+
         DataWriter.addShopOrder(shopOrder);
         
         return Response.status(200).entity("Successfully Added").build();
@@ -143,6 +144,7 @@ public class ShopOrderService implements IDynoGetService
     public Response updateShopOrder(ShopOrderModelJson shopOrderJson)
     {
         ShopOrderModel shopOrder = new ShopOrderModel();
+        shopOrder.setId(shopOrderJson.id); // ID added for update only
         shopOrder.setOrderNo(shopOrderJson.orderNo);
         shopOrder.setDescription(shopOrderJson.description);
         shopOrder.setPartNo(shopOrderJson.partNo);
@@ -198,6 +200,7 @@ public class ShopOrderService implements IDynoGetService
     public Response updatehopOrderOperation(ShopOrderOperationModelJson shopOrderOperationJson)
     {
         ShopOrderOperationModel shopOrderOperation = new ShopOrderOperationModel();
+        shopOrderOperation.setOperationId(shopOrderOperationJson.operationId);  // ID added for update only
         shopOrderOperation.setOrderNo(shopOrderOperationJson.orderNo);
         shopOrderOperation.setOperationNo(shopOrderOperationJson.operationNo);
         shopOrderOperation.setWorkCenterNo(shopOrderOperationJson.workCenterNo);
@@ -225,6 +228,7 @@ public class ShopOrderService implements IDynoGetService
 @XmlRootElement
 class ShopOrderModelJson
 {
+    public int id;
     public String orderNo;
     public String description;
     public String createdDate;
@@ -242,9 +246,10 @@ class ShopOrderModelJson
     public int revenueValue;
     public List<ShopOrderOperationModelJson> operations;
 
-    public ShopOrderModelJson(String orderNo, String description, String createdDate, String partNo, String structureRevision, String routingRevision, String requiredDate,
+    public ShopOrderModelJson(int id, String orderNo, String description, String createdDate, String partNo, String structureRevision, String routingRevision, String requiredDate,
             String startDate, String finishDate, String schedulingDirection, String customerNo, String schedulingStatus, String shopOrderStatus, String priority, int revenueValue, List<ShopOrderOperationModelJson> operations)
     {
+        this.id = id;
         this.orderNo = orderNo;
         this.description = description;
         this.createdDate = createdDate;

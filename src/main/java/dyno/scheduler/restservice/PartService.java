@@ -109,7 +109,9 @@ public class PartService implements IDynoGetService
         PartUnavailabilityModel partUnavailability = new PartUnavailabilityModel();
         partUnavailability.setPartNo(partUnavailabilityJson.partNo);
         partUnavailability.setUnavailableFromDate(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableFromDateTime));
+        partUnavailability.setUnavailableFromTime(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableFromDateTime));
         partUnavailability.setUnavailableToDate(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime));
+        partUnavailability.setUnavailableToTime(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime));
         
         DataWriter.addPartUnavailabilityDetails(partUnavailability);
         
@@ -147,7 +149,6 @@ class PartUnavailabilityModelJson
     public String partNo; 
     public String unavailableFromDateTime;
     public String unavailableToDateTime;
-    public String unavailableToTime;
 
     public PartUnavailabilityModelJson()
     {
