@@ -6,6 +6,8 @@
 package dyno.scheduler.datamodels;
 
 import dyno.scheduler.data.DataReader;
+import dyno.scheduler.utils.DateTimeUtil;
+import java.util.Comparator;
 import java.util.List;
 import org.joda.time.DateTime;
 
@@ -15,6 +17,7 @@ import org.joda.time.DateTime;
  */
 public class WorkCenterUtil
 {
+
     public static void interruptWorkCenter(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, String workCenterNo)
     {
         List<InterruptedOpDetailsDataModel> interruptionDetails = DataReader.getInterruptedOperationDetails(interruptionStartDateTime, interruptionStartDateTime, interruptionEndDateTime, interruptionEndDateTime, workCenterNo);
@@ -25,15 +28,68 @@ public class WorkCenterUtil
             shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.Interruption);
         }
     }
-    
-    public static void interruptWorkCenterOnPartUnavailability(DateTime partUnavailableStartDateTime, DateTime partUnavailableEndDateTime, String workCenterNo)
+
+    public static void interruptWorkCenterOnPartUnavailability(DateTime partUnavailableStartDateTime, DateTime partUnavailableEndDateTime, String partNo)
     {
-        List<InterruptedOpDetailsDataModel> interruptionDetails = DataReader.getInterruptedOperationDetails(partUnavailableStartDateTime, partUnavailableStartDateTime, partUnavailableEndDateTime, partUnavailableEndDateTime, workCenterNo);
-        for (InterruptedOpDetailsDataModel interruptionDetail : interruptionDetails)
+        List<ShopOrderOperationModel> affectedOperations = DataReader.getAffectedOperationsByPartUnavailabiility(partNo, partUnavailableStartDateTime, partUnavailableStartDateTime, partUnavailableEndDateTime, partUnavailableEndDateTime);
+        
+        // sort operations by the operation start date time
+        affectedOperations.sort(new OperationDateComparator());
+
+        // by going through the operations, find out the interruption start date and end dates of the work centers
+        for (int i = 0; i < affectedOperations.size(); i++)
         {
-            ShopOrderModel shopOrder = DataReader.getShopOrderByPrimaryKey(interruptionDetail.getOrderNo());
-            DateTime interruptionOnOpEndDateTime = WorkCenterOpAllocModel.incrementTime(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionDetail.getInterruptedRunTime());
-            shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.PartUnavailable);
+            DateTime interruptionStartDateTime = new DateTime();
+            DateTime interruptionEndDateTime = new DateTime();
+            
+            ShopOrderOperationModel currentOperation = affectedOperations.get(i);
+            DateTime currentOpStartDateTime = DateTimeUtil.concatenateDateTime(currentOperation.getOpStartDate(), currentOperation.getOpStartTime());
+            DateTime currentOpFinishDateTime = DateTimeUtil.concatenateDateTime(currentOperation.getOpFinishDate(), currentOperation.getOpFinishTime());
+
+            // if the current operation has started before the part unavailability start date time, the interruption start date time should be the partUnavailableStartDateTime
+            if (currentOpStartDateTime.isBefore(partUnavailableStartDateTime))
+            {
+                interruptionStartDateTime = partUnavailableStartDateTime;
+            }
+            // else if current operation starts after or on the partUnavailableStartDateTime, then the interrupton start datetime should be the current operation start datetime
+            else if(currentOpStartDateTime.isEqual(partUnavailableStartDateTime) || currentOpStartDateTime.isAfter(partUnavailableStartDateTime))
+            {
+                interruptionStartDateTime = currentOpStartDateTime;
+            } // This part is only checked for the 1st operation since the operations are sorted by the start date time, there cannot be operations earlier than that
+
+
+            // if the current operation finish date time goes after the partUnavailableEndDateTime, then the interruptionEndDateTime should be the partUnavailableEndDateTime
+            if (currentOpFinishDateTime.isAfter(partUnavailableEndDateTime))
+            {
+                interruptionEndDateTime = partUnavailableEndDateTime;
+            }
+            // else if the current operation finish date time is equal to before the partUnavailableEndDateTime, then the interruptionEndDateTime should be the current operation finish datetime
+            else if(currentOpFinishDateTime.isEqual(partUnavailableEndDateTime) || currentOpFinishDateTime.isBefore(partUnavailableEndDateTime))
+            {
+                interruptionEndDateTime = currentOpFinishDateTime;
+            }
+
+            List<InterruptedOpDetailsDataModel> interruptionDetails = DataReader.getInterruptedOperationDetails(interruptionStartDateTime, interruptionStartDateTime, interruptionEndDateTime, interruptionEndDateTime, currentOperation.getWorkCenterNo());
+            System.out.println("");
+            for (InterruptedOpDetailsDataModel interruptionDetail : interruptionDetails)
+            {
+                ShopOrderModel shopOrder = DataReader.getShopOrderByPrimaryKey(interruptionDetail.getOrderNo());
+                DateTime interruptionOnOpEndDateTime = WorkCenterOpAllocModel.incrementTime(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionDetail.getInterruptedRunTime());
+                shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.PartUnavailable);
+            }
+        }
+    }
+    
+
+    static class OperationDateComparator implements Comparator<ShopOrderOperationModel>
+    {
+        @Override
+        public int compare(ShopOrderOperationModel o1, ShopOrderOperationModel o2)
+        {
+            DateTime o1StartDate = DateTimeUtil.concatenateDateTime(o1.getOpStartDate(), o1.getOpStartTime());
+            DateTime o2StartDate = DateTimeUtil.concatenateDateTime(o2.getOpStartDate(), o2.getOpStartTime());
+            int returnVal = o1StartDate.isAfter(o2StartDate) ? 1 : -1;
+            return returnVal;
         }
     }
 }

@@ -89,4 +89,6 @@ public abstract class DataReadManager
     protected abstract List<PartUnavailabilityModel> getPartUnavailabilityDetailsByPartNo(String partNo);
     
     protected abstract List<WorkCenterInterruptionsModel> getWorkCenterInterruptionsDetails(String workCenterNo);
+    
+    protected abstract List<ShopOrderOperationModel> getAffectedOperationsByPartUnavailabiility(String partNo, DateTime unavailabilityStartDate, DateTime unavailabilityStartTime, DateTime unavailabilityEndDate, DateTime unavailabilityEndTime);
 }

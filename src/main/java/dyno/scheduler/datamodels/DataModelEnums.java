@@ -118,6 +118,7 @@ public class DataModelEnums
         ReplacePrecedingOperationIDs,
         MakeAvailableTempUnavailableLocationsFinite,
         PartUnavailabilityDetails,
-        WorkCenterInterruptions
+        WorkCenterInterruptions,
+        AffectedOperationsByPartUnavailability
     }
 }

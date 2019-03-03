@@ -154,4 +154,9 @@ public class DataReader
     {
         return DataFactory.getDataReadManagerInstance().getWorkCenterInterruptionsDetails(workCenter);
     }
+    
+    public static List<ShopOrderOperationModel> getAffectedOperationsByPartUnavailabiility(String partNo, DateTime unavailabilityStartDate, DateTime unavailabilityStartTime, DateTime unavailabilityEndDate, DateTime unavailabilityEndTime)
+    {
+        return DataFactory.getDataReadManagerInstance().getAffectedOperationsByPartUnavailabiility(partNo, unavailabilityStartDate, unavailabilityStartTime, unavailabilityEndDate, unavailabilityEndTime);
+    }
 }

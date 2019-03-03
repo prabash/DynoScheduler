@@ -633,7 +633,10 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
                     (opStartDateTime.isBefore(interruptionStartDateTime) && (opFinishDateTime.isBefore(interruptionEndDateTime) || opFinishDateTime.isEqual(interruptionEndDateTime))) ||
                     (opStartDateTime.isEqual(interruptionStartDateTime) && opFinishDateTime.isEqual(interruptionEndDateTime)) ||
                     (opStartDateTime.isEqual(interruptionStartDateTime) && opFinishDateTime.isAfter(interruptionEndDateTime)) ||
-                    ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isAfter(interruptionEndDateTime)))
+                    (opStartDateTime.isEqual(interruptionStartDateTime) && opFinishDateTime.isBefore(interruptionEndDateTime)) ||
+                    ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isAfter(interruptionEndDateTime)) || 
+                    ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isEqual(interruptionEndDateTime)) ||
+                    ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isBefore(interruptionEndDateTime)))
             {
                 operation.splitAndUnscheduleInterruptedOperation(interruptionStartDateTime, interruptionEndDateTime, interruptionType);
             }

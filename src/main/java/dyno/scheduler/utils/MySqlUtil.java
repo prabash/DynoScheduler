@@ -69,6 +69,8 @@ public class MySqlUtil
                 return "get_part_unavailability_details";
             case WorkCenterInterruptions:
                 return "get_work_center_interruptions";
+            case AffectedOperationsByPartUnavailability:
+                return "get_affected_operations_by_part_unavailability";
             default:
                 return "";
         }

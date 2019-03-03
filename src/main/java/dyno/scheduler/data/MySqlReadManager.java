@@ -507,4 +507,33 @@ public class MySqlReadManager extends DataReadManager
         }
         return workCenterInterruptionDetails;
     }
+
+    @Override
+    protected List<ShopOrderOperationModel> getAffectedOperationsByPartUnavailabiility(String partNo, DateTime unavailabilityStartDate, DateTime unavailabilityStartTime, DateTime unavailabilityEndDate, DateTime unavailabilityEndTime)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderOperationModel> affectedOperations = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.AffectedOperationsByPartUnavailability);
+
+        parameters.add(partNo);
+        parameters.add(DateTimeUtil.convertDatetoSqlDate(unavailabilityStartDate));
+        parameters.add(DateTimeUtil.convertTimetoSqlTime(unavailabilityStartTime));
+        parameters.add(DateTimeUtil.convertDatetoSqlDate(unavailabilityEndDate));
+        parameters.add(DateTimeUtil.convertTimetoSqlTime(unavailabilityEndTime));
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderOperationModel affectedOperation = new ShopOrderOperationModel().getModelObject(results);
+                affectedOperations.add(affectedOperation);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return affectedOperations;
+    }
 }
