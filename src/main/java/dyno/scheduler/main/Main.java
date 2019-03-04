@@ -6,7 +6,6 @@ import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
-import dyno.scheduler.datamodels.WorkCenterUtil;
 import dyno.scheduler.jade.AgentsManager;
 import dyno.scheduler.restservice.RESTServiceHandler;
 import dyno.scheduler.utils.DateTimeUtil;
@@ -50,10 +49,6 @@ public class Main
 //            
 //            System.out.println("Press a key to continue creating agents");
 //            System.in.read();
-
-            WorkCenterUtil.interruptWorkCenterOnPartUnavailability(
-                    DateTimeUtil.concatenateDateTime("2018-08-07", "07:00:00"),
-                    DateTimeUtil.concatenateDateTime("2018-08-07", "11:00:00"), "P2");
           
             // create the main container
             ContainerController mainContainer = AgentsManager.createMainContainer(platformRuntime);

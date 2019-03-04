@@ -99,6 +99,11 @@ public class DataWriter
         return DataFactory.getDataWriteManagerInstance().removeOperationScheduleData(operationId, operationStatus);
     }
     
+    public static boolean changeOpStatusToUnschedule(String orderNo)
+    {
+        return DataFactory.getDataWriteManagerInstance().changeOperationStatusToUnschedule(orderNo);
+    }
+    
     //</editor-fold>
     
     //<editor-fold defaultstate="collapsed" desc="Work Center Methods">

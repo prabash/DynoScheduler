@@ -223,6 +223,15 @@ public class ShopOrderService implements IDynoGetService
         
         return Response.status(200).entity("Successfully Updated").build();
     }
+    
+    @POST
+    @Path("/unschedule-op-status")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response changeOperationStatusToUnschedule(ShopOrderModelJson shopOrderJson)
+    {
+        DataWriter.changeOpStatusToUnschedule(shopOrderJson.orderNo);
+        return Response.status(200).entity("Successfully Updated Status to Unschedule").build();
+    }
 }
 
 @XmlRootElement

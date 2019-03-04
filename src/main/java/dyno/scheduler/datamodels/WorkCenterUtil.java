@@ -75,7 +75,7 @@ public class WorkCenterUtil
             {
                 ShopOrderModel shopOrder = DataReader.getShopOrderByPrimaryKey(interruptionDetail.getOrderNo());
                 DateTime interruptionOnOpEndDateTime = WorkCenterOpAllocModel.incrementTime(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionDetail.getInterruptedRunTime());
-                shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.PartUnavailable);
+                shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.Normal);
             }
         }
     }

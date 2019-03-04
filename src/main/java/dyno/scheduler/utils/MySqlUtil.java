@@ -71,6 +71,8 @@ public class MySqlUtil
                 return "get_work_center_interruptions";
             case AffectedOperationsByPartUnavailability:
                 return "get_affected_operations_by_part_unavailability";
+            case ChangeOperationStatusToUnschedule:
+                return "change_operation_status_to_unschedule";
             default:
                 return "";
         }

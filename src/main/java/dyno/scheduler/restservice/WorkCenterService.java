@@ -9,6 +9,7 @@ import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.WorkCenterInterruptionsModel;
 import dyno.scheduler.datamodels.WorkCenterModel;
+import dyno.scheduler.datamodels.WorkCenterUtil;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,10 +118,10 @@ public class WorkCenterService implements IDynoGetService
         workCenterInterruption.setInterruptionToTime(DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionToDateTime));
         
         DataWriter.addWCInterruptionDetails(workCenterInterruption);
-//        WorkCenterUtil.interruptWorkCenter(
-//                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
-//                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
-//                wcInterruptionJson.workCenterNo);
+        WorkCenterUtil.interruptWorkCenter(
+                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
+                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
+                wcInterruptionJson.workCenterNo);
         
         return Response.status(200).entity("Successfully Interrupted").build();
     }

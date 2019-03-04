@@ -163,4 +163,12 @@ public abstract class DataWriteManager
      * @return 
      */
     public abstract boolean updateWorkCenterInterruptionDetails(WorkCenterInterruptionsModel workCenterInterruptionDetail, String storageName);
+    
+    
+    /**
+     * Update new operations (From Created Status) to Unscheduled status
+     * @param orderNo
+     * @return 
+     */
+    public abstract boolean changeOperationStatusToUnschedule(String orderNo);
 }

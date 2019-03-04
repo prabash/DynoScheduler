@@ -856,6 +856,26 @@ public class MySqlWriterManager extends DataWriteManager
             return false;
         }
     }
+
+    @Override
+    public boolean changeOperationStatusToUnschedule(String orderNo)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ChangeOperationStatusToUnschedule);
+        parameters.add(orderNo);
+        int result;
+        try
+        {
+            result = new MySqlWriter().invokeUpdateStoredProcedure(storedProcedure, parameters);
+
+        } catch (Exception ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return true;
+    }
+    
+    
     
     public void UpdateTestColumn()
     {

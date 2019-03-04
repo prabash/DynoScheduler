@@ -411,6 +411,12 @@ public class ExcelWriteManager extends DataWriteManager
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    @Override
+    public boolean changeOperationStatusToUnschedule(String orderNo)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
     /**
      * returns the column index related to the specific timeBlock
      *

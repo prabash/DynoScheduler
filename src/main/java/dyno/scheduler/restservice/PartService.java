@@ -9,6 +9,7 @@ import dyno.scheduler.data.DataReader;
 import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.PartModel;
 import dyno.scheduler.datamodels.PartUnavailabilityModel;
+import dyno.scheduler.datamodels.WorkCenterUtil;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +115,10 @@ public class PartService implements IDynoGetService
         partUnavailability.setUnavailableToTime(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime));
         
         DataWriter.addPartUnavailabilityDetails(partUnavailability);
+        WorkCenterUtil.interruptWorkCenterOnPartUnavailability(
+                DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableFromDateTime), 
+                DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime), 
+                partUnavailabilityJson.partNo);
         
         return Response.status(200).entity("Successfully Updated").build();
     }
