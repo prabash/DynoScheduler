@@ -111,6 +111,7 @@ public class DataModelEnums
         OperationScheduledTimeBlockFinite,
         InterruptedOperaitonDetails,
         UnscheduledOrders,
+        ScheduledOrders,
         UnschedledOperationWorkCenters,
         AllOperationsOrdered,
         ByOrderNoOperationsOrdered,

@@ -58,6 +58,12 @@ public abstract class DataReadManager
     protected abstract List<ShopOrderModel> getUnscheduledShopOrders();
     
     /**
+     * Get scheduled shop orders list
+     * @return 
+     */
+    protected abstract List<ShopOrderModel> getScheduledShopOrders();
+    
+    /**
      * Get Work Centres related unscheduled operations
      * @return unscheduled operations' work centers list
      */

@@ -115,6 +115,11 @@ public class DataReader
         return DataFactory.getDataReadManagerInstance().getUnscheduledShopOrders();
     }
     
+    public static List<ShopOrderModel> getScheduledOrders()
+    {
+        return DataFactory.getDataReadManagerInstance().getScheduledShopOrders();
+    }
+    
     public static List<WorkCenterModel> getUnscheduledOpWorkCenters()
     {
         return DataFactory.getDataReadManagerInstance().getUnscheduledOperationWorkCenters();

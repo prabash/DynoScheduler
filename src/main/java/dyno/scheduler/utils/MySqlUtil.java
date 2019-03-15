@@ -53,6 +53,8 @@ public class MySqlUtil
                 return "get_interrupted_operation_details";
             case UnscheduledOrders:
                 return "get_unscheduled_orders";
+            case ScheduledOrders:
+                return "get_scheduled_orders";
             case UnschedledOperationWorkCenters:
                 return "get_unscheduled_operation_workcenters";
             case AllOperationsOrdered:

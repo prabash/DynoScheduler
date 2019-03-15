@@ -271,6 +271,34 @@ public class MySqlReadManager extends DataReadManager
         }
         return unscheduledOrders;
     }
+    
+    @Override
+    protected List<ShopOrderModel> getScheduledShopOrders()
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderModel> scheduledOrders = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ScheduledOrders);
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
+                // set the list of operations
+                shopOrder.setOperations(getShopOrderOperationsByOrderNo(shopOrder.getOrderNo()));
+                // assign latest finish time for operations
+                shopOrder.assignEstimatedLatestFinishTimeForOperations();
+                scheduledOrders.add(shopOrder);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return scheduledOrders;
+    }
+    
+    
 
     @Override
     protected List<WorkCenterModel> getUnscheduledOperationWorkCenters()

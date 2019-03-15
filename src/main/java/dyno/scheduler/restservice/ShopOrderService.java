@@ -14,8 +14,10 @@ import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -35,9 +37,16 @@ public class ShopOrderService implements IDynoGetService
     {
         List<ShopOrderModel> shopOrders = DataReader.getShopOrderDetails(true);
 
-        List<ShopOrderModelJson> list = new ArrayList<>();
+        List<ShopOrderModelJson> list = getShopOrdersJsonList(shopOrders);
         GenericEntity<List<ShopOrderModelJson>> entity;
 
+        entity = new GenericEntityImpl(list);
+        return Response.ok(entity).build();
+    }
+
+    private static List<ShopOrderModelJson> getShopOrdersJsonList(List<ShopOrderModel> shopOrders)
+    {
+        List<ShopOrderModelJson> list = new ArrayList<>();
         for (ShopOrderModel shopOrder : shopOrders)
         {
             List<ShopOrderOperationModelJson> operations = new ArrayList<ShopOrderOperationModelJson>();
@@ -98,19 +107,33 @@ public class ShopOrderService implements IDynoGetService
 
             list.add(shopOrderJsonObj);
         }
-        
-        entity = new GenericEntityImpl(list);
-        return Response.ok(entity).build();
+
+        return list;
     }
 
     private static class GenericEntityImpl extends GenericEntity<List<ShopOrderModelJson>>
     {
+
         public GenericEntityImpl(List<ShopOrderModelJson> entity)
         {
             super(entity);
         }
     }
     
+    @GET
+    @Path("get-scheduled-orders")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getScheduledOrders()
+    {
+        List<ShopOrderModel> shopOrders = DataReader.getScheduledOrders();
+
+        List<ShopOrderModelJson> list = getShopOrdersJsonList(shopOrders);
+        GenericEntity<List<ShopOrderModelJson>> entity;
+
+        entity = new GenericEntityImpl(list);
+        return Response.ok(entity).build();
+    }
+
     @POST
     @Path("/add-shop-order")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -134,10 +157,10 @@ public class ShopOrderService implements IDynoGetService
         shopOrder.setRevenueValue(shopOrderJson.revenueValue);
 
         DataWriter.addShopOrder(shopOrder);
-        
+
         return Response.status(200).entity("Successfully Added").build();
     }
-    
+
     @POST
     @Path("/update-shop-order")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -159,12 +182,12 @@ public class ShopOrderService implements IDynoGetService
         shopOrder.setShopOrderStatus(DataModelEnums.ShopOrderStatus.valueOf(shopOrderJson.shopOrderStatus));
         shopOrder.setPriority(DataModelEnums.ShopOrderPriority.valueOf(shopOrderJson.priority));
         shopOrder.setRevenueValue(shopOrderJson.revenueValue);
-        
+
         DataWriter.updateShopOrder(shopOrder);
-        
+
         return Response.status(200).entity("Successfully Updated").build();
     }
-    
+
     @POST
     @Path("/add-operation")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -188,12 +211,12 @@ public class ShopOrderService implements IDynoGetService
         shopOrderOperation.setOpFinishTime(null);
         shopOrderOperation.setQuantity(shopOrderOperationJson.quantity);
         shopOrderOperation.setOperationStatus(DataModelEnums.OperationStatus.Created);
-        
+
         DataWriter.addShopOrderOperation(shopOrderOperation);
-        
+
         return Response.status(200).entity("Successfully Added").build();
     }
-    
+
     @POST
     @Path("/update-operation")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -218,12 +241,12 @@ public class ShopOrderService implements IDynoGetService
         shopOrderOperation.setOpFinishTime(DateTimeUtil.convertJsonDateTimeToDateTime(shopOrderOperationJson.opFinishDateTime));
         shopOrderOperation.setQuantity(shopOrderOperationJson.quantity);
         shopOrderOperation.setOperationStatus(DataModelEnums.OperationStatus.valueOf(shopOrderOperationJson.operationStatus));
-        
+
         DataWriter.updateShopOrderOperation(shopOrderOperation);
-        
+
         return Response.status(200).entity("Successfully Updated").build();
     }
-    
+
     @POST
     @Path("/unschedule-op-status")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -237,6 +260,7 @@ public class ShopOrderService implements IDynoGetService
 @XmlRootElement
 class ShopOrderModelJson
 {
+
     public int id;
     public String orderNo;
     public String description;
