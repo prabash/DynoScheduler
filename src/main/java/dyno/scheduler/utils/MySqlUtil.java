@@ -62,7 +62,7 @@ public class MySqlUtil
             case ByOrderNoOperationsOrdered:
                 return "get_shop_order_operations_ordered";
             case LowerPriorityBlockerShopOrders:
-                return "get_lower_priority_blocker_shop_orders";    
+                return "get_lower_priority_blocker_shop_orders";
             case ReplacePrecedingOperationIDs:
                 return "replace_preceding_op_ids";
             case MakeAvailableTempUnavailableLocationsFinite:
@@ -75,6 +75,12 @@ public class MySqlUtil
                 return "get_affected_operations_by_part_unavailability";
             case ChangeOperationStatusToUnschedule:
                 return "change_operation_status_to_unschedule";
+            case ScheduledOrdersByWorkCenters:
+                return "get_scheduled_orders_by_work_centers";
+            case ScheduledOperationsByWorkCenters:
+                return "get_scheduled_operations_by_work_centers";
+            case WorkCenterDetails:
+                return "get_work_center_details";
             default:
                 return "";
         }

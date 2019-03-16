@@ -115,9 +115,9 @@ public class DataReader
         return DataFactory.getDataReadManagerInstance().getUnscheduledShopOrders();
     }
     
-    public static List<ShopOrderModel> getScheduledOrders()
+    public static List<ShopOrderModel> getScheduledOrders(int skip, int take)
     {
-        return DataFactory.getDataReadManagerInstance().getScheduledShopOrders();
+        return DataFactory.getDataReadManagerInstance().getScheduledShopOrders(skip, take);
     }
     
     public static List<WorkCenterModel> getUnscheduledOpWorkCenters()
@@ -163,5 +163,20 @@ public class DataReader
     public static List<ShopOrderOperationModel> getAffectedOperationsByPartUnavailabiility(String partNo, DateTime unavailabilityStartDate, DateTime unavailabilityStartTime, DateTime unavailabilityEndDate, DateTime unavailabilityEndTime)
     {
         return DataFactory.getDataReadManagerInstance().getAffectedOperationsByPartUnavailabiility(partNo, unavailabilityStartDate, unavailabilityStartTime, unavailabilityEndDate, unavailabilityEndTime);
+    }
+    
+    public static List<ShopOrderModel> getScheduledOrdersByWorkCentre(String workCentres)
+    {
+        return DataFactory.getDataReadManagerInstance().getScheduledOrdersByWorkCenters(workCentres);
+    }
+    
+    public static List<ShopOrderOperationModel> getScheduledOperationsByWorkCentre(String workCentres)
+    {
+        return DataFactory.getDataReadManagerInstance().getScheduledOperationsByWorkCenters(workCentres);
+    }
+    
+    public static List<WorkCenterModel> getWorkCenterDetails(int skip, int take)
+    {
+        return DataFactory.getDataReadManagerInstance().getWorkCenters(skip, take);
     }
 }

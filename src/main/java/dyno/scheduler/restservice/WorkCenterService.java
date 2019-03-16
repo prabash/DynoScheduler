@@ -125,6 +125,21 @@ public class WorkCenterService implements IDynoGetService
         
         return Response.status(200).entity("Successfully Interrupted").build();
     }
+    
+    public static String getWorkCentersQueryString(List<WorkCenterModel> workCenterDetails)
+    {
+        StringBuilder workCenters = new StringBuilder();
+        for (int i = 1; i <= workCenterDetails.size(); i++)
+        {
+            workCenters.append(workCenterDetails.get(i-1).getId());
+            if (i < workCenterDetails.size())
+            {
+                workCenters.append(",");    
+            }
+        }
+        
+        return workCenters.toString();
+    }
 }
 
 @XmlRootElement

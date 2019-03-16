@@ -59,9 +59,11 @@ public abstract class DataReadManager
     
     /**
      * Get scheduled shop orders list
+     * @param skip
+     * @param take
      * @return 
      */
-    protected abstract List<ShopOrderModel> getScheduledShopOrders();
+    protected abstract List<ShopOrderModel> getScheduledShopOrders(int skip, int take);
     
     /**
      * Get Work Centres related unscheduled operations
@@ -97,4 +99,10 @@ public abstract class DataReadManager
     protected abstract List<WorkCenterInterruptionsModel> getWorkCenterInterruptionsDetails(String workCenterNo);
     
     protected abstract List<ShopOrderOperationModel> getAffectedOperationsByPartUnavailabiility(String partNo, DateTime unavailabilityStartDate, DateTime unavailabilityStartTime, DateTime unavailabilityEndDate, DateTime unavailabilityEndTime);
+    
+    protected abstract List<ShopOrderModel> getScheduledOrdersByWorkCenters(String workCenters);
+    
+    protected abstract List<ShopOrderOperationModel> getScheduledOperationsByWorkCenters(String workCenters);
+    
+    protected abstract List<WorkCenterModel> getWorkCenters(int skip, int take);
 }

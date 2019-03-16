@@ -121,6 +121,9 @@ public class DataModelEnums
         PartUnavailabilityDetails,
         WorkCenterInterruptions,
         AffectedOperationsByPartUnavailability,
-        ChangeOperationStatusToUnschedule
+        ChangeOperationStatusToUnschedule,
+        ScheduledOrdersByWorkCenters,
+        ScheduledOperationsByWorkCenters,
+        WorkCenterDetails,
     }
 }

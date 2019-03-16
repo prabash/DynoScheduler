@@ -492,10 +492,10 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
                 operation.setLatestOpFinishDate(latestOpEndDateTime);
                 operation.setLatestOpFinishTime(latestOpEndDateTime);
             }
-            System.out.println("SO : " + operation.getOrderNo() + " Op No : " + operation.getOperationId() + " Latest Op End Date : "
-                    + DateTimeUtil.concatenateDateTime(operation.getLatestOpFinishDate(), operation.getLatestOpFinishTime()).toString(DateTimeUtil.getDateTimeFormat()));
+//            System.out.println("SO : " + operation.getOrderNo() + " Op No : " + operation.getOperationId() + " Latest Op End Date : "
+//                    + DateTimeUtil.concatenateDateTime(operation.getLatestOpFinishDate(), operation.getLatestOpFinishTime()).toString(DateTimeUtil.getDateTimeFormat()));
         }
-        System.out.println("Completed assigning latest finish times for operations");
+        //System.out.println("Completed assigning latest finish times for operations");
     }
 
     /**

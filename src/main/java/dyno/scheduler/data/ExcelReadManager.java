@@ -260,7 +260,25 @@ public class ExcelReadManager extends DataReadManager
     }
 
     @Override
-    protected List<ShopOrderModel> getScheduledShopOrders()
+    protected List<ShopOrderModel> getScheduledShopOrders(int skip, int take)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    protected List<ShopOrderModel> getScheduledOrdersByWorkCenters(String workCenters)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    protected List<ShopOrderOperationModel> getScheduledOperationsByWorkCenters(String workCenters)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    protected List<WorkCenterModel> getWorkCenters(int skip, int take)
     {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

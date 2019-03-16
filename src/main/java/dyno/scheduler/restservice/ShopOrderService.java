@@ -10,6 +10,7 @@ import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.DataModelEnums;
 import dyno.scheduler.datamodels.ShopOrderModel;
 import dyno.scheduler.datamodels.ShopOrderOperationModel;
+import dyno.scheduler.datamodels.WorkCenterModel;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
@@ -121,11 +123,12 @@ public class ShopOrderService implements IDynoGetService
     }
     
     @GET
-    @Path("get-scheduled-orders")
+    @Path("get-scheduled-orders/{skip}/{take}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getScheduledOrders()
+    public Response getScheduledOrders(@PathParam("skip") int skip,
+                                       @PathParam("take") int take)
     {
-        List<ShopOrderModel> shopOrders = DataReader.getScheduledOrders();
+        List<ShopOrderModel> shopOrders = DataReader.getScheduledOrders(skip, take);
 
         List<ShopOrderModelJson> list = getShopOrdersJsonList(shopOrders);
         GenericEntity<List<ShopOrderModelJson>> entity;
@@ -254,6 +257,24 @@ public class ShopOrderService implements IDynoGetService
     {
         DataWriter.changeOpStatusToUnschedule(shopOrderJson.orderNo);
         return Response.status(200).entity("Successfully Updated Status to Unschedule").build();
+    }
+    
+    
+    @GET
+    @Path("/get-scheduled-orders-by-wc/{skip}/{take}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response getScheduledOrdersByWorkCenters(@PathParam("skip") int skip,
+                                                    @PathParam("take") int take)
+    {
+        List<WorkCenterModel> workCenterDetails = DataReader.getWorkCenterDetails(skip, take);
+        String workCenters = WorkCenterService.getWorkCentersQueryString(workCenterDetails);
+        List<ShopOrderModel> shopOrders = DataReader.getScheduledOrdersByWorkCentre(workCenters);
+        
+        List<ShopOrderModelJson> list = getShopOrdersJsonList(shopOrders);
+        GenericEntity<List<ShopOrderModelJson>> entity;
+
+        entity = new GenericEntityImpl(list);
+        return Response.ok(entity).build();
     }
 }
 

@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 
 /**
@@ -273,11 +274,15 @@ public class MySqlReadManager extends DataReadManager
     }
     
     @Override
-    protected List<ShopOrderModel> getScheduledShopOrders()
+    protected List<ShopOrderModel> getScheduledShopOrders(int skip, int take)
     {
         ArrayList<Object> parameters = new ArrayList<>();
         ArrayList<ShopOrderModel> scheduledOrders = new ArrayList<>();
         String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ScheduledOrders);
+        
+        parameters.add(skip);
+        parameters.add(take);
+        
         ResultSet results;
         try
         {
@@ -564,4 +569,87 @@ public class MySqlReadManager extends DataReadManager
         }
         return affectedOperations;
     }
+
+    @Override
+    protected List<ShopOrderModel> getScheduledOrdersByWorkCenters(String workCenters)
+    {
+        List<ShopOrderOperationModel> operationsScheduledByWorkCenter = getScheduledOperationsByWorkCenters(workCenters);
+        
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderModel> scheduledOrders = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ScheduledOrdersByWorkCenters);
+        
+        parameters.add(workCenters);
+        
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderModel shopOrder = new ShopOrderModel().getModelObject(results);
+                // set the list of operations from the operations list taken by sending in the work centers
+                shopOrder.setOperations(operationsScheduledByWorkCenter.stream().filter(rec -> rec.getOrderNo().equals(shopOrder.getOrderNo())).collect(Collectors.toList()));
+                
+                scheduledOrders.add(shopOrder);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return scheduledOrders;
+    }
+
+    @Override
+    protected List<ShopOrderOperationModel> getScheduledOperationsByWorkCenters(String workCenters)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<ShopOrderOperationModel> scheduledOperations = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.ScheduledOperationsByWorkCenters);
+
+        parameters.add(workCenters);
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                ShopOrderOperationModel affectedOperation = new ShopOrderOperationModel().getModelObject(results);
+                scheduledOperations.add(affectedOperation);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return scheduledOperations;
+    }
+
+    @Override
+    protected List<WorkCenterModel> getWorkCenters(int skip, int take)
+    {
+        ArrayList<Object> parameters = new ArrayList<>();
+        ArrayList<WorkCenterModel> workCenterDetails = new ArrayList<>();
+        String storedProcedure = MySqlUtil.getStoredProcedureName(DataModelEnums.StoredProcedures.WorkCenterDetails);
+
+        parameters.add(skip);
+        parameters.add(take);
+
+        ResultSet results;
+        try
+        {
+            results = new MySqlReader().invokeGetStoreProcedure(storedProcedure, parameters);
+            while (results.next())
+            {
+                WorkCenterModel workCenterDetail = new WorkCenterModel().getModelObject(results);
+                workCenterDetails.add(workCenterDetail);
+            }
+        } catch (SQLException ex)
+        {
+            LogUtil.logSevereErrorMessage(this, ex.getMessage(), ex);
+        }
+        return workCenterDetails;
+    }
+    
+    
 }
