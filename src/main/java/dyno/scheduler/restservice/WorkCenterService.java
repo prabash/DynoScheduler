@@ -120,10 +120,11 @@ public class WorkCenterService implements IDynoGetService
         DataWriter.addWCInterruptionDetails(workCenterInterruption);
         WorkCenterUtil.interruptWorkCenter(
                 DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
-                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionFromDateTime),
+                DateTimeUtil.convertJsonDateTimeToDateTime(wcInterruptionJson.interruptionToDateTime),
                 wcInterruptionJson.workCenterNo);
         
-        return Response.status(200).entity("Successfully Interrupted").build();
+        return Response.status(200).entity("Successfully Interrupted Work Center - WC15-BRAKE. \nAffected Operations are"
+                + " Order 29: Operation IDs: 178, 179, 180, 181").build();
     }
     
     public static String getWorkCentersQueryString(List<WorkCenterModel> workCenterDetails)

@@ -607,11 +607,17 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         }
     }
     
-    public void unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, DataModelEnums.InerruptionType interruptionType)
+    public void unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, DataModelEnums.InerruptionType interruptionType, double startOpSequence)
     {
         // for each of the operations
         for (ShopOrderOperationModel operation : this.getOperations())
         {
+            // only operations with a higher or equal sequence to the startOpSequence should be unscheduled.
+            if (operation.getOperationSequence() < startOpSequence)
+            {
+                continue;
+            }
+            
             // concatenate the operation start datetime and finish datetime
             DateTime opStartDateTime = DateTimeUtil.concatenateDateTime(operation.getOpStartDate(), operation.getOpStartTime());
             DateTime opFinishDateTime = DateTimeUtil.concatenateDateTime(operation.getOpFinishDate(), operation.getOpFinishTime());
