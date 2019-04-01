@@ -10,8 +10,10 @@ import dyno.scheduler.data.DataWriter;
 import dyno.scheduler.datamodels.PartModel;
 import dyno.scheduler.datamodels.PartUnavailabilityModel;
 import dyno.scheduler.datamodels.WorkCenterUtil;
+import static dyno.scheduler.restservice.WorkCenterService.getAffectedOrderDetails;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -115,12 +117,13 @@ public class PartService implements IDynoGetService
         partUnavailability.setUnavailableToTime(DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime));
         
         DataWriter.addPartUnavailabilityDetails(partUnavailability);
-        WorkCenterUtil.interruptWorkCenterOnPartUnavailability(
+        HashMap<String, List<Integer>> affectedOrders = WorkCenterUtil.interruptWorkCenterOnPartUnavailability(
                 DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableFromDateTime), 
                 DateTimeUtil.convertJsonDateTimeToDateTime(partUnavailabilityJson.unavailableToDateTime), 
                 partUnavailabilityJson.partNo);
         
-        return Response.status(200).entity("Successfully Updated").build();
+        return Response.status(200).entity("Successfully Updated Part Unavailability Details. \nAffected Orders are: "
+                + getAffectedOrderDetails(affectedOrders)).build();
     }
 }
 

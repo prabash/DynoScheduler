@@ -16,6 +16,7 @@ import dyno.scheduler.utils.GeneralSettings;
 import dyno.scheduler.utils.LogUtil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -607,8 +608,10 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         }
     }
     
-    public void unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, DataModelEnums.InerruptionType interruptionType, double startOpSequence)
+    public List<Integer> unscheduleOperationsOnInterruption(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, DataModelEnums.InerruptionType interruptionType, double startOpSequence)
     {
+        List<Integer> affectedOperations = new ArrayList<>();
+        
         // for each of the operations
         for (ShopOrderOperationModel operation : this.getOperations())
         {
@@ -631,6 +634,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
             // if the operation start datetime comes after the unscheduleFromDateTime, such operations should just be unscheduled without splitting
             else if (opStartDateTime.isEqual(interruptionEndDateTime) || opStartDateTime.isAfter(interruptionEndDateTime))
             {
+                affectedOperations.add(operation.getOperationNo());
                 operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
             }
             // if the unscheduleFromDate falls in between the operation start datetime and finish datetime such operation should be split into 2
@@ -644,6 +648,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
                     ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isEqual(interruptionEndDateTime)) ||
                     ((opStartDateTime.isAfter(interruptionStartDateTime) && opStartDateTime.isBefore(interruptionEndDateTime)) && opFinishDateTime.isBefore(interruptionEndDateTime)))
             {
+                affectedOperations.add(operation.getOperationNo());
                 operation.splitAndUnscheduleInterruptedOperation(interruptionStartDateTime, interruptionEndDateTime, interruptionType);
             }
         }
@@ -656,6 +661,8 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
         {
             DataWriter.changeShopOrderScheduleData(getOrderNo(), ShopOrderScheduleStatus.Unscheduled, null, null);
         }
+        
+        return affectedOperations;
     }
     
     /**

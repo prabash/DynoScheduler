@@ -8,6 +8,7 @@ package dyno.scheduler.datamodels;
 import dyno.scheduler.data.DataReader;
 import dyno.scheduler.utils.DateTimeUtil;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
@@ -19,25 +20,31 @@ import org.joda.time.DateTime;
 public class WorkCenterUtil
 {
 
-    public static void interruptWorkCenter(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, String workCenterNo)
+    public static HashMap<String, List<Integer>> interruptWorkCenter(DateTime interruptionStartDateTime, DateTime interruptionEndDateTime, String workCenterNo)
     {
         List<InterruptedOpDetailsDataModel> interruptionDetails = DataReader.getInterruptedOperationDetails(interruptionStartDateTime, interruptionStartDateTime, interruptionEndDateTime, interruptionEndDateTime, workCenterNo);
+        
+        HashMap<String, List<Integer>> affectedOrders = new HashMap<>();
         for (InterruptedOpDetailsDataModel interruptionDetail : interruptionDetails)
         {
             ShopOrderModel shopOrder = DataReader.getShopOrderByPrimaryKey(interruptionDetail.getOrderNo());
             double interruptedOpSequenceNo = shopOrder.getOperations().stream().filter(rec -> rec.getOperationId() == interruptionDetail.getOperationId()).collect(Collectors.toList()).get(0).getOperationSequence();
             DateTime interruptionOnOpEndDateTime = WorkCenterOpAllocModel.incrementTime(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionDetail.getInterruptedRunTime());
-            shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.Interruption, interruptedOpSequenceNo);
+            List<Integer> affectedOps = shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.Interruption, interruptedOpSequenceNo);
+            
+            affectedOrders.put(shopOrder.getOrderNo(), affectedOps);
         }
+        return affectedOrders;
     }
 
-    public static void interruptWorkCenterOnPartUnavailability(DateTime partUnavailableStartDateTime, DateTime partUnavailableEndDateTime, String partNo)
+    public static HashMap<String, List<Integer>> interruptWorkCenterOnPartUnavailability(DateTime partUnavailableStartDateTime, DateTime partUnavailableEndDateTime, String partNo)
     {
         List<ShopOrderOperationModel> affectedOperations = DataReader.getAffectedOperationsByPartUnavailabiility(partNo, partUnavailableStartDateTime, partUnavailableStartDateTime, partUnavailableEndDateTime, partUnavailableEndDateTime);
         
         // sort operations by the operation start date time
         affectedOperations.sort(new OperationDateComparator());
-
+        HashMap<String, List<Integer>> affectedOrders = new HashMap<>();
+        
         // by going through the operations, find out the interruption start date and end dates of the work centers
         for (int i = 0; i < affectedOperations.size(); i++)
         {
@@ -73,14 +80,19 @@ public class WorkCenterUtil
 
             List<InterruptedOpDetailsDataModel> interruptionDetails = DataReader.getInterruptedOperationDetails(interruptionStartDateTime, interruptionStartDateTime, interruptionEndDateTime, interruptionEndDateTime, currentOperation.getWorkCenterNo());
             System.out.println("");
+            
             for (InterruptedOpDetailsDataModel interruptionDetail : interruptionDetails)
             {
                 ShopOrderModel shopOrder = DataReader.getShopOrderByPrimaryKey(interruptionDetail.getOrderNo());
                 double interruptedOpSequenceNo = shopOrder.getOperations().stream().filter(rec -> rec.getOperationId() == interruptionDetail.getOperationId()).collect(Collectors.toList()).get(0).getOperationSequence();
                 DateTime interruptionOnOpEndDateTime = WorkCenterOpAllocModel.incrementTime(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionDetail.getInterruptedRunTime());
-                shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.Normal, interruptedOpSequenceNo);
+                List<Integer> affectedOps = shopOrder.unscheduleOperationsOnInterruption(interruptionDetail.getInterruptionOnOpStartDateTime(), interruptionOnOpEndDateTime, DataModelEnums.InerruptionType.Normal, interruptedOpSequenceNo);
+                
+                affectedOrders.put(shopOrder.getOrderNo(), affectedOps);
             }
         }
+        
+        return affectedOrders;
     }
     
 
