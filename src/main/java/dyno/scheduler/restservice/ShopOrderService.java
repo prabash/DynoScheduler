@@ -276,6 +276,16 @@ public class ShopOrderService implements IDynoGetService
         entity = new GenericEntityImpl(list);
         return Response.ok(entity).build();
     }
+    
+    @GET
+    @Path("cancel/{orderNo}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response cancelShopOrder(@PathParam("orderNo") String orderNo)
+    {
+        ShopOrderModel shopOrder = DataReader.getShopOrderByPrimaryKey(orderNo);
+        shopOrder.cancel();
+        return Response.status(200).entity("Successfully Cancelled order " + orderNo).build();
+    }
 }
 
 @XmlRootElement
