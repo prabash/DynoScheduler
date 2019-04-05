@@ -264,7 +264,7 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                 currentOperation = currentAgent.getOperationById(opIdToSchedule);
                 // if the previous operation has an acceptedProposal, then only the current operation should start its usual process by taking the target op start date from the prev. op
                 // else just start the process and it will notify to the manager agent without scheduling the operation
-                if (currentOperation != null && acceptProposal != 2)
+                if (currentOperation != null && acceptProposal == 0)
                 {
                     // get the target operation start date before scheduling
                     targetOperationStartDate = currentAgent.targetOpStartDate(currentOperation.getPrimaryKey());
@@ -459,6 +459,8 @@ class BStartNewOperationScheduler extends CyclicBehaviour
                         // Date set successfully. We can terminate
                         System.out.println("Operation " + currentOperation.getOperationId() + " was successfully scheduled on " + bestOfferedDate + " at work center : " + workCenterReply.getSender().getName());
                         System.out.println("______________________________________________________________________________________________________________________________________");
+                        // after accepting the proposal for previous operation, it should be reset.
+                        acceptProposal = 0;
 
                     } else
                     {
