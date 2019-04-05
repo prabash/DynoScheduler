@@ -634,7 +634,7 @@ public class ShopOrderModel extends DataModel implements Comparator<ShopOrderMod
             // if the operation start datetime comes after the unscheduleFromDateTime, such operations should just be unscheduled without splitting
             else if (opStartDateTime.isEqual(interruptionEndDateTime) || opStartDateTime.isAfter(interruptionEndDateTime))
             {
-                affectedOperations.add(operation.getOperationNo());
+                affectedOperations.add(operation.getOperationId());
                 operation.unscheduleOperation(DataModelEnums.OperationStatus.Unscheduled);
             }
             // if the unscheduleFromDate falls in between the operation start datetime and finish datetime such operation should be split into 2
